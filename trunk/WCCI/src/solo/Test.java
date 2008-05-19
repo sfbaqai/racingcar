@@ -3,6 +3,13 @@ package solo;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+
+import com.graphbuilder.math.func.Function;
+
+import cern.colt.function.DoubleDoubleProcedure;
+import cern.colt.function.DoubleProcedure;
+import cern.colt.list.DoubleArrayList;
+import cern.jet.math.Functions;
 /**
  * Created by IntelliJ IDEA.
  * User: julian
@@ -36,8 +43,7 @@ public class Test {
 //			Thread.sleep(2000);
 //		} catch (Exception e) {
 //			// TODO: handle exception
-//		}
-//		System.exit(0);
+//		}        
 //        
 //        JFrame jf = new JFrame();
 //    	jf.setMinimumSize(new Dimension(400,500));
