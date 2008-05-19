@@ -127,7 +127,6 @@ public class EdgeDetector {
 
 	public EdgeDetector(CarState cs) {
 		// TODO Auto-generated constructor stub
-
 		init(cs);
 	}
 
