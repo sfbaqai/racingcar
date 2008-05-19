@@ -214,5 +214,9 @@ public class Edge {
 		this.p2l.put(p, totalLength);
 	}
 	
-	
+	public Vector2D get(int index){
+		if (index<0 || index>=size)
+			return null;
+		return allPoints.get(index);
+	}
 }
