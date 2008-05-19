@@ -1,0 +1,105 @@
+FUNCTION_BLOCK philbcar
+
+//An attempt to repeat the PhilBController in linguistic terms
+
+VAR_INPUT
+	speedx : REAL;
+	speedy : REAL;
+	angle : REAL;
+	dist  : REAL;
+	pos   : REAL;
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL; 	// Steering angle
+END_VAR
+
+
+//Need to understand how to get negative values
+FUZZIFY speedx
+	TERM VerySlow 	 := trape 0 0 25 30 ;
+	TERM Slow	     := trape 25 30 40 50;
+	TERM Medium  := trape 40 45 80 90;
+	TERM Fast	 := trape 85 90 120 125;
+	TERM VeryFast	 := trape 125 130 350 360;
+
+
+	RANGE := (0 .. 360);	// Difference between heading and WP
+END_FUZZIFY
+
+FUZZIFY speedy
+	TERM VerySlow 	 := trape -10 -5 5 10 ;
+	TERM Slow	     := (-15,0) (-13,1) (-10,1) (-5,0) (5,0) (10,1) (13,1) (15,0);
+	TERM Medium	 := (-25,0) (-20,1) (-15,1) (-13,0) (13,0) (15,1) (20,1) (25,0);
+	TERM Fast	 := (-60,0) (-50,1) (-25,1) (-20,0) (20,0) (25,1) (50,1) (60,0);
+	TERM VeryFast	 := (-360,0) (-350,1) (-60,1) (-50,0) (50,0) (60,1) (350,1) (360,0);
+
+
+	RANGE := (-360 .. 360);	// Difference between heading and WP
+END_FUZZIFY
+
+FUZZIFY dist
+	TERM VeryNear	 := trape 0 3 7 10 ;
+	TERM Near	     := trape 7 10 15 20;
+	TERM Medium	 := trape 15 20 46 50;
+	TERM Far	 := trape 50 52 62 65;
+	TERM VeryFar	 := trape 60 70 199 200;
+
+
+	RANGE := (0 .. 200);	// Difference between heading and WP
+END_FUZZIFY
+
+
+FUZZIFY angle
+	TERM Small	     := trape 0 0 0.08 0.1;
+	TERM Medium	 := trape 0.08 0.1 0.4 0.5;
+	TERM Large	 := trape 0.45 0.5 0.8 3.14;
+
+
+	RANGE := (0 .. 3.14159265);	// Difference between heading and WP
+END_FUZZIFY
+
+FUZZIFY pos
+	TERM Safe   := trape -0.9 -0.8 0.8 0.9 ;
+	TERM Dangerous := (-3,0) (-2,1) (-0.96,1) (-0.93,0);
+
+	RANGE := (-3 .. 3);	// Difference between heading and WP
+END_FUZZIFY
+
+
+
+//Steer : [0,16]
+DEFUZZIFY steer
+	TERM Neutral  := 0;
+	TERM Safe 	:= FUNCTION (angle);		//16
+	TERM AdjustQuick := FUNCTION ((0.0-pos)/10);
+	TERM AdjustSlow := FUNCTION (speedx/120*(-0.96-pos)*dist/1200);
+	TERM Small 	:= trian 0 122.173047639603058 122.173047639603059 ;
+
+	ACCU : MAX;
+	METHOD : COGF;
+	DEFAULT := 0.0;
+	RANGE := (-3.14 .. 3.14);
+END_DEFUZZIFY
+
+
+//Acceleration : [0, 0.01]
+//currently operates at maximum acceleration
+
+RULEBLOCK No1
+	AND : PROD;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF dist IS Far AND angle IS Small THEN steer IS AdjustSlow;
+	RULE 2 : IF dist IS Far AND speedx IS Medium AND angle IS Small THEN steer IS AdjustSlow;	
+	RULE 3 : IF dist IS Far and speedx IS VeryFast THEN steer IS Safe;
+	RULE 4 : IF dist IS NOT Far AND dist IS NOT VeryFar THEN steer is Safe;
+	RULE 5 : IF angle IS NOT Small AND dist is NOT VeryFar THEN steer IS Safe;
+	RULE 6 : IF dist IS VeryFar THEN steer IS AdjustSlow;
+	RULE 7 : IF pos IS Dangerous THEN steer IS AdjustQuick;
+	
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+

@@ -1,0 +1,60 @@
+FUNCTION_BLOCK qualify
+
+VAR_INPUT
+	scoring : REAL;
+	sel : REAL;
+	occupation_type: REAL;
+	city: REAL;
+END_VAR
+
+VAR_OUTPUT
+	qualify : REAL;
+END_VAR
+
+FUZZIFY scoring
+	TERM veryHigh := trape 850 900 1000 1000;
+	TERM high := trape 650 700 900 1000;
+	TERM midHight := trape 500 550 700 900;
+	TERM midLow := trape 380 420 550 700;
+	TERM low := trape 0 0 420 550;
+END_FUZZIFY
+
+FUZZIFY sel
+	TERM a := trape 3000 5000 10000 15000;
+	TERM b := trape 2000 3000 5000 10000;
+	TERM c1 := trape 1300 2000 3000 5000;
+	TERM c2 := trape 900 1300 2000 3000;
+	TERM c3 := trape 600 900 1300 2000;
+	TERM d1 := trape 400 600 900 1300;
+	TERM d2 := trape 0 400 600 900;
+	TERM e := trape 0 0 400 600;
+END_FUZZIFY
+
+FUZZIFY city
+	TERM bsas := trape 0 0 1899 1900;
+	TERM other := trape 1900 1900 10000 10000;
+END_FUZZIFY
+
+FUZZIFY occupation_type
+	TERM good := trape 0 0 4.5 4.5;
+	TERM other := trape 4.5 4.5 20 20;
+END_FUZZIFY
+
+DEFUZZIFY qualify
+	TERM accept := trape 2 3 4 4;
+	TERM manual_accept := trape 1 2 3 4;
+	TERM manual_reject := trape 0 1 2 3;
+	TERM reject := trape 0 0 1 2;
+	ACCU : SUM;
+	METHOD : COG;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	RULE 1 : IF scoring IS low THEN qualify IS reject;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+

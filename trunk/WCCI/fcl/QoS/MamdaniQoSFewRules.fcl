@@ -1,0 +1,51 @@
+FUNCTION_BLOCK MamdaniQoSFewRules
+
+VAR_INPUT
+	commitment : REAL;
+	clarity : REAL;
+	influence : REAL;
+END_VAR
+
+VAR_OUTPUT
+	service_quality : REAL;
+END_VAR
+
+FUZZIFY commitment
+	TERM nothing := gauss 0 1;
+	TERM minimal := gauss 1 1;
+	TERM partially := gauss 2 1;
+	TERM satisfactory := gauss 3 1;
+	TERM largely := gauss 4 1;
+	TERM fully := gauss 5 1;
+END_FUZZIFY
+
+FUZZIFY clarity
+	TERM low := gauss 0 1;
+	TERM medium := gauss 2.5 1;
+	TERM high:= gauss 5 1;
+END_FUZZIFY
+
+FUZZIFY influence
+	TERM low := gauss 0 1;
+	TERM medium := gauss 2.5 1;
+	TERM high:= gauss 5 1;
+END_FUZZIFY
+
+DEFUZZIFY service_quality
+	TERM inadequate := gauss 0 1;
+	TERM sufficient := gauss 2.5 1;
+	TERM excellent := gauss 5 1;
+	ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	RULE 1 : IF commitment IS fully AND influence IS high THEN service_quality IS excellent;
+	RULE 2 : IF commitment IS partially AND clarity IS high AND influence IS low THEN service_quality IS sufficient;
+	RULE 3 : IF commitment IS nothing THEN service_quality IS inadequate;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+

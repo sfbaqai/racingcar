@@ -1,0 +1,75 @@
+FUNCTION_BLOCK philbcar
+
+//Philbcar04 - Using results from GCFuzzy v GoodController => 27/34
+//See Dir 2724FuzzyCar for other variations.
+
+VAR_INPUT
+	error : REAL; // Difference between heading and WP [-180,180]
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL;	//Calculated steering angle [-8,8]
+	accel : REAL;	//calculated acceleration [-0.01,0.01]
+END_VAR
+
+//Error : [0, 180] - angle between heading and WP
+//Need to understand how to get negative values
+FUZZIFY error
+	TERM HighPos		:= trape 30 40 180 180;
+	TERM MedPos			:= trape 10 15 20 40;
+	TERM LowPos			:= trape 1 2 9 11;
+	TERM None			:= trape -1.1 -0.9 0.9 1.1;
+	TERM LowNeg			:= trape -11 -9 -2 -1;
+	TERM MedNeg			:= trape -40 -20 -15 -10;
+	TERM HighNeg		:= trape -180 -180 -40 -30;
+END_FUZZIFY
+
+//Steer : [0,16]
+DEFUZZIFY steer
+	TERM HighPos	:= 	trian 6.5 11.74 12.5;
+	TERM MedPos		:= 	trian 3 4.75 9;
+	TERM LowPos		:= 	trian 0 0.75 3.5;
+	TERM None		:=	trian -0.5 0 0.5;
+	TERM LowNeg		:= 	trian -3.5 -0.75 0;
+	TERM MedNeg		:= 	trian -9 -4.75 -3;
+	TERM HighNeg	:= 	trian -12.5 -11.74 -6.5;
+	//ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0;
+
+END_DEFUZZIFY
+
+//Acceleration : [0, 0.01]
+//currently operates at maximum acceleration
+
+DEFUZZIFY accel
+	TERM HighHigh 	:= 0.01;
+	TERM None		:= 0.0;
+	//ACCU : MAX;
+	METHOD : COGF;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF error IS HighPos
+				THEN steer IS HighPos, accel IS HighHigh;
+	RULE 2 : IF error IS MedPos
+				THEN steer IS MedPos, accel IS HighHigh;
+	RULE 3 : IF error IS LowPos
+				THEN steer IS LowPos, accel IS HighHigh;
+	RULE 4 : IF error IS None
+				THEN steer IS None, accel IS None;
+	RULE 5 : IF error IS LowNeg
+				THEN steer IS LowNeg, accel IS HighHigh;
+	RULE 6 : IF error IS MedNeg
+				THEN steer IS MedNeg, accel IS HighHigh;
+	RULE 7 : IF error IS HighNeg
+				THEN steer IS HighNeg, accel IS HighHigh;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+

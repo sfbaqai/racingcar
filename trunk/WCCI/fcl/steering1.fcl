@@ -1,0 +1,59 @@
+FUNCTION_BLOCK philbcar
+
+//An attempt to repeat the PhilBController in linguistic terms
+
+VAR_INPUT
+	heading_angle : REAL;
+	sp        : REAL;
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL; 	// Steering angle
+END_VAR
+
+
+//Need to understand how to get negative values
+FUZZIFY heading_angle
+	TERM VerySmall 	 := gauss 0 0.01 ;
+	TERM Small	     := trian 0 1.4 1.4;
+	TERM VeryLarge  := trape 1.4 1.4 3.14159 3.1516;
+
+	RANGE := (-3.14159 .. 3.14159);	// Difference between heading and WP
+END_FUZZIFY
+
+//Need to understand how to get negative values
+FUZZIFY sp
+	TERM Small 	 := trape 0 87.26646259971647 100 100;
+
+	RANGE := (0 .. 100);	// Difference between heading and WP
+END_FUZZIFY
+
+
+//Steer : [0,16]
+DEFUZZIFY steer
+	TERM VerySmall 	:= gauss 0 0.01;		//16
+	TERM VeryLarge := trian 8.6 8.726646259971647 8.8;
+	TERM Small 	:= trian 0 122.173047639603058 122.173047639603059 ;
+
+	ACCU : MAX;
+	METHOD : LM;
+	DEFAULT := 0.0;
+	RANGE := (-122.173047639603058 .. 122.173047639603058);
+END_DEFUZZIFY
+
+//Acceleration : [0, 0.01]
+//currently operates at maximum acceleration
+
+RULEBLOCK No1
+	AND : PROD;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF heading_angle IS VerySmall THEN steer IS VerySmall;
+	RULE 2 : IF heading_angle IS VeryLarge THEN steer IS VeryLarge;
+	RULE 4 : IF heading_angle IS Small AND sp IS Small THEN steer IS Small;
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+

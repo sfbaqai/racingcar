@@ -1,0 +1,50 @@
+FUNCTION_BLOCK philbcar
+
+//An attempt to repeat the PhilBController in linguistic terms
+
+VAR_INPUT
+	error : REAL; 	// Difference between heading and WP
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL; 	// Steering angle
+	accel : REAL; 	// Car acceleration
+END_VAR
+
+//Error : [0, 180] - angle between heading and WP
+//Need to understand how to get negative values
+FUZZIFY error
+	TERM HighHigh 	:= (0,0) (10,1);//>8
+	TERM LowLow 	:= (0,1) (10,0);//0.0313
+END_FUZZIFY
+
+//Steer : [0,16]
+DEFUZZIFY steer
+	TERM HighHigh 	:= 8;				//16
+	TERM LowLow 	:= 0.001;			//0.001
+	ACCU : MAX;
+	METHOD : COGF;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+//Acceleration : [0, 0.01]
+//currently operates at maximum acceleration
+
+DEFUZZIFY accel
+	TERM HighHigh 	:= 0.01;
+	ACCU : MAX;
+	METHOD : COGF;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF error IS HighHigh THEN steer IS HighHigh, accel IS HighHigh;
+	RULE 2 : IF error IS LowLow THEN steer IS LowLow, accel IS HighHigh;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+
