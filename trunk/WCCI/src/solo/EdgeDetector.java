@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
