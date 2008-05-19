@@ -255,11 +255,11 @@ public class MyDriver extends SimpleDriver {
 	public void startRecordingEdge(){
 		long time = System.currentTimeMillis();
 		recording = true;		
-		prevEdge = edgeDetector;		
+		prevEdge = edgeDetector;					
 		
-		highestPoint = edgeDetector.highestPoint;
+		highestPoint = edgeDetector.highestPoint;		
 		highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
-		highestPointOnRightEdge = (edgeDetector.left!=null) ? edgeDetector.right.getHighestPoint() : null;
+		highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
 				
 		highestL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		highestR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
@@ -281,14 +281,16 @@ public class MyDriver extends SimpleDriver {
 			edgeDetector.combine(prevEdge, nraced);			
 		}
 		
-		if (distRaced>200) meta = 1;
+		if (distRaced>150) meta = 1;
 		turn = edgeDetector.turn;		
 		
 		Vector2D hh = edgeDetector.highestPoint;
+		System.out.println(hh+"  "+highestPoint);
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
 		Vector2D hR = (edgeDetector.left!=null) ? edgeDetector.right.getHighestPoint() : null;
-		Vector2D gL = (edgeDetector.guessPointOnEdge(hh)==-1) ? hh : null;
-		Vector2D gR = (edgeDetector.guessPointOnEdge(hh)==1) ? hh : null;
+		int highestPointEdge =edgeDetector.guessPointOnEdge(hh); 
+		Vector2D gL = (highestPointEdge==-1) ? hh : null;
+		Vector2D gR = (highestPointEdge==1) ? hh : null;
 				
 		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		double lenR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
@@ -319,30 +321,24 @@ public class MyDriver extends SimpleDriver {
 		
 		highest -= nraced;		
 		if (highest>0 && highest>len+1){
-			if (nraced<=edgeDetector.straightDist)
+			if (nraced<=edgeDetector.straightDist || highestPointEdge==0)
 				highestPoint.y -= nraced;
-			else highestPoint = (edgeDetector.guessPointOnEdge(highestPoint)==-1) ? edgeDetector.left.estimatePointOnEdge(highest, gL) : 
-				(edgeDetector.guessPointOnEdge(highestPoint)==1) ? edgeDetector.right.estimatePointOnEdge(highest, gR) : null;		
+			else highestPoint = (highestPointEdge==-1) ? edgeDetector.left.estimatePointOnEdge(highest, gL) : 
+				(highestPointEdge==1) ? edgeDetector.right.estimatePointOnEdge(highest, gR) : highestPoint.minus(new Vector2D(0,-nraced));		
 		} else {
 			highestPoint = hh;
 			highest = len;
 		}
 				
 				
-		if (distRaced>140 && distRaced<190){
-			Vector2D[] edges = edgeDetector.getEdges();
-			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"a");
-			ObjectArrayList<Vector2D> nedges = new ObjectArrayList<Vector2D>(edges);
-			if (highestPoint!=null) nedges.add(highestPoint);
-//			if (highestPointOnLeftEdge!=null) nedges.add(highestPointOnLeftEdge);
-			if (highestPointOnRightEdge!=null) nedges.add(highestPointOnRightEdge);
-			EdgeDetector.drawEdge(nedges, "E"+distRaced+" "+nraced+"b");
-			try {
-				Thread.sleep(200);
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
-		}
+//		if (true){			
+//			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
+//			try {
+//				Thread.sleep(200);
+//			} catch (Exception e) {
+//				// TODO: handle exception
+//			}
+//		}
 		
 		prevEdge = edgeDetector;				
 		raced = distRaced;		

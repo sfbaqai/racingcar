@@ -3,6 +3,7 @@
  */
 package solo;
 
+import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
@@ -108,6 +109,7 @@ public class EdgeDetector {
 		maxDistance=-1;
 		firstIndexMax = -1;
 		lastIndexMax = -1;		
+		maxY = -1;
 		distRaced = cs.distRaced;			
 
 		if (Math.abs(cs.angle)<0.001)
@@ -117,16 +119,18 @@ public class EdgeDetector {
 		double[] y = new double[NUM_POINTS];
 		double[] rx = new double[NUM_POINTS];//x is axis along track axis
 		double[] ry = new double[NUM_POINTS];
+		polar2Cartesian = new Double2ObjectRBTreeMap<Vector2D>();
 
 		leftStraight=-1;
 		rightStraight=-1;	
 		numpoint = 19;
 	
 		for (int i=0;i<19;++i){
-			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;						
-			angle=Math.round(angle*ANGLEACCURACY)/ANGLEACCURACY;			
+			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;											
 			double xx =Math.round(tracks[i]* Math.cos(angle)*10000.0d)/10000.0d;
 			double yy =Math.round(tracks[i]* Math.sin(angle)*10000.0d)/10000.0d;
+			angle=Math.round((Math.PI-angle)*ANGLEACCURACY)/ANGLEACCURACY;
+	
 			polar2Cartesian.put(angle, new Vector2D(xx,yy));
 			x[i] = xx;
 			y[i] = yy;
@@ -146,22 +150,22 @@ public class EdgeDetector {
 		}
 		this.x = DoubleArrayList.wrap(x, 19);
 		this.y = DoubleArrayList.wrap(y, 19);
-		highestPoint = new Vector2D(x[firstIndexMax],y[firstIndexMax]);
-		left = (firstIndexMax>0) ? new Edge(x,y,firstIndexMax) : null;
-		right = (lastIndexMax<18) ? new Edge(rx,ry,18-lastIndexMax) : null;
-		int turnL = left.turn();
-		int turnR = right.turn();
+		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(x[firstIndexMax],y[firstIndexMax]) : null;
+		left = (firstIndexMax>0 && firstIndexMax<19) ? new Edge(x,y,firstIndexMax) : null;
+		right = (lastIndexMax<18 && lastIndexMax>=0) ? new Edge(rx,ry,18-lastIndexMax) : null;
+		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
+		int turnR = (left==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR; 
 		if (d > 0){
-			turn = turnL;
+			turn = (turnR==MyDriver.UNKNOWN) ? turnL : (turnL==MyDriver.UNKNOWN) ? turnR : turnL;
 		} else if (d == 0){
 			turn = (turnL==0) ? turnR : turnL;
-		} else turn = MyDriver.UNKNOWN;
+		} else turn = MyDriver.STRAIGHT;
 		
-		if (turn==MyDriver.STRAIGHT && highestPoint.length()<99)
+		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
-		
-		straightDist = (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
+				
+		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
 	}
 
 	//-1: Left,1:Right,0:UNKNOWN
@@ -169,9 +173,9 @@ public class EdgeDetector {
 		if (left==null && right==null) return 0;
 		if (left==null) return 1;
 		if (right==null) return -1;
-		Vector2D hL = left.getHighestPoint();
-		Vector2D hR = right.getHighestPoint();
-		if (p.y<hL.y || p.y<hR.y) return 0;
+//		Vector2D hL = left.getHighestPoint();
+//		Vector2D hR = right.getHighestPoint();
+//		if (p.y<hL.y || p.y<hR.y) return 0;
 		if (turn==MyDriver.TURNRIGHT){
 			return -1;
 		} else if (turn==MyDriver.TURNLEFT){
@@ -188,15 +192,14 @@ public class EdgeDetector {
 		double ax = -toLeftEdge()+ed.toLeftEdge();
 				 		
 //		long time = System.currentTimeMillis();
-		int len=ed.x.size();
-				
-		double oldTrackWidth = ed.trackWidth;
-		double scale = this.trackWidth/oldTrackWidth;		
+		int len=ed.numpoint;
+						
+		double scale = this.trackWidth/ed.trackWidth;		
 		double[] xx = ed.x.elements();
 		double[] yy = ed.y.elements();		
 		DoubleSortedSet ds = this.polar2Cartesian.keySet();
 		
-		
+		System.out.println(straightDist+" stra");
 		for (int i=0;i<len;++i){			
 			double x = xx[i]*scale;
 			double y = yy[i];
@@ -212,17 +215,21 @@ public class EdgeDetector {
 		}
 				
 
+		firstIndexMax = -1;
+		lastIndexMax = -1;
 		leftStraight=-1;
-		rightStraight=-1;	
+		rightStraight=-1;
+		maxY = -1;
+		maxDistance = -1;
 		numpoint = polar2Cartesian.size();
 		
 		int sz = (numpoint<NUM_POINTS) ? NUM_POINTS : numpoint*2;
-		x.ensureCapacity(sz);
-		y.ensureCapacity(sz);
+		this.x.ensureCapacity(sz);
+		this.y.ensureCapacity(sz);
 		double[] rx = new double[sz];
 		double[] ry = new double[sz];
-		x.size(numpoint);
-		y.size(numpoint);
+		this.x.size(numpoint);
+		this.y.size(numpoint);
 		xx = x.elements();
 		yy = y.elements();				
 		
@@ -230,13 +237,14 @@ public class EdgeDetector {
 		right = null;
 	
 		int i = 0;
+		ds = this.polar2Cartesian.keySet();
 		
 		for (double angle:ds){
 			Vector2D v = polar2Cartesian.get(angle);		
 			xx[i] = v.x;
 			yy[i] = v.y;
-			rx[18-i] = v.x;
-			ry[18-i] = v.y;
+			rx[numpoint-1-i] = v.x;
+			ry[numpoint-1-i] = v.y;
 			
 			double dist = v.length();
 
@@ -250,23 +258,24 @@ public class EdgeDetector {
 			} else if (maxY==v.y){
 				lastIndexMax =i;
 			}
+			i++;
 		}		
-		highestPoint = new Vector2D(xx[firstIndexMax],yy[firstIndexMax]);
-		left = (firstIndexMax>0) ? new Edge(xx,yy,firstIndexMax) : null;
-		right = (lastIndexMax<18) ? new Edge(rx,ry,18-lastIndexMax) : null;
-		int turnL = left.turn();
-		int turnR = right.turn();
+		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(xx[firstIndexMax],yy[firstIndexMax]) : null;
+		left = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Edge(xx,yy,firstIndexMax) : null;
+		right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? new Edge(rx,ry,numpoint-1-lastIndexMax) : null;
+		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
+		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR; 
 		if (d > 0){
-			turn = turnL;
+			turn = (turnR==MyDriver.UNKNOWN) ? turnL : (turnL==MyDriver.UNKNOWN) ? turnR : turnL;
 		} else if (d == 0){
 			turn = (turnL==0) ? turnR : turnL;
-		} else turn = MyDriver.UNKNOWN;
+		} else turn = MyDriver.STRAIGHT;
 		
-		if (turn==MyDriver.STRAIGHT && highestPoint.length()<99)
+		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 		
-		straightDist = (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
+		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
 
 	}
@@ -517,6 +526,38 @@ public class EdgeDetector {
 
 		p.start();
 	}
+	
+	public static void drawEdge(EdgeDetector ed,final String title){			
+		XYSeries series = new XYSeries("Curve");
+
+		for (int i=0;i<ed.numpoint;++i){			
+			series.add(ed.x.get(i),ed.y.get(i));
+		}
+
+		XYDataset xyDataset = new XYSeriesCollection(series);
+
+		// Create plot and show it
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+
+		Thread p = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try{
+					BufferedImage image = chart.createBufferedImage(600, 400);
+					ImageIO.write(image, "png", new File(title+".png"));
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+		});
+
+		p.start();
+	}
+
 	
 	public static void drawEdge(Edge edge,final String title){			
 		XYSeries series = new XYSeries("Curve");
