@@ -1,0 +1,31 @@
+package net.sourceforge.jFuzzyLogic;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
+
+/**
+ * Create a window and show a chart
+ * @author pcingola@users.sourceforge.net
+ */
+public class PlotWindow extends ApplicationFrame {
+
+	public static int DEFAULT_CHART_NUMBER_OF_POINTS = 100;
+	public static int DEFAULT_WIDTH = 500;
+	public static int DEFAULT_HEIGHT = 300;
+
+	private PlotWindow(String windowTitle, JFreeChart chart) {
+		super(windowTitle);
+		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new java.awt.Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+		setContentPane(chartPanel);
+	}
+
+	public static void showIt(String windowTitle, JFreeChart chart) {
+		PlotWindow plotWindow = new PlotWindow(windowTitle, chart);
+		plotWindow.pack();
+		RefineryUtilities.centerFrameOnScreen(plotWindow);
+		plotWindow.setVisible(true);
+	}
+
+}

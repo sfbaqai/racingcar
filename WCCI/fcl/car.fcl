@@ -1,0 +1,72 @@
+FUNCTION_BLOCK car
+
+//Using gauss functions for testing
+
+VAR_INPUT
+	error : REAL; // Difference between heading and WP [-180,180]
+	distance : REAL; // Difference between car and WP [0,130] (Mult by 100)
+
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL;	//Calculated steering angle [-8,8]
+END_VAR
+
+//Error : [0, 180] - angle between heading and WP
+//Need to understand how to get negative values
+FUZZIFY error
+	TERM HighPos		:= gauss 130 40;
+	TERM MedPos			:= gauss 60 25;
+	TERM LowPos			:= gauss 25 10;
+	TERM None			:= gauss 0 8;
+	TERM LowNeg			:= gauss -25 10;
+	TERM MedNeg			:= gauss -60 25;
+	TERM HighNeg		:= gauss -130 40;
+END_FUZZIFY
+
+//wpDistance [0,1.4]* 100 in the frame
+FUZZIFY distance
+	TERM High			:= gauss 140 60;
+	TERM Med			:= gauss 45 20;
+	TERM Low			:= gauss 0 20;
+END_FUZZIFY
+
+//Steer : [0,10]
+DEFUZZIFY steer
+	TERM HighPos	:= 	gauss 10 2.5;
+	TERM MedPos		:= 	gauss 5 1.8;
+	TERM LowPos		:= 	gauss 2 0.8;
+	TERM None		:=	gauss 0 0.8;
+	TERM LowNeg		:= 	gauss -2 0.8;
+	TERM MedNeg		:= 	gauss -5 1.8;
+	TERM HighNeg	:= 	gauss -10 2.5;
+	//ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0;
+
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF error IS HighPos AND distance IS NOT Low
+				THEN steer IS HighPos;
+	RULE 2 : IF error IS MedPos AND distance IS NOT Low
+				THEN steer IS MedPos;
+	RULE 3 : IF error IS LowPos AND distance IS NOT Low
+				THEN steer IS LowPos;
+	RULE 4 : IF error IS None
+				THEN steer IS None;
+	RULE 5 : IF error IS LowNeg AND distance IS NOT Low
+				THEN steer IS LowNeg;
+	RULE 6 : IF error IS MedNeg AND distance IS NOT Low
+				THEN steer IS MedNeg;
+	RULE 7 : IF error IS HighNeg AND distance IS NOT Low
+				THEN steer IS HighNeg;
+	RULE 8 : If error IS NOT None AND distance IS Low
+				THEN steer IS None;
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK

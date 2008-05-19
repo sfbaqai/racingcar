@@ -1,0 +1,72 @@
+FUNCTION_BLOCK philbcar
+
+//An attempt to repeat the PhilBController in linguistic terms
+
+VAR_INPUT
+	error : REAL; 	// Difference between heading and WP
+END_VAR
+
+VAR_OUTPUT
+	steer : REAL; 	// Steering angle
+	accel : REAL; 	// Car acceleration
+END_VAR
+
+//Error : [0, 180] - angle between heading and WP
+//Need to understand how to get negative values
+FUZZIFY error
+	TERM HighHigh 	:= trape 0 0 180 180;					//>8
+	TERM High 		:= trape 0 0 180 180;					// 4
+	TERM HighLow 	:= trape 0 0 180 180;				// 2
+	TERM MedHigh 	:= trape 0 0 180 180;			// 1
+	TERM Med 		:= trape 0 0 180 180;		// 0.5
+	TERM MedLow 	:= trape 0 0 180 180;		// 0.25
+	TERM LowHigh 	:= trape 0 0 180 180;	// 0.125
+	TERM Low 		:= trape 0 0 180 180;	// 0.0625
+	TERM LowLow 	:= trape 0 0 180 180;	// 0.0313
+END_FUZZIFY
+
+//Steer : [0,16]
+DEFUZZIFY steer
+	TERM HighHigh 	:= trian 7 8 9;		//16
+	TERM High 		:= trian 7 8 9;		//6
+	TERM HighLow 	:= trian 7 8 9;		//2
+	TERM MedHigh 	:= trian 7 8 9;		//0.25
+	TERM Med 		:= trian 7 8 9;		//0.1
+	TERM MedLow 	:= trian 7 8 9;		//0.05
+	TERM LowHigh 	:= trian 7 8 9;		//0.01
+	TERM Low 		:= trian 7 8 9;		//0.005
+	TERM LowLow 	:= trian 7 8 9;		//0.001
+	ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0.0;
+	RANGE := (0 .. 9);
+END_DEFUZZIFY
+
+//Acceleration : [0, 0.01]
+//currently operates at maximum acceleration
+
+DEFUZZIFY accel
+	TERM HighHigh 	:= 0.01;
+	ACCU : MAX;
+	METHOD : COGF;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF error IS HighHigh THEN steer IS HighHigh, accel IS HighHigh;
+	RULE 2 : IF error IS High THEN steer IS High, accel IS HighHigh;
+	RULE 3 : IF error IS HighLow THEN steer IS HighLow, accel IS HighHigh;
+	RULE 4 : IF error IS MedHigh THEN steer IS MedHigh, accel IS HighHigh;
+	RULE 5 : IF error IS Med THEN steer IS Med, accel IS HighHigh;
+	RULE 6 : IF error IS MedLow THEN steer IS MedLow, accel IS HighHigh;
+	RULE 7 : IF error IS LowHigh THEN steer IS LowHigh, accel IS HighHigh;
+	RULE 8 : IF error IS Low THEN steer IS Low, accel IS HighHigh;
+	RULE 9 : IF error IS LowLow THEN steer IS LowLow, accel IS HighHigh;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+

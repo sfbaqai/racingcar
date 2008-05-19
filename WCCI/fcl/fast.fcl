@@ -1,0 +1,67 @@
+FUNCTION_BLOCK fast
+
+VAR_INPUT
+	wpdistance : REAL; // Difference between car and WP [0,140] (Mult by 100)
+	velocity : REAL;	//Velocity of the car [0,20] (Mult by 100)
+END_VAR
+
+VAR_OUTPUT
+	accel1 : REAL;	//calculated acceleration [-0.01,0.01]
+END_VAR
+
+//wpDistance [0,1.4]* 100 in the frame
+FUZZIFY wpdistance
+	TERM High			:= gauss 140 60;
+	TERM Med			:= gauss 45 20;
+	TERM Low			:= gauss 0 20;
+END_FUZZIFY
+
+//velocity [0,0.2] * 100 in the frame
+FUZZIFY velocity
+	TERM HighPos		:= gauss 20 6;
+	TERM MedPos			:= gauss 9.5 3.5;
+	TERM LowPos			:= gauss 3.2 2;
+	TERM None			:= gauss 0 0.8;
+END_FUZZIFY
+
+
+//Accel : [0,10]/1000 in the frame
+DEFUZZIFY accel1
+	TERM HighPos		:= gauss 10 2.5;
+	TERM MedPos			:= gauss 5 1.8;
+	TERM LowPos			:= gauss 2 0.8;
+	TERM None			:= gauss 0 0.9;
+	TERM LowNeg			:= gauss -2 0.8;
+	TERM MedNeg			:= gauss -5 1.8;
+	TERM HighNeg		:= gauss -10 2.5;
+
+	//ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF wpdistance IS High
+				THEN accel1 IS HighPos;
+	RULE 2 : IF wpdistance IS Med AND velocity IS HighPos
+				THEN accel1 IS None;
+	RULE 3 : IF wpdistance IS Med AND velocity IS MedPos
+				THEN accel1 IS MedPos;
+	RULE 4 : IF wpdistance IS Med AND velocity IS LowPos
+				THEN accel1 IS HighPos;
+	RULE 5 : IF wpdistance IS Med AND velocity IS None
+				THEN accel1 IS HighPos;
+	RULE 6 : IF wpdistance IS Low AND velocity IS HighPos
+				THEN accel1 IS HighNeg;
+	RULE 7 : IF wpdistance IS Low AND velocity IS MedPos
+				THEN accel1 IS MedNeg;
+	RULE 8 : IF wpdistance IS Low AND velocity IS LowPos
+				THEN accel1 IS None;
+	RULE 9 : IF wpdistance IS Low AND velocity IS None
+				THEN accel1 IS LowPos;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK

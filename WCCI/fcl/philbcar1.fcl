@@ -1,0 +1,44 @@
+FUNCTION_BLOCK philbcar1
+
+VAR_INPUT
+	wpdistance : REAL; // Difference between heading and WP [-180,180]
+END_VAR
+
+VAR_OUTPUT
+	accel1 : REAL;	//calculated acceleration [-0.01,0.01]
+END_VAR
+
+//wpDistance [0,2]* 100 in the frame
+//Need to understand how to get negative values
+FUZZIFY wpdistance
+	TERM HighPos		:= trape 30 31 200 200;
+	TERM MedPos			:= trape 10 11 30 31;
+	TERM LowPos			:= trape 0 1 10 11;
+
+END_FUZZIFY
+
+//Accel : [0,10]/1000 in the frame
+DEFUZZIFY accel1
+	TERM HighPos	:= 	trian 7 10 10;
+	TERM MedPos		:= 	trian 1 3 8;
+	TERM LowPos		:= 	trian -5 0 2;
+	//ACCU : MAX;
+	METHOD : COG;
+	DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;
+	ACT : MIN;
+	//Driving rules
+	RULE 1 : IF wpdistance IS HighPos
+				THEN accel1 IS HighPos;
+	RULE 2 : IF wpdistance IS MedPos
+				THEN accel1 IS MedPos;
+	RULE 3 : IF wpdistance IS LowPos
+				THEN accel1 IS LowPos;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
+

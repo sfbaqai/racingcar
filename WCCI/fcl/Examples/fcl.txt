@@ -1,0 +1,25 @@
+FUNCTION_BLOCK
+
+VAR_INPUT
+    <variable name> REAL; (* RANGE(<variable minimum value> .. <variable maximum value>) *) 
+END_VAR
+
+VAR_OUTPUT
+    <variable name> REAL; (* RANGE(<variable minimum value> .. <variable maximum value>) *) 
+END_VAR
+
+FUZZIFY <variable name>
+    TERM <term (or set) name> := <points that make up the term> ;
+END_FUZZIFY
+
+DEFUZZIFY valve 
+    METHOD: <defuzzification method>;
+END_DEFUZZIFY
+
+RULEBLOCK <ruleblock name>
+    <operator>:<algorithm>;
+    ACCUM:<accumulation method>;
+    RULE <rule number>: IF <condition> THEN <conclusion>;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
