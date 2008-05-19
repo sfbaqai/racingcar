@@ -164,6 +164,21 @@ public class EdgeDetector {
 		straightDist = (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 	}
 
+	//-1: Left,1:Right,0:UNKNOWN
+	int guessPointOnEdge(Vector2D p){
+		if (left==null && right==null) return 0;
+		if (left==null) return 1;
+		if (right==null) return -1;
+		Vector2D hL = left.getHighestPoint();
+		Vector2D hR = right.getHighestPoint();
+		if (p.y<hL.y || p.y<hR.y) return 0;
+		if (turn==MyDriver.TURNRIGHT){
+			return -1;
+		} else if (turn==MyDriver.TURNLEFT){
+			return 1;
+		} 
+		return 0;
+	}
 	
 	public void combine(EdgeDetector ed,double distRaced){
 		if (distRaced>ed.straightDist) return;		
@@ -172,7 +187,7 @@ public class EdgeDetector {
 		}
 		double ax = -toLeftEdge()+ed.toLeftEdge();
 				 		
-		long time = System.currentTimeMillis();
+//		long time = System.currentTimeMillis();
 		int len=ed.x.size();
 				
 		double oldTrackWidth = ed.trackWidth;
@@ -502,6 +517,39 @@ public class EdgeDetector {
 
 		p.start();
 	}
+	
+	public static void drawEdge(Edge edge,final String title){			
+		XYSeries series = new XYSeries("Curve");
+
+		for (int i=0;i<edge.size;++i){
+			Vector2D v = edge.get(i);
+			series.add(v.x,v.y);
+		}
+
+		XYDataset xyDataset = new XYSeriesCollection(series);
+
+		// Create plot and show it
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+
+		Thread p = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try{
+					BufferedImage image = chart.createBufferedImage(600, 400);
+					ImageIO.write(image, "png", new File(title+".png"));
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+		});
+
+		p.start();
+	}
+
 
 
 
@@ -524,30 +572,6 @@ public class EdgeDetector {
 			return Double.MAX_VALUE;
 		}
 	}
-
-
-
-//	double estimateDistance(double angle){
-//		if (angle>leftRange[1] && angle<rightRange[0])
-//			return 100;
-//
-//		if (allAngles==null) return 0.0d;
-//
-//		int len = allAngles.length;
-//		int insertPoint = java.util.Arrays.binarySearch(allAngles,angle);
-//		if (insertPoint>=0) return allDistances[insertPoint];
-//
-//		insertPoint = -insertPoint-1;		
-//		if (insertPoint==0) 
-//			return -1;
-//
-//		if (insertPoint>=len)
-//			return -1;
-//
-//		double a = allAngles[insertPoint]; 
-//		double b = allAngles[insertPoint-1];
-//		return (a+b>angle+angle) ? allDistances[insertPoint-1] : allDistances[insertPoint];
-//	}
 
 		
 	public Vector2D[] getEdges(){
