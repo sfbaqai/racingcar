@@ -278,65 +278,71 @@ public class MyDriver extends SimpleDriver {
 		nraced = Math.round(nraced*10000.0d)/10000.0d;
 		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
 		double ax = 0;
+		
 		if (prevEdge.straightDist>=nraced) {
 			edgeDetector.combine(prevEdge, nraced);			
 			ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
 		}
+		Vector2D transform = new Vector2D(ax,0);
 		
-		if (distRaced>380) meta = 1;
+		if (distRaced>600) meta = 1;
 		turn = edgeDetector.turn;
 		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
 		
 		
-		Vector2D hh = edgeDetector.highestPoint;		
+		Vector2D hh = edgeDetector.highestPoint;
+		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);		
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
 		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
-		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh); 
-		Vector2D gL = (highestPointEdge==-1) ? hh : null;
-		Vector2D gR = (highestPointEdge==1) ? hh : null;
-		System.out.println(gL+"     "+gR);		
+		
+//		Vector2D gL = (highestPointEdge==-1) ? hh : null;
+//		Vector2D gR = (highestPointEdge==1) ? hh : null;
+//		System.out.println(gL+"     "+gR+"  "+edgeDetector.turn+"   "+highestPointEdge);		
 		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		double lenR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
-		double len = (edgeDetector.guessPointOnEdge(hh)==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
-		
+		double len = (highestPointEdge==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
+		if (hh==null)
+			hh = (highestPointEdge==-1) ? hL : (highestPointEdge==1) ? hR : null;
 		
 		System.out.println("*********** "+distRaced+"  "+nraced+"**************");
 		
 		highest -= nraced;		
-		if (highest>0 && highest>len+1){
-			if (gL!=null){ 
-				edgeDetector.left.append(gL);
-				lenL = edgeDetector.left.totalLength;
-				hL = gL;
-				
-			} else if (gR!=null) {
-				edgeDetector.right.append(gR);
-				lenR = edgeDetector.right.totalLength;
-				hR = gR;				
-			}
-			
+		if (highest>0 && highest>len+1){//ok now the highest store point is the real highest point			
 			if (nraced<=edgeDetector.straightDist || highestPointEdge==0){
-				highestPoint.y -= nraced;
-				highestPoint.x *= scale;
-				highestPoint.x += ax;				
+				highestPoint = new Vector2D(highestPoint.x*scale+ax,highestPoint.y-nraced);								
 			} else highestPoint = (highestPointEdge==-1) ? edgeDetector.left.locatePointAtLength(highest) : 
 				(highestPointEdge==1) ? edgeDetector.right.locatePointAtLength(highest) : null;	
-			
+			//From here we have the real highest point in current perspective
+			//Now compare it with current seen highest point hh 
+			if (highestPoint==null){
+				highestPoint = hh;
+				highest = len;
+			} else {
+				double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();
+				if (!Double.isNaN(alpha)){					
+					if (alpha>0.001){//hh belongs to the right edge
+						hR = hh;
+						lenR = len;
+					} else if (alpha<-0.001){//hh belongs to the left edge
+						hL = hh;
+						lenL = len;
+					} else {//unlikely, hh and highest point, because hh is more accurate, highestpoint is now hh
+						highestPoint = hh;
+						highest = len;
+					}
+				}
+			}
 		} else {
 			highestPoint = hh;
 			highest = len;
-		}
-
-		gL = (highestPointEdge==-1) ? highestPoint : null;
-		gR = (highestPointEdge==1) ? highestPoint : null;
+		}// After this, we have update hL and hR, and lenL ,lenR accoringly
+		
 				
 		highestL -= nraced;
 		if (highestL>0 && highestL>lenL+1){
 			if (nraced<=edgeDetector.straightDist){
-				highestPointOnLeftEdge.y -= nraced;
-				highestPointOnLeftEdge.x *= scale;
-				highestPointOnLeftEdge.x += ax;
-			} else highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.estimatePointOnEdge(highestL, gL) : null;
+				highestPointOnLeftEdge = new Vector2D(highestPointOnLeftEdge.x*scale+ax,highestPointOnLeftEdge.y-nraced);
+			} else highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.estimatePointOnEdge(highestL, hL) : null;
 		} else {
 			highestPointOnLeftEdge = hL;
 			highestL = lenL;
@@ -345,21 +351,19 @@ public class MyDriver extends SimpleDriver {
 		highestR -= nraced;
 		if (highestR>0 && highestR>lenR+1){
 			if (nraced<=edgeDetector.straightDist){
-				highestPointOnRightEdge.y -= nraced;
-				highestPointOnRightEdge.x *= scale;
-				highestPointOnRightEdge.x += ax;
-			} else highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.estimatePointOnEdge(highestR, gR) : null;
+				highestPointOnRightEdge = highestPointOnRightEdge.scale(scale, 1).plus(transform);
+			} else highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.estimatePointOnEdge(highestR, hR) : null;
 		} else {
 			highestPointOnRightEdge = hR;
 			highestR = lenR;
 		}
-		System.out.println(gL+"     "+gR);
+//		System.out.println(gL+"     "+gR);
 		System.out.println(hL+" "+hh+"  "+hR);
 		System.out.println(lenL+"  "+len+"  "+lenR);
 		System.out.println(highestL+"  "+highest+"  "+highestR);
 		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);		
 				
-		if (distRaced>270 && distRaced<380){			
+		if ((distRaced>480 && distRaced<560)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 			if (highestPoint!=null) edges.add(highestPoint);

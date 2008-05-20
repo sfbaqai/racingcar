@@ -4,11 +4,23 @@ import java.awt.geom.Point2D;
 
 import com.graphbuilder.geom.Point2d;
 
-public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.Serializable  {	
+public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.Serializable  {
+	
 	double x;
 	double y;
 	
 	
+	/**
+	 * Copy Constructor
+	 *
+	 * @param vector2D a <code>Vector2D</code> object
+	 */
+	public Vector2D(Vector2D vector2D) 
+	{
+	    this.x = vector2D.x;
+	    this.y = vector2D.y;
+	    this.polar = vector2D.polar;
+	}
 	@Override	
 	public double getX() {
 		// TODO Auto-generated method stub
@@ -34,17 +46,6 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 		polar = false;	
 	}
 
-	public Vector2D(Vector2D vector) {
-		if (vector!=null){
-			x = vector.x;
-			y = vector.y;
-			polar = vector.polar;
-		} else {
-			x = 0;
-			y = 0;
-			polar = false;
-		}
-	}
 	public Vector2D(double x, double y) {
 		this(x, y, false);
 	}
@@ -74,6 +75,10 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 	public void copy(Vector2D v){		
 		x = v.x;
 		y = v.y;
+	}
+	
+	public Vector2D scale(double xs,double ys) {
+		return new Vector2D(xs * x, ys * y);
 	}
 
 	public Vector2D plus(Vector2D vector) {

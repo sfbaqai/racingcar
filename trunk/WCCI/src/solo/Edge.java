@@ -12,7 +12,7 @@ import cern.colt.list.DoubleArrayList;
  * @author kokichi3000
  *
  */
-public class Edge {
+public final class Edge {
 	public final static double ANGLEACCURACY =100.0d;
 	public final static int NUM_POINTS=150;
 	public final static double DELTA = 0.001;
@@ -164,20 +164,20 @@ public class Edge {
 		allLengths.setSize(size);		
 	}
 	
-	public Vector2D getHighestPoint(){
+	public final Vector2D getHighestPoint(){
 		return allPoints.get(size-1);
 	}
 
-	public Vector2D getLowestPoint(){
+	public final Vector2D getLowestPoint(){
 		return allPoints.get(0);
 	}
 	
-	public Vector2D locatePointAtLength(double length){
+	public final Vector2D locatePointAtLength(double length){
 		if (allPoints==null || allLengths==null || size<2 || length<0) return null;		
 		int index = allLengths.binarySearch(length);				
 		Vector2D[] allPoints = this.allPoints.elements();
 		if (index>=0)
-			return allPoints[index];
+			return new Vector2D(allPoints[index]);
 		
 					
 		if (index<0) index = -index+1;
@@ -195,19 +195,20 @@ public class Edge {
 		return p.plus(t.times(length-allLengths.getQuick(index-1)));
 	}
 	
-	public Vector2D estimatePointOnEdge(double length,Vector2D hP){
+	public final Vector2D estimatePointOnEdge(double length,Vector2D hP){
 		if (size<2) return null;
-		if (length>=totalLength-0.3 || length<=totalLength+0.3)
-			return allPoints.get(size-1);
-		if (length<totalLength || hP==null)
+		Vector2D lastPoint = allPoints.get(size-1);	
+		if (length>=totalLength-0.1 || length<=totalLength+0.1)
+			return new Vector2D(lastPoint);
+		if (length<totalLength || hP==null || hP.equals(lastPoint))
 			return locatePointAtLength(length);
 		double d = length-totalLength;		
-		Vector2D lastPoint = allPoints.get(size-1);		
+			
 		Vector2D t = hP.minus(lastPoint).normalized();		
 		return lastPoint.plus(t.times(d));		
 	}
 	
-	public int turn(){
+	public final int turn(){
 		double sumx = 0;
 		double[] xx = x.elements();
 					
@@ -223,20 +224,20 @@ public class Edge {
 		return MyDriver.STRAIGHT;
 	}
 	
-	public void append(Vector2D p){
-		Vector2D lastPoint = allPoints.get(size-1);
-		size++;
-		this.x.add(p.x);
-		this.y.add(p.y);		
-		this.allPoints.add(p);
-		totalLength += p.distance(lastPoint);		
-		this.allLengths.add(totalLength);
-		this.p2l.put(p, totalLength);
-		double x0 = x.getQuick(0);
-		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
-	}
+//	public final void append(Vector2D p){
+//		Vector2D lastPoint = allPoints.get(size-1);
+//		size++;
+//		this.x.add(p.x);
+//		this.y.add(p.y);		
+//		this.allPoints.add(p);
+//		totalLength += p.distance(lastPoint);		
+//		this.allLengths.add(totalLength);
+//		this.p2l.put(p, totalLength);
+//		double x0 = x.getQuick(0);
+//		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
+//	}
 	
-	public Vector2D get(int index){
+	public final Vector2D get(int index){
 		if (index<0 || index>=size)
 			return null;
 		return allPoints.get(index);
