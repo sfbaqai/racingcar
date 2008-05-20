@@ -11,7 +11,6 @@ import it.unimi.dsi.lang.MutableString;
 import java.awt.geom.AffineTransform;
 
 import net.sourceforge.jFuzzyLogic.FIS;
-import net.sourceforge.jFuzzyLogic.rule.FuzzyRule;
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
 
 
@@ -277,32 +276,67 @@ public class MyDriver extends SimpleDriver {
 		long time = System.currentTimeMillis();
 		nraced = distRaced - raced;
 		nraced = Math.round(nraced*10000.0d)/10000.0d;
+		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
+		double ax = 0;
 		if (prevEdge.straightDist>=nraced) {
 			edgeDetector.combine(prevEdge, nraced);			
+			ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
 		}
 		
-		if (distRaced>150) meta = 1;
-		turn = edgeDetector.turn;		
+		if (distRaced>380) meta = 1;
+		turn = edgeDetector.turn;
+		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
+		
 		
 		Vector2D hh = edgeDetector.highestPoint;		
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
-		Vector2D hR = (edgeDetector.left!=null) ? edgeDetector.right.getHighestPoint() : null;
+		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
 		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh); 
 		Vector2D gL = (highestPointEdge==-1) ? hh : null;
 		Vector2D gR = (highestPointEdge==1) ? hh : null;
-				
+		System.out.println(gL+"     "+gR);		
 		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		double lenR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
-		double len = (edgeDetector.guessPointOnEdge(hh)==-1) ? lenL+hh.distance(hL) : lenR+hh.distance(hR);
+		double len = (edgeDetector.guessPointOnEdge(hh)==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
 		
 		
-		System.out.println("*********** "+distRaced+"  "+nraced+"**************");		
+		System.out.println("*********** "+distRaced+"  "+nraced+"**************");
 		
+		highest -= nraced;		
+		if (highest>0 && highest>len+1){
+			if (gL!=null){ 
+				edgeDetector.left.append(gL);
+				lenL = edgeDetector.left.totalLength;
+				hL = gL;
+				
+			} else if (gR!=null) {
+				edgeDetector.right.append(gR);
+				lenR = edgeDetector.right.totalLength;
+				hR = gR;				
+			}
+			
+			if (nraced<=edgeDetector.straightDist || highestPointEdge==0){
+				highestPoint.y -= nraced;
+				highestPoint.x *= scale;
+				highestPoint.x += ax;				
+			} else highestPoint = (highestPointEdge==-1) ? edgeDetector.left.locatePointAtLength(highest) : 
+				(highestPointEdge==1) ? edgeDetector.right.locatePointAtLength(highest) : null;	
+			
+		} else {
+			highestPoint = hh;
+			highest = len;
+		}
+
+		gL = (highestPointEdge==-1) ? highestPoint : null;
+		gR = (highestPointEdge==1) ? highestPoint : null;
+				
 		highestL -= nraced;
 		if (highestL>0 && highestL>lenL+1){
-			if (nraced<=edgeDetector.straightDist)
+			if (nraced<=edgeDetector.straightDist){
 				highestPointOnLeftEdge.y -= nraced;
-			else highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.estimatePointOnEdge(highestL, gL) : null;
+				highestPointOnLeftEdge.x *= scale;
+				highestPointOnLeftEdge.x += ax;
+			} else highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.estimatePointOnEdge(highestL, gL) : null;
 		} else {
 			highestPointOnLeftEdge = hL;
 			highestL = lenL;
@@ -310,28 +344,28 @@ public class MyDriver extends SimpleDriver {
 		
 		highestR -= nraced;
 		if (highestR>0 && highestR>lenR+1){
-			if (nraced<=edgeDetector.straightDist)
+			if (nraced<=edgeDetector.straightDist){
 				highestPointOnRightEdge.y -= nraced;
-			else highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.estimatePointOnEdge(highestR, gR) : null;
+				highestPointOnRightEdge.x *= scale;
+				highestPointOnRightEdge.x += ax;
+			} else highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.estimatePointOnEdge(highestR, gR) : null;
 		} else {
 			highestPointOnRightEdge = hR;
 			highestR = lenR;
 		}
-		
-		highest -= nraced;		
-		if (highest>0 && highest>len+1){
-			if (nraced<=edgeDetector.straightDist || highestPointEdge==0)
-				highestPoint.y -= nraced;
-			else highestPoint = (highestPointEdge==-1) ? edgeDetector.left.estimatePointOnEdge(highest, gL) : 
-				(highestPointEdge==1) ? edgeDetector.right.estimatePointOnEdge(highest, gR) : highestPoint.minus(new Vector2D(0,-nraced));		
-		} else {
-			highestPoint = hh;
-			highest = len;
-		}
+		System.out.println(gL+"     "+gR);
+		System.out.println(hL+" "+hh+"  "+hR);
+		System.out.println(lenL+"  "+len+"  "+lenR);
+		System.out.println(highestL+"  "+highest+"  "+highestR);
+		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);		
 				
-				
-		if (distRaced>60 && distRaced<150){			
+		if (distRaced>270 && distRaced<380){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
+			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
+			if (highestPoint!=null) edges.add(highestPoint);
+			if (highestPointOnLeftEdge!=null) edges.add(highestPointOnLeftEdge);
+			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
+			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
 			try {
 				Thread.sleep(200);
 			} catch (Exception e) {
@@ -403,10 +437,10 @@ public class MyDriver extends SimpleDriver {
 //		if (distRaced>120 && distRaced<150)
 ////			System.out.println(fuzzyRuleSet);
 			
-			for (Object r : fuzzyRuleSet.getRules()) {
-				FuzzyRule rule = (FuzzyRule)r;
-				if (rule.getDegreeOfSupport()>0) System.out.println(rule);
-			}
+//			for (Object r : fuzzyRuleSet.getRules()) {
+//				FuzzyRule rule = (FuzzyRule)r;
+//				if (rule.getDegreeOfSupport()>0) System.out.println(rule);
+//			}
 //		if (distRaced>330) meta=1;
 		double steer = sign*steering.getLatestDefuzzifiedValue();
 //		if (Double.isNaN(steer)){

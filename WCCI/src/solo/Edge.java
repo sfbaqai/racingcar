@@ -3,17 +3,10 @@
  */
 package solo;
 
-import java.util.Arrays;
-
-import cern.colt.list.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.Double2DoubleSortedMap;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleRBTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import cern.colt.list.DoubleArrayList;
 
 /**
  * @author kokichi3000
@@ -93,12 +86,11 @@ public class Edge {
 			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) straightDist = y;
 		}		
 		totalLength = len;
-		allPoints = ObjectArrayList.wrap(aP);		
+		allPoints = ObjectArrayList.wrap(aP,size);		
 		allLengths = new DoubleArrayList(aL);
 		x.setSize(size);
 		y.setSize(size);
-		allLengths.setSize(size);
-		allPoints.size(size);
+		allLengths.setSize(size);		
 	}
 	
 	public Edge(Vector2D[] v,int size){
@@ -181,10 +173,10 @@ public class Edge {
 	}
 	
 	public Vector2D locatePointAtLength(double length){
-		if (allPoints==null || allLengths==null || size<2) return null;		
+		if (allPoints==null || allLengths==null || size<2 || length<0) return null;		
 		int index = allLengths.binarySearch(length);				
 		Vector2D[] allPoints = this.allPoints.elements();
-		if (index>0)
+		if (index>=0)
 			return allPoints[index];
 		
 					
@@ -194,6 +186,7 @@ public class Edge {
 		if (index>=size){
 			t = allPoints[size-1].minus(allPoints[size-2]).normalized();
 			p = allPoints[size-1];
+			return p.plus(t.times(length-totalLength));
 		} else {
 			t = allPoints[index].minus(allPoints[index-1]).normalized();
 			p = allPoints[index-1];
@@ -204,7 +197,9 @@ public class Edge {
 	
 	public Vector2D estimatePointOnEdge(double length,Vector2D hP){
 		if (size<2) return null;
-		if (length<=totalLength || hP==null)
+		if (length>=totalLength-0.3 || length<=totalLength+0.3)
+			return allPoints.get(size-1);
+		if (length<totalLength || hP==null)
 			return locatePointAtLength(length);
 		double d = length-totalLength;		
 		Vector2D lastPoint = allPoints.get(size-1);		
@@ -237,6 +232,8 @@ public class Edge {
 		totalLength += p.distance(lastPoint);		
 		this.allLengths.add(totalLength);
 		this.p2l.put(p, totalLength);
+		double x0 = x.getQuick(0);
+		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
 	}
 	
 	public Vector2D get(int index){

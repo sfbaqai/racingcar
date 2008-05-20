@@ -170,6 +170,7 @@ public class EdgeDetector {
 
 	//-1: Left,1:Right,0:UNKNOWN
 	int guessPointOnEdge(Vector2D p){
+		
 		if (left==null && right==null) return 0;
 		if (left==null) return 1;
 		if (right==null) return -1;
@@ -180,7 +181,7 @@ public class EdgeDetector {
 			return -1;
 		} else if (turn==MyDriver.TURNLEFT){
 			return 1;
-		} 
+		}		
 		return 0;
 	}
 	
@@ -270,10 +271,11 @@ public class EdgeDetector {
 		} else if (d == 0){
 			turn = (turnL==0) ? turnR : turnL;
 		} else turn = MyDriver.STRAIGHT;
-		
+				
 		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 		
+		System.out.println(turnL+"  "+turnR+"  "+turn);
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
 
@@ -475,7 +477,7 @@ public class EdgeDetector {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 
 		Thread p = new Thread(new Runnable(){
@@ -506,7 +508,7 @@ public class EdgeDetector {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 
 		Thread p = new Thread(new Runnable(){
@@ -537,7 +539,7 @@ public class EdgeDetector {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 
 		Thread p = new Thread(new Runnable(){
