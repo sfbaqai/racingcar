@@ -154,7 +154,7 @@ public class EdgeDetector {
 		left = (firstIndexMax>0 && firstIndexMax<19) ? new Edge(x,y,firstIndexMax) : null;
 		right = (lastIndexMax<18 && lastIndexMax>=0) ? new Edge(rx,ry,18-lastIndexMax) : null;
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
-		int turnR = (left==null) ? MyDriver.UNKNOWN : right.turn();
+		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR; 
 		if (d > 0){
 			turn = (turnR==MyDriver.UNKNOWN) ? turnL : (turnL==MyDriver.UNKNOWN) ? turnR : turnL;
@@ -198,8 +198,7 @@ public class EdgeDetector {
 		double[] xx = ed.x.elements();
 		double[] yy = ed.y.elements();		
 		DoubleSortedSet ds = this.polar2Cartesian.keySet();
-		
-		System.out.println(straightDist+" stra");
+				
 		for (int i=0;i<len;++i){			
 			double x = xx[i]*scale;
 			double y = yy[i];

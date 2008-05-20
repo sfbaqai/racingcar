@@ -199,7 +199,7 @@ public class Edge {
 			p = allPoints[index-1];
 		}
 		
-		return p.plus(t.times(length-allLengths.getQuick(size-1)));
+		return p.plus(t.times(length-allLengths.getQuick(index-1)));
 	}
 	
 	public Vector2D estimatePointOnEdge(double length,Vector2D hP){
