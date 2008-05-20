@@ -293,11 +293,7 @@ public class MyDriver extends SimpleDriver {
 		Vector2D hh = edgeDetector.highestPoint;
 		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);		
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
-		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
-		
-//		Vector2D gL = (highestPointEdge==-1) ? hh : null;
-//		Vector2D gR = (highestPointEdge==1) ? hh : null;
-//		System.out.println(gL+"     "+gR+"  "+edgeDetector.turn+"   "+highestPointEdge);		
+		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;		
 		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		double lenR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
 		double len = (highestPointEdge==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
@@ -332,9 +328,26 @@ public class MyDriver extends SimpleDriver {
 					}
 				}
 			}
-		} else {
+		} else if (highestPoint==null || highest<=0){
 			highestPoint = hh;
 			highest = len;
+		} else {//now the old highest point is lower than current highest point
+			double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();//calculate the angle between 2 highest points
+			if (!Double.isNaN(alpha)){					
+				if (alpha>0.001){//highest belongs to the left edge
+					if (lenL<highest){
+						lenL = highest;
+						hL = highestPoint;
+					}
+				} else if (alpha<-0.001){//hh belongs to the left edge
+					if (lenR<highest){
+						lenR = highest;
+						hR = highestPoint;
+					}
+				}//unlikely, hh and highest point are at nearly the same angle, because hh is more accurate, cannot determine highest belongs to left or right
+				highestPoint = hh;
+				highest = len;				
+			}
 		}// After this, we have update hL and hR, and lenL ,lenR accoringly
 		
 				
