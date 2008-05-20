@@ -284,11 +284,10 @@ public class MyDriver extends SimpleDriver {
 		if (distRaced>150) meta = 1;
 		turn = edgeDetector.turn;		
 		
-		Vector2D hh = edgeDetector.highestPoint;
-		System.out.println(hh+"  "+highestPoint);
+		Vector2D hh = edgeDetector.highestPoint;		
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
 		Vector2D hR = (edgeDetector.left!=null) ? edgeDetector.right.getHighestPoint() : null;
-		int highestPointEdge =edgeDetector.guessPointOnEdge(hh); 
+		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh); 
 		Vector2D gL = (highestPointEdge==-1) ? hh : null;
 		Vector2D gR = (highestPointEdge==1) ? hh : null;
 				
@@ -331,14 +330,14 @@ public class MyDriver extends SimpleDriver {
 		}
 				
 				
-//		if (true){			
-//			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
-//			try {
-//				Thread.sleep(200);
-//			} catch (Exception e) {
-//				// TODO: handle exception
-//			}
-//		}
+		if (distRaced>60 && distRaced<150){			
+			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
+			try {
+				Thread.sleep(200);
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
 		
 		prevEdge = edgeDetector;				
 		raced = distRaced;		
