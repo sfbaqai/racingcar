@@ -276,6 +276,7 @@ public class MyDriver extends SimpleDriver {
 	//len is the len to point on the edge(specified by edge) on prev
 	//hP is a point on ed ....
 	public Vector2D convertPoint(Vector2D p,double len,double nraced,int edge,Vector2D hP,int hEdge,EdgeDetector ed){
+		if (len>=99) return new Vector2D(hP);
 		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
 		double ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
 
@@ -354,9 +355,9 @@ public class MyDriver extends SimpleDriver {
 			highestPoint = convertPoint(highestPoint, highest, nraced, edge, hh,highestPointEdge, edgeDetector);
 			highestPointOnLeftEdge = convertPoint(highestPointOnLeftEdge, highestL, nraced, -1, hL,-1, edgeDetector);
 			highestPointOnRightEdge = convertPoint(highestPointOnRightEdge, highestR, nraced, 1, hR,1, edgeDetector);
-			highest = (highestPoint==null) ? 0 :(hh==null) ? highest-nraced :  len+highestPoint.distance(hh);
-			highestL = (highestPointOnLeftEdge==null) ? 0 : (hL==null) ? highestL-nraced : lenL+highestPointOnLeftEdge.distance(hL);
-			highestR = (highestPointOnRightEdge==null) ? 0 : (hR==null) ? highestR-nraced : lenR+highestPointOnRightEdge.distance(hR);
+			highest = (highestPoint==null) ? 0 :(hh==null) ? highest-nraced :  (highest>=99) ? len :len+highestPoint.distance(hh);
+			highestL = (highestPointOnLeftEdge==null) ? 0 : (hL==null) ? highestL-nraced : (highestL>=99) ? lenL : lenL+highestPointOnLeftEdge.distance(hL);
+			highestR = (highestPointOnRightEdge==null) ? 0 : (hR==null) ? highestR-nraced : (highestR>=99) ? lenR : lenR+highestPointOnRightEdge.distance(hR);
 			
 			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
 			System.out.println(highestL+"  "+highest+"  "+highestR);
@@ -434,7 +435,7 @@ public class MyDriver extends SimpleDriver {
 		System.out.println(highestL+"  "+highest+"  "+highestR);
 
 
-		if ((distRaced>110 && distRaced<180)){			
+		if ((distRaced>110 && distRaced<180) || (distRaced>280 && distRaced<350)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 			if (highestPoint!=null) edges.add(highestPoint);
