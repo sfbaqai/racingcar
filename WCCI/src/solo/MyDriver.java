@@ -29,7 +29,8 @@ public class MyDriver extends SimpleDriver {
 	public final static double W = 1.96;
 	public final static double mass = 1050;
 	public final static double G = 9.81;
-	public final static double PI_2 = Math.PI/2;	
+	public final static double PI_2 = Math.PI/2;
+	public final static double EPSILON = 1.5;
 	public double trackWidth =-1;
 	double workingWidth = 0;
 	double leftX;
@@ -66,15 +67,15 @@ public class MyDriver extends SimpleDriver {
 			return;
 		}//load the system from here
 		fuzzyRuleSet = fis.getFuzzyRuleSet();//create a fuzzy rule set from the system
-		
-				
+
+
 		angle = fuzzyRuleSet.getVariable(new MutableString("angle"));
 		dist = fuzzyRuleSet.getVariable(new MutableString("dist"));
 		speedx = fuzzyRuleSet.getVariable(new MutableString("speedx"));
 		speedy = fuzzyRuleSet.getVariable(new MutableString("speedy"));
 		pos = fuzzyRuleSet.getVariable(new MutableString("pos"));
 		steering = fuzzyRuleSet.getVariable(new MutableString("steer"));
-		
+
 	}
 
 	double filterABS(double brake)
@@ -192,7 +193,7 @@ public class MyDriver extends SimpleDriver {
 		workingWidth = trackWidth-2*W;
 		curPos *= trackWidth/workingWidth;
 		toMiddle = edgeDetector.toMiddle();
-		
+
 	}
 
 	//try to get to new pos within distance meters
@@ -201,9 +202,9 @@ public class MyDriver extends SimpleDriver {
 		if (newPos<-1 || newPos>1 || Math.abs(curPos-newPos)<epsilon || distance<=0){
 			return curAngle/steerLock;
 		}
-		
-		
-		
+
+
+
 //		if (distance<2*L) return curAngle/steerLock;
 
 		double diffx = (newPos-curPos)*workingWidth*0.5;		
@@ -213,7 +214,7 @@ public class MyDriver extends SimpleDriver {
 //		System.out.println(curPos+"     "+newPos+"     "+distance);
 		return angle/steerLock;
 	}
-	
+
 	public static Double2ObjectSortedMap<Vector2D> toMap(double[] x,double[] y){
 		if (x==null || y == null || x.length==0 || y.length == 0 || x.length!=y.length)
 			return null;
@@ -229,7 +230,7 @@ public class MyDriver extends SimpleDriver {
 		}
 		return lMap;	
 	}
-	
+
 	//this method return a matrix tranform from a point in prev co_ord to ed cord
 	//where ed is dist away from prev
 	public static AffineTransform transform(EdgeDetector prev,double dist,EdgeDetector ed){
@@ -245,21 +246,21 @@ public class MyDriver extends SimpleDriver {
 		}
 		return null;
 	}	
-	
+
 	double[] xx;
 	double[] yy;
 	double miny=-1;
-	
-	
+
+
 	public void startRecordingEdge(){
 		long time = System.currentTimeMillis();
 		recording = true;		
 		prevEdge = edgeDetector;					
-		
+
 		highestPoint = edgeDetector.highestPoint;		
 		highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
 		highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
-				
+
 		highestL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
 		highestR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
 		highest = (turn==TURNRIGHT) ? highestL+highestPoint.distance(highestPointOnLeftEdge) : highestR+highestPoint.distance(highestPointOnRightEdge);
@@ -270,26 +271,60 @@ public class MyDriver extends SimpleDriver {
 	int count=0;
 	boolean followedPath = false;
 
-	
+	//p is assume to be a point on prev, convert now to ed
+	//edge is -1 = left edge, 1: right edge, 0 : UNKNOWN
+	//len is the len to point on the edge(specified by edge) on prev
+	//hP is a point on ed ....
+	public Vector2D convertPoint(Vector2D p,double len,double nraced,int edge,Vector2D hP,int hEdge,EdgeDetector ed){
+		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
+		double ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
+
+		if (edge==0)
+			return new Vector2D(p.x*scale+ax,p.y-nraced);
+
+		Vector2D tmp = null;
+
+		if (edge==-1){
+			if (ed.left==null) 
+				return new Vector2D(p.x*scale+ax,p.y-nraced);
+			else {
+				if (hP==null || edge!=hEdge) 
+					tmp = ed.left.estimatePointOnEdge(len-nraced, null);
+				else tmp = ed.left.estimatePointOnEdge(len-nraced, hP);				
+								
+				System.out.println(tmp+"   "+hP);
+				if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
+				return tmp;
+			}
+		}
+
+		if (ed.right==null) 
+			return new Vector2D(p.x*scale+ax,p.y-nraced);
+		if (hP==null || edge!=hEdge) 
+			tmp = ed.right.estimatePointOnEdge(len-nraced, null);
+		else tmp = ed.right.estimatePointOnEdge(len-nraced, hP);
+		System.out.println(tmp+"   "+hP);
+		if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
+		return tmp;
+	}
+
 	public void record(){
 		if (!recording) return;
 		long time = System.currentTimeMillis();
 		nraced = distRaced - raced;
 		nraced = Math.round(nraced*10000.0d)/10000.0d;
-		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
-		double ax = 0;
-		
-		if (prevEdge.straightDist>=nraced) {
-			edgeDetector.combine(prevEdge, nraced);			
-			ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
+//		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;		
+		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
+		if (prevEdge.turn*edgeDetector.turn!=-1 && prevEdge.straightDist>=nraced) {
+			edgeDetector.combine(prevEdge, nraced);						
 		}
-		Vector2D transform = new Vector2D(ax,0);
-		
+//		Vector2D transform = new Vector2D(ax,0);
+
 		if (distRaced>600) meta = 1;
 		turn = edgeDetector.turn;
 		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
-		
-		
+
+
 		Vector2D hh = edgeDetector.highestPoint;
 		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);		
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
@@ -299,84 +334,96 @@ public class MyDriver extends SimpleDriver {
 		double len = (highestPointEdge==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
 		if (hh==null)
 			hh = (highestPointEdge==-1) ? hL : (highestPointEdge==1) ? hR : null;
-		
+
 		System.out.println("*********** "+distRaced+"  "+nraced+"**************");
-		
-		highest -= nraced;		
-		if (highest>0 && highest>len+1){//ok now the highest store point is the real highest point			
-			if (nraced<=edgeDetector.straightDist || highestPointEdge==0){
-				highestPoint = new Vector2D(highestPoint.x*scale+ax,highestPoint.y-nraced);								
-			} else highestPoint = (highestPointEdge==-1) ? edgeDetector.left.locatePointAtLength(highest) : 
-				(highestPointEdge==1) ? edgeDetector.right.locatePointAtLength(highest) : null;	
-			//From here we have the real highest point in current perspective
-			//Now compare it with current seen highest point hh 
-			if (highestPoint==null){
+
+		int edge = prevEdge.guessPointOnEdge(highestPoint);
+		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
+		if (turn*prevEdge.turn==-1){
+			highestPoint = hh;
+			highestPointOnLeftEdge = hL;
+			highestPointOnRightEdge = hR;
+			highest = len;
+			highestL = lenL;
+			highestR = lenR;
+		} else {
+			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
+			System.out.println(highestL+"  "+highest+"  "+highestR);
+			System.out.println(hL+" "+hh+"  "+hR);
+			System.out.println(lenL+"  "+len+"  "+lenR);
+			highestPoint = convertPoint(highestPoint, highest, nraced, edge, hh,highestPointEdge, edgeDetector);
+			highestPointOnLeftEdge = convertPoint(highestPointOnLeftEdge, highestL, nraced, -1, hL,-1, edgeDetector);
+			highestPointOnRightEdge = convertPoint(highestPointOnRightEdge, highestR, nraced, 1, hR,1, edgeDetector);
+			highest = (highestPoint==null) ? 0 :(hh==null) ? highest-nraced :  len+highestPoint.distance(hh);
+			highestL = (highestPointOnLeftEdge==null) ? 0 : (hL==null) ? highestL-nraced : lenL+highestPointOnLeftEdge.distance(hL);
+			highestR = (highestPointOnRightEdge==null) ? 0 : (hR==null) ? highestR-nraced : lenR+highestPointOnRightEdge.distance(hR);
+			
+			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
+			System.out.println(highestL+"  "+highest+"  "+highestR);
+
+
+			if (highestPoint==null || highest<=0){
 				highestPoint = hh;
 				highest = len;
-			} else {
+			} else if (highestPoint.y>hh.y){//ok now the highest store point is the real highest point							
+				//From here we have the real highest point in current perspective
+				//Now compare it with current seen highest point hh 			 
 				double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();
 				if (!Double.isNaN(alpha)){					
 					if (alpha>0.001){//hh belongs to the right edge
+						lenR += hh.distance(hR);
 						hR = hh;
-						lenR = len;
+						highestPointOnRightEdge = hh;
+						highestR = lenR;
 					} else if (alpha<-0.001){//hh belongs to the left edge
-						hL = hh;
-						lenL = len;
+						lenL += hh.distance(hL);
+						hL = hh;		
+						highestPointOnLeftEdge = hh;
+						highestL = lenL;
 					} else {//unlikely, hh and highest point, because hh is more accurate, highestpoint is now hh
 						highestPoint = hh;
 						highest = len;
 					}
 				}
-			}
-		} else if (highestPoint==null || highest<=0){
-			highestPoint = hh;
-			highest = len;
-		} else {//now the old highest point is lower than current highest point
-			double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();//calculate the angle between 2 highest points
-			if (!Double.isNaN(alpha)){					
-				if (alpha>0.001){//highest belongs to the left edge
-					if (lenL<highest){
-						lenL = highest;
-						hL = highestPoint;
-					}
-				} else if (alpha<-0.001){//hh belongs to the left edge
-					if (lenR<highest){
-						lenR = highest;
-						hR = highestPoint;
-					}
-				}//unlikely, hh and highest point are at nearly the same angle, because hh is more accurate, cannot determine highest belongs to left or right
+
+			}  else if (highestPoint.y<=hh.y){//now the old highest point is lower than current highest point
+				double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();//calculate the angle between 2 highest points
+				if (!Double.isNaN(alpha)){					
+					if (alpha>0.01){//highest belongs to the left edge
+						if (hL!=null && hL.y<highestPoint.y){
+							lenL += highestPoint.distance(hL);
+							hL = highestPoint;
+						}
+					} else if (alpha<-0.01){//hh belongs to the left edge
+						if (hR!=null && hR.y<highestPoint.y){
+							lenR += highestPoint.distance(hR);
+							hR = highestPoint;
+						}
+					}//unlikely, hh and highest point are at nearly the same angle, because hh is more accurate, cannot determine highest belongs to left or right						
+				}
 				highestPoint = hh;
-				highest = len;				
+				highest = len;
 			}
-		}// After this, we have update hL and hR, and lenL ,lenR accoringly
-		
-				
-		highestL -= nraced;
-		if (highestL>0 && highestL>lenL+1){
-			if (nraced<=edgeDetector.straightDist){
-				highestPointOnLeftEdge = new Vector2D(highestPointOnLeftEdge.x*scale+ax,highestPointOnLeftEdge.y-nraced);
-			} else highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.estimatePointOnEdge(highestL, hL) : null;
-		} else {
-			highestPointOnLeftEdge = hL;
-			highestL = lenL;
+
+
+			if (highestPointOnLeftEdge==null || (hL!=null && highestPointOnLeftEdge.y<hL.y)){
+				highestPointOnLeftEdge = hL;
+				highestL = lenL;
+			}
+
+			if (highestPointOnRightEdge==null || (hR !=null && highestPointOnRightEdge.y<hR.y)){			
+				highestPointOnRightEdge = hR;
+				highestR = lenR;
+			}
 		}
-		
-		highestR -= nraced;
-		if (highestR>0 && highestR>lenR+1){
-			if (nraced<=edgeDetector.straightDist){
-				highestPointOnRightEdge = highestPointOnRightEdge.scale(scale, 1).plus(transform);
-			} else highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.estimatePointOnEdge(highestR, hR) : null;
-		} else {
-			highestPointOnRightEdge = hR;
-			highestR = lenR;
-		}
-//		System.out.println(gL+"     "+gR);
-		System.out.println(hL+" "+hh+"  "+hR);
-		System.out.println(lenL+"  "+len+"  "+lenR);
+
+//		System.out.println(hL+" "+hh+"  "+hR);
+//		System.out.println(lenL+"  "+len+"  "+lenR);
+		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
 		System.out.println(highestL+"  "+highest+"  "+highestR);
-		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);		
-				
-		if ((distRaced>480 && distRaced<560)){			
+
+
+		if ((distRaced>530 && distRaced<560)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 			if (highestPoint!=null) edges.add(highestPoint);
@@ -389,32 +436,32 @@ public class MyDriver extends SimpleDriver {
 				// TODO: handle exception
 			}
 		}
-		
+
 		prevEdge = edgeDetector;				
 		raced = distRaced;		
 		System.out.println(System.currentTimeMillis()-time);	
 	}
-		
+
 	public double radiusAtAngle(double angle){
 		return L/Math.sin(angle);
 	}
-	
+
 	public double angleWithRadius(double r){
 		return Math.asin(L/r);
 	}
-	
+
 	public double maxAngleAtSpeed(double speed){		
 		double ds = speed*3.6;
 		return Math.asin(L/ds*ds/2/G);
 	}
-	
+
 	public double maxAllowedSpeedAtRadius(double radius){			
 		return Math.sqrt(G*radius*2)*3.6;
 	}
-		
-	
+
+
 	public double fuzzySteering(){
-		System.out.println("Here");
+		
 		if (turn==STRAIGHT) {
 			followedPath = false;
 			maxSpeed = Double.MAX_VALUE;			
@@ -423,17 +470,17 @@ public class MyDriver extends SimpleDriver {
 		}
 //		int firstIndexMax = (turn==TURNLEFT) ? edgeDetector.firstIndexMax-1 : edgeDetector.lastIndexMax+1;		
 //		if (firstIndexMax>0 && firstIndexMax<edgeDetector.x.size()){				
-//			Vector2D p = new Vector2D(edgeDetector.x.getDouble(firstIndexMax),edgeDetector.y.getDouble(firstIndexMax));
-//			double[] r = new double[3];
-//			Geom.getCircle(0, 0, highestPoint.x, highestPoint.y, p.x, p.y, r);
-//			double radius = Math.sqrt(r[2]);			
-//			maxSpeed = 0.8*maxAllowedSpeedAtRadius(Math.abs(radius));
+//		Vector2D p = new Vector2D(edgeDetector.x.getDouble(firstIndexMax),edgeDetector.y.getDouble(firstIndexMax));
+//		double[] r = new double[3];
+//		Geom.getCircle(0, 0, highestPoint.x, highestPoint.y, p.x, p.y, r);
+//		double radius = Math.sqrt(r[2]);			
+//		maxSpeed = 0.8*maxAllowedSpeedAtRadius(Math.abs(radius));
 //		}
 		maxSpeed=120;
-		
+
 		double alpha = PI_2-highestPoint.angle();
 		double maxA = maxAngleAtSpeed(speedX)-curAngle;
-		
+
 		double distance = highestPoint.length();
 		if (distance>75)
 			maxSpeed = Double.MAX_VALUE;
@@ -445,69 +492,69 @@ public class MyDriver extends SimpleDriver {
 		this.pos.setValue(pos);
 		speedx.setValue(speedX);
 		this.speedy.setValue(speedy);
-			
+
 		angle.getMembershipFunction("Small").setParameter(3,maxA);
 		angle.getMembershipFunction("Small").setParameter(2,0.9*maxA);
 
-		
+
 		fuzzyRuleSet.evaluate();
 //		if (distRaced>120 && distRaced<150)
-////			System.out.println(fuzzyRuleSet);
-			
-//			for (Object r : fuzzyRuleSet.getRules()) {
-//				FuzzyRule rule = (FuzzyRule)r;
-//				if (rule.getDegreeOfSupport()>0) System.out.println(rule);
-//			}
+////		System.out.println(fuzzyRuleSet);
+
+//		for (Object r : fuzzyRuleSet.getRules()) {
+//		FuzzyRule rule = (FuzzyRule)r;
+//		if (rule.getDegreeOfSupport()>0) System.out.println(rule);
+//		}
 //		if (distRaced>330) meta=1;
 		double steer = sign*steering.getLatestDefuzzifiedValue();
 //		if (Double.isNaN(steer)){
-//			System.out.println(fuzzyRuleSet);
+//		System.out.println(fuzzyRuleSet);
 //		}
-		System.out.println(steer+"   "+alpha+"   "+highestPoint+"   "+curAngle);
+//		System.out.println(steer+"   "+alpha+"   "+highestPoint+"   "+curAngle);
 		steer = curAngle - steer;
 		steer = Math.max(steer, -steerLock);
 		steer = Math.min(steer, steerLock);
-		
+
 		return steer/steerLock;
 	}
-	
-		
-	
+
+
+
 	double getSteer() {
 		// TODO Auto-generated method stub
 		//		jf.setVisible(true);		
 		if (meta==1)
 			return 0;
-		
-				
+
+
 		if (trackWidth<=0)
 			return curAngle/steerLock;
-		
+
 		if (recording) 
 			record();
 		else turn = edgeDetector.turn;
-		
+
 		if (followedPath){			
 			double steer =  fuzzySteering();			
 			return steer;
 		}
-				
+
 //		if (distRaced>870 ) {
-//			meta=1;
-//			try{
-//				Thread.sleep(5000);
-//			} catch (Exception e){
-//
-//			}
-//			return 0;
-//
+//		meta=1;
+//		try{
+//		Thread.sleep(5000);
+//		} catch (Exception e){
+
+//		}
+//		return 0;
+
 //		}
 		if (!followedPath && (curPos<= -(trackWidth/workingWidth) || curPos>=(trackWidth/workingWidth))){
 			recording = false;
 			followedPath = false;
 			return curAngle/steerLock+curPos/10;
 		}
-									
+
 
 		if (turn==STRAIGHT){
 			recording = false;
@@ -522,7 +569,7 @@ public class MyDriver extends SimpleDriver {
 			maxSpeed = Double.MAX_VALUE;			
 			return (curAngle+Math.random()*0.05)/steerLock;
 		}
-		
+
 		return fuzzySteering();
 
 //		Left + Right -

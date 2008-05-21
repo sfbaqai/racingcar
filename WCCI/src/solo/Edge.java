@@ -197,9 +197,7 @@ public final class Edge {
 	
 	public final Vector2D estimatePointOnEdge(double length,Vector2D hP){
 		if (size<2) return null;
-		Vector2D lastPoint = allPoints.get(size-1);	
-		if (length>=totalLength-0.1 || length<=totalLength+0.1)
-			return new Vector2D(lastPoint);
+		Vector2D lastPoint = allPoints.get(size-1);			
 		if (length<totalLength || hP==null || hP.equals(lastPoint))
 			return locatePointAtLength(length);
 		double d = length-totalLength;		

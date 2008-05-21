@@ -156,13 +156,24 @@ public class EdgeDetector {
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
 		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR; 
-		if (d > 0){
-			turn = (turnR==MyDriver.UNKNOWN) ? turnL : (turnL==MyDriver.UNKNOWN) ? turnR : turnL;
+		if (turnL==MyDriver.UNKNOWN || turnR == MyDriver.UNKNOWN){
+			turn = (int)(d/MyDriver.UNKNOWN);
+		} else if (d > 0){
+			turn = turnL;
 		} else if (d == 0){
 			turn = (turnL==0) ? turnR : turnL;
-		} else turn = MyDriver.STRAIGHT;
-		
-		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
+		} else {
+			turn = MyDriver.UNKNOWN;
+		}
+				
+		if (turn==MyDriver.UNKNOWN && highestPoint!=null){
+			if (highestPoint.x<x[0])
+				turn = MyDriver.TURNLEFT;
+			else if (highestPoint.x>rx[0])
+				turn = MyDriver.TURNRIGHT;
+			else if (highestPoint.length()>=99)
+				turn = MyDriver.STRAIGHT;
+		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 				
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
@@ -266,13 +277,24 @@ public class EdgeDetector {
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
 		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR; 
-		if (d > 0){
-			turn = (turnR==MyDriver.UNKNOWN) ? turnL : (turnL==MyDriver.UNKNOWN) ? turnR : turnL;
+		if (turnL==MyDriver.UNKNOWN || turnR == MyDriver.UNKNOWN){
+			turn = (int)(d/MyDriver.UNKNOWN);
+		} else if (d > 0){
+			turn = turnL;
 		} else if (d == 0){
 			turn = (turnL==0) ? turnR : turnL;
-		} else turn = MyDriver.STRAIGHT;
+		} else {
+			turn = MyDriver.UNKNOWN;
+		}
 				
-		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
+		if (turn==MyDriver.UNKNOWN && highestPoint!=null){
+			if (highestPoint.x<xx[0])
+				turn = MyDriver.TURNLEFT;
+			else if (highestPoint.x>rx[0])
+				turn = MyDriver.TURNRIGHT;
+			else if (highestPoint.length()>=99)
+				turn = MyDriver.STRAIGHT;
+		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 		
 		System.out.println(turnL+"  "+turnR+"  "+turn);
