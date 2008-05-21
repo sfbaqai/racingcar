@@ -37,7 +37,8 @@ public final class Edge {
 				
 		double[] aL = new double[sz];
 		Vector2D[] aP = new Vector2D[sz];
-		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);			
+		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);
+		straightDist = 0;
 		
 		Vector2D prev = new Vector2D(xx[0],yy[0]);
 		double x0 = xx[0];
@@ -107,6 +108,7 @@ public final class Edge {
 		Vector2D prev = v[0];
 		double x0 = prev.x;
 		double len = 0;
+		straightDist = 0;
 		for (int i=0;i<size;++i){
 			Vector2D p = v[i];
 			double x = p.x;
@@ -139,7 +141,7 @@ public final class Edge {
 		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);					
 		allPoints = ObjectArrayList.wrap(v,size);
 		
-		
+		straightDist = 0;
 		Vector2D prev = v[0];
 		double len = 0;
 		double x0 = prev.x;
