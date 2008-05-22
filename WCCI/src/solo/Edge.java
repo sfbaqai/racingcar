@@ -3,6 +3,20 @@
  */
 package solo;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+import javax.imageio.ImageIO;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+import com.graphbuilder.geom.Geom;
+
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -25,6 +39,8 @@ public final class Edge {
 	
 	int size =0;	
 	double totalLength =0;
+	Vector2D center = null;
+	double radius = Double.MAX_VALUE;
 	
 	public Edge(){
 	}
@@ -43,6 +59,7 @@ public final class Edge {
 		Vector2D prev = new Vector2D(xx[0],yy[0]);
 		double x0 = xx[0];
 		double len = 0;
+		int index = 0;
 		for (int i=0;i<size;++i){
 			double x = xx[i];
 			double y = yy[i];
@@ -52,7 +69,10 @@ public final class Edge {
 			p2l.put(p, len);						
 			len += p.distance(prev);
 			prev = p;
-			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) straightDist = y; 
+			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
+				straightDist = y;
+				index = i;
+			}
 		}
 		allPoints = ObjectArrayList.wrap(aP);		
 		allLengths = new DoubleArrayList(aL);
@@ -60,7 +80,25 @@ public final class Edge {
 		allLengths.setSize(size);
 		allPoints.size(size);
 		x.setSize(size);
-		y.setSize(size);		
+		y.setSize(size);
+		
+		if (straightDist<totalLength){
+			double[] r = new double[3];
+			Vector2D startTurn = allPoints.get(index);
+			if (index<size-2){
+				index = (index+size-1)/2;
+			} else if (index>0) index -= 1;
+			
+			if (index>=0 && index<size){
+				Vector2D point = allPoints.get(index);
+				Vector2D highestPoint = allPoints.get(size-1);
+				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
+				if (isCircle){
+					center = new Vector2D(r[0],r[1]);
+					radius = Math.sqrt(r[2]);
+				}
+			}
+		}
 	}
 	
 	public Edge(double[] xx,double[] yy,int size){
@@ -75,6 +113,7 @@ public final class Edge {
 		Vector2D prev = new Vector2D(xx[0],yy[0]);
 		double len = 0;
 		double x0 = xx[0];
+		int index = 0;
 		for (int i=0;i<size;++i){
 			double x = xx[i];
 			double y = yy[i];
@@ -84,14 +123,34 @@ public final class Edge {
 			p2l.put(p, len);						
 			len += p.distance(prev);
 			prev = p;			
-			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) straightDist = y;
+			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
+				straightDist = y;
+				index = i;
+			}
 		}		
 		totalLength = len;
 		allPoints = ObjectArrayList.wrap(aP,size);		
 		allLengths = new DoubleArrayList(aL);
 		x.setSize(size);
 		y.setSize(size);
-		allLengths.setSize(size);		
+		allLengths.setSize(size);
+		if (straightDist<totalLength){
+			double[] r = new double[3];
+			Vector2D startTurn = allPoints.get(index);
+			if (index<size-2){
+				index = (index+size-1)/2;
+			} else if (index>0) index -= 1;
+			
+			if (index>=0 && index<size){
+				Vector2D point = allPoints.get(index);
+				Vector2D highestPoint = allPoints.get(size-1);
+				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
+				if (isCircle){
+					center = new Vector2D(r[0],r[1]);
+					radius = Math.sqrt(r[2]);
+				}
+			}
+		}
 	}
 	
 	public Edge(Vector2D[] v,int size){
@@ -109,6 +168,7 @@ public final class Edge {
 		double x0 = prev.x;
 		double len = 0;
 		straightDist = 0;
+		int index = 0;
 		for (int i=0;i<size;++i){
 			Vector2D p = v[i];
 			double x = p.x;
@@ -119,7 +179,10 @@ public final class Edge {
 			p2l.put(p, len);						
 			len += p.distance(prev);
 			prev = p;
-			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) straightDist = y;
+			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
+				straightDist = y;
+				index = i;
+			}
 		}
 		x = new DoubleArrayList(xx);
 		y = new DoubleArrayList(yy);
@@ -129,6 +192,23 @@ public final class Edge {
 		y.setSize(size);
 		allLengths.setSize(size);
 		allPoints.size(size);
+		if (straightDist<totalLength){
+			double[] r = new double[3];
+			Vector2D startTurn = allPoints.get(index);
+			if (index<size-2){
+				index = (index+size-1)/2;
+			} else if (index>0) index -= 1;
+			
+			if (index>=0 && index<size){
+				Vector2D point = allPoints.get(index);
+				Vector2D highestPoint = allPoints.get(size-1);
+				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
+				if (isCircle){
+					center = new Vector2D(r[0],r[1]);
+					radius = Math.sqrt(r[2]);
+				}
+			}
+		}
 	}
 	
 	public Edge(Vector2D[] v){
@@ -145,6 +225,7 @@ public final class Edge {
 		Vector2D prev = v[0];
 		double len = 0;
 		double x0 = prev.x;
+		int index = 0;
 		for (int i=0;i<size;++i){
 			Vector2D p = v[i];
 			double x = p.x;
@@ -155,7 +236,10 @@ public final class Edge {
 			p2l.put(p, len);						
 			len += p.distance(prev);
 			prev = p;
-			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) straightDist = y;
+			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
+				straightDist = y;
+				index = i;
+			}
 		}
 		x = new DoubleArrayList(xx);
 		y = new DoubleArrayList(yy);
@@ -163,7 +247,24 @@ public final class Edge {
 		totalLength = len;
 		x.setSize(size);
 		y.setSize(size);
-		allLengths.setSize(size);		
+		allLengths.setSize(size);
+		if (straightDist<totalLength){
+			double[] r = new double[3];
+			Vector2D startTurn = allPoints.get(index);
+			if (index<size-2){
+				index = (index+size-1)/2;
+			} else if (index>0) index -= 1;
+			
+			if (index>=0 && index<size){
+				Vector2D point = allPoints.get(index);
+				Vector2D highestPoint = allPoints.get(size-1);
+				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
+				if (isCircle){
+					center = new Vector2D(r[0],r[1]);
+					radius = Math.sqrt(r[2]);
+				}
+			}
+		}
 	}
 	
 	public final Vector2D getHighestPoint(){
@@ -208,6 +309,22 @@ public final class Edge {
 		return lastPoint.plus(t.times(d));		
 	}
 	
+	public boolean isStraight(Vector2D[] points){
+		if (points==null || points.length<2) return false;
+		int len = points.length;
+		if (len==2) return true;
+		Vector2D v0 = points[0];
+		double min = Double.MAX_VALUE;
+		double max = Double.MIN_VALUE;
+		for (int i=1;i<len;++i){
+			Vector2D v = points[i];
+			double a = v.minus(v0).angle();
+			if (a<min) min = a;
+			if (a>max) max = a;
+		}
+		return (Math.abs(max-min) < 0.1);
+	}
+	
 	public final int turn(){
 		double sumx = 0;
 		double[] xx = x.elements();
@@ -239,7 +356,61 @@ public final class Edge {
 	
 	public final Vector2D get(int index){
 		if (index<0 || index>=size)
-			return null;
+			return null;		
 		return allPoints.get(index);
 	}
+	
+	public final static void drawEdge(Edge edge,final String title){			
+		XYSeries series = new XYSeries("Curve");
+
+		for (int i=0;i<edge.size;++i){
+			Vector2D v = edge.get(i);
+			series.add(v.x,v.y);
+		}
+		
+		if (edge.center!=null){
+			TrackSegment.circle(edge.center.x, edge.center.y, edge.radius, series);
+		}
+		series.add(edge.center.x, edge.center.y);
+
+		XYDataset xyDataset = new XYSeriesCollection(series);
+		
+
+		// Create plot and show it
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
+		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+
+		Thread p = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try{
+					BufferedImage image = chart.createBufferedImage(600, 400);
+					ImageIO.write(image, "png", new File(title+".png"));
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+		});
+
+		p.start();
+	}
+	
+	public final static void drawEdge(Edge edge,XYSeries series){					
+
+		for (int i=0;i<edge.size;++i){
+			Vector2D v = edge.get(i);
+			series.add(v.x,v.y);
+		}
+		
+		if (edge.center!=null){
+			TrackSegment.circle(edge.center.x, edge.center.y, edge.radius, series);
+		}
+		series.add(edge.center.x, edge.center.y);
+
+	}
+
+
 }

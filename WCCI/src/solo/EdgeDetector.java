@@ -580,21 +580,13 @@ public class EdgeDetector {
 
 		p.start();
 	}
-
 	
-	public static void drawEdge(Edge edge,final String title){			
-		XYSeries series = new XYSeries("Curve");
-
-		for (int i=0;i<edge.size;++i){
-			Vector2D v = edge.get(i);
-			series.add(v.x,v.y);
-		}
-
+	public static void drawEdge(XYSeries series,final String title){					
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 
 		Thread p = new Thread(new Runnable(){
@@ -614,8 +606,7 @@ public class EdgeDetector {
 		p.start();
 	}
 
-
-
+	
 
 	/* compute the radius given three points */
 	double radius(double x1, double y1, double x2, double y2, double x3, double y3)
