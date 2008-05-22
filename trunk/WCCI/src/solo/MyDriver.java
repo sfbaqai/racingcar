@@ -10,6 +10,8 @@ import it.unimi.dsi.lang.MutableString;
 
 import java.awt.geom.AffineTransform;
 
+import org.jfree.data.xy.XYSeries;
+
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
 
@@ -293,7 +295,7 @@ public class MyDriver extends SimpleDriver {
 					tmp = ed.left.estimatePointOnEdge(len-nraced, null);
 				else tmp = ed.left.estimatePointOnEdge(len-nraced, hP);				
 								
-				System.out.println(tmp+"   "+hP);
+//				System.out.println(tmp+"   "+hP);
 				if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
 				return tmp;
 			}
@@ -304,7 +306,7 @@ public class MyDriver extends SimpleDriver {
 		if (hP==null || edge!=hEdge) 
 			tmp = ed.right.estimatePointOnEdge(len-nraced, null);
 		else tmp = ed.right.estimatePointOnEdge(len-nraced, hP);
-		System.out.println(tmp+"   "+hP);
+//		System.out.println(tmp+"   "+hP);
 		if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
 		return tmp;
 	}
@@ -315,13 +317,13 @@ public class MyDriver extends SimpleDriver {
 		nraced = distRaced - raced;
 		nraced = Math.round(nraced*10000.0d)/10000.0d;
 //		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;		
-		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
+//		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
 		if (prevEdge.turn*edgeDetector.turn!=-1 && prevEdge.straightDist-1>nraced) {
 			edgeDetector.combine(prevEdge, nraced);						
 		}
 //		Vector2D transform = new Vector2D(ax,0);
 
-		if (distRaced>180) meta = 1;
+		if (distRaced>400) meta = 1;
 		turn = edgeDetector.turn;
 		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
 
@@ -338,8 +340,7 @@ public class MyDriver extends SimpleDriver {
 
 		System.out.println("*********** "+distRaced+"  "+nraced+"**************");
 
-		int edge = prevEdge.guessPointOnEdge(highestPoint);
-		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
+		int edge = prevEdge.guessPointOnEdge(highestPoint);		
 		if (turn*prevEdge.turn==-1){
 			highestPoint = hh;
 			highestPointOnLeftEdge = hL;
@@ -348,10 +349,10 @@ public class MyDriver extends SimpleDriver {
 			highestL = lenL;
 			highestR = lenR;
 		} else {
-			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-			System.out.println(highestL+"  "+highest+"  "+highestR);
-			System.out.println(hL+" "+hh+"  "+hR);
-			System.out.println(lenL+"  "+len+"  "+lenR);
+//			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
+//			System.out.println(highestL+"  "+highest+"  "+highestR);
+//			System.out.println(hL+" "+hh+"  "+hR);
+//			System.out.println(lenL+"  "+len+"  "+lenR);
 			highestPoint = convertPoint(highestPoint, highest, nraced, edge, hh,highestPointEdge, edgeDetector);
 			highestPointOnLeftEdge = convertPoint(highestPointOnLeftEdge, highestL, nraced, -1, hL,-1, edgeDetector);
 			highestPointOnRightEdge = convertPoint(highestPointOnRightEdge, highestR, nraced, 1, hR,1, edgeDetector);
@@ -359,8 +360,8 @@ public class MyDriver extends SimpleDriver {
 			highestL = (highestPointOnLeftEdge==null) ? 0 : (hL==null) ? highestL-nraced : (highestL>=99) ? lenL : lenL+highestPointOnLeftEdge.distance(hL);
 			highestR = (highestPointOnRightEdge==null) ? 0 : (hR==null) ? highestR-nraced : (highestR>=99) ? lenR : lenR+highestPointOnRightEdge.distance(hR);
 			
-			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-			System.out.println(highestL+"  "+highest+"  "+highestR);
+//			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
+//			System.out.println(highestL+"  "+highest+"  "+highestR);
 
 
 			if (highestPoint==null || highest<=0){
@@ -431,22 +432,35 @@ public class MyDriver extends SimpleDriver {
 
 //		System.out.println(hL+" "+hh+"  "+hR);
 //		System.out.println(lenL+"  "+len+"  "+lenR);
-		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-		System.out.println(highestL+"  "+highest+"  "+highestR);
+//		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
+//		System.out.println(highestL+"  "+highest+"  "+highestR);
 
 
-		if ((distRaced>110 && distRaced<180) || (distRaced>280 && distRaced<350)){			
+		if ((distRaced>120 && distRaced<121) || (distRaced>280 && distRaced<350)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
-			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
-			if (highestPoint!=null) edges.add(highestPoint);
-			if (highestPointOnLeftEdge!=null) edges.add(highestPointOnLeftEdge);
-			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
-			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
+//			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
+//			if (highestPoint!=null) edges.add(highestPoint);
+//			if (highestPointOnLeftEdge!=null) edges.add(highestPointOnLeftEdge);
+//			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
+//			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
+			XYSeries series = new XYSeries("Curve");
+			Edge left = edgeDetector.left;
+			Edge right = edgeDetector.right;
+			if (left.center!=null && left.radius<1000){
+				System.out.println(left.center+"  "+left.radius);
+				Edge.drawEdge(left, series);
+			}
+			if (right.center!=null && right.radius<1000){
+				System.out.println(right.center+"  "+right.radius);
+				Edge.drawEdge(right, series);
+			}
+			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 			try {
-				Thread.sleep(200);
+				Thread.sleep(300);
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
+//			meta=1;
 		}
 
 		prevEdge = edgeDetector;				
