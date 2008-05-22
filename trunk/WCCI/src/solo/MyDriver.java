@@ -5,15 +5,14 @@ package solo;
 
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.lang.MutableString;
 
 import java.awt.geom.AffineTransform;
 
-import org.jfree.data.xy.XYSeries;
-
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
+
+import org.jfree.data.xy.XYSeries;
 
 
 
@@ -323,7 +322,7 @@ public class MyDriver extends SimpleDriver {
 		}
 //		Vector2D transform = new Vector2D(ax,0);
 
-		if (distRaced>400) meta = 1;
+		if (distRaced>550) meta = 1;
 		turn = edgeDetector.turn;
 		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
 
@@ -436,7 +435,7 @@ public class MyDriver extends SimpleDriver {
 //		System.out.println(highestL+"  "+highest+"  "+highestR);
 
 
-		if ((distRaced>120 && distRaced<121) || (distRaced>280 && distRaced<350)){			
+		if ( (distRaced>480 && distRaced<550)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 //			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 //			if (highestPoint!=null) edges.add(highestPoint);
@@ -444,16 +443,31 @@ public class MyDriver extends SimpleDriver {
 //			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
 //			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
 			XYSeries series = new XYSeries("Curve");
+			if (hh!=null) series.add(hh.x,hh.y);
 			Edge left = edgeDetector.left;
 			Edge right = edgeDetector.right;
-			if (left.center!=null && left.radius<1000){
-				System.out.println(left.center+"  "+left.radius);
-				Edge.drawEdge(left, series);
-			}
-			if (right.center!=null && right.radius<1000){
-				System.out.println(right.center+"  "+right.radius);
-				Edge.drawEdge(right, series);
-			}
+			if (turn==TURNRIGHT){			
+				if (left.center!=null && left.radius<1000){
+					System.out.println(left.center+"  "+left.radius);
+					Edge.drawEdge(left, series);
+					TrackSegment.circle(left.center.x, left.center.y, left.radius-edgeDetector.trackWidth, series);
+				}
+				
+				
+				
+//				if (right.center!=null){				
+//					Edge.drawEdge(right, series);
+//				}
+			} else if (turn==TURNLEFT){			
+				if (right.center!=null && right.radius<1000){
+					System.out.println(right.center+"  "+right.radius);
+					Edge.drawEdge(right, series);
+					TrackSegment.circle(right.center.x, right.center.y, right.radius-edgeDetector.trackWidth, series);
+				}
+				
+				
+				
+			} 
 			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 			try {
 				Thread.sleep(300);
