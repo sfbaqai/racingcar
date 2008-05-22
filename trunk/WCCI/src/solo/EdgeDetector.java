@@ -62,6 +62,9 @@ public class EdgeDetector {
 	Vector2D highestPoint = null;
 	Double2ObjectSortedMap<Vector2D> polar2Cartesian = null;
 	int turn;
+	Vector2D center = null;
+	double radiusL = -1;
+	double radiusR = -1;
 
 	/**
 	 * Copy Constructor
@@ -111,6 +114,7 @@ public class EdgeDetector {
 		lastIndexMax = -1;		
 		maxY = -1;
 		distRaced = cs.distRaced;			
+		trackWidth =-1;
 
 		if (Math.abs(cs.angle)<0.001)
 			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(cs.angle));
@@ -155,7 +159,8 @@ public class EdgeDetector {
 		right = (lastIndexMax<18 && lastIndexMax>=0) ? new Edge(rx,ry,18-lastIndexMax) : null;
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
 		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
-		double d = turnL * turnR; 
+		double d = turnL * turnR;
+		
 		if (turnL==MyDriver.UNKNOWN || turnR == MyDriver.UNKNOWN){
 			turn = (int)(d/MyDriver.UNKNOWN);
 		} else if (d > 0){
@@ -176,24 +181,39 @@ public class EdgeDetector {
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 				
+		if (turn==MyDriver.TURNRIGHT){			
+			if (left!=null && left.center!=null){
+				center = left.center;
+				radiusL = left.radius;				
+				radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) : radiusL - trackWidth;
+			}
+		} else if (turn==MyDriver.TURNLEFT){			
+			if (right!=null && right.center!=null){
+				center = right.center;
+				radiusR = right.radius;				
+				radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) : radiusR - trackWidth;				
+			}			
+		}
+		if (trackWidth<0 && radiusL>0 && radiusR>0)
+			trackWidth = Math.abs(radiusL-radiusR);				
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
 	}
 
 	//-1: Left,1:Right,0:UNKNOWN
 	int guessPointOnEdge(Vector2D p){
-		
+		if (p==null) return 0;
 		if (left==null && right==null) return 0;
 		if (left==null) return 1;
 		if (right==null) return -1;
-//		Vector2D hL = left.getHighestPoint();
-//		Vector2D hR = right.getHighestPoint();
-//		if (p.y<hL.y || p.y<hR.y) return 0;
-		if (turn==MyDriver.TURNRIGHT){
-			return -1;
-		} else if (turn==MyDriver.TURNLEFT){
-			return 1;
-		}		
-		return 0;
+		if (turn==MyDriver.UNKNOWN || turn==MyDriver.STRAIGHT)
+			return 0;
+		if (center==null || radiusL<0 || radiusR<0)
+			return -turn;
+		
+		double d = p.distance(center);
+		double dL = Math.abs(d-radiusL);
+		double dR = Math.abs(d-radiusR);
+		return (dL<dR) ? -1 : (dL>dR) ? 1 : -turn;
 	}
 	
 	public void combine(EdgeDetector ed,double distRaced){
@@ -297,7 +317,21 @@ public class EdgeDetector {
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 		
-		System.out.println(turnL+"  "+turnR+"  "+turn);
+		if (turn==MyDriver.TURNRIGHT){			
+			if (left!=null && left.center!=null){
+				center = left.center;
+				radiusL = left.radius;				
+				radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) : radiusL - trackWidth;
+			}
+		} else if (turn==MyDriver.TURNLEFT){			
+			if (right!=null && right.center!=null){
+				center = right.center;
+				radiusR = right.radius;				
+				radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) : radiusR - trackWidth;				
+			}			
+		}
+		if (trackWidth<0 && radiusL>0 && radiusR>0)
+			trackWidth = Math.abs(radiusL-radiusR);
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
 

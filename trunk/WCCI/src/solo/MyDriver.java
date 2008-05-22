@@ -319,7 +319,8 @@ public class MyDriver extends SimpleDriver {
 //		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);
 		if (prevEdge.turn*edgeDetector.turn!=-1 && prevEdge.straightDist-1>nraced) {
 			edgeDetector.combine(prevEdge, nraced);						
-		}
+		}		
+		 		
 //		Vector2D transform = new Vector2D(ax,0);
 
 		if (distRaced>550) meta = 1;
@@ -328,7 +329,8 @@ public class MyDriver extends SimpleDriver {
 
 
 		Vector2D hh = edgeDetector.highestPoint;
-		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);		
+		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);
+		System.out.println(highestPointEdge+"   guess");
 		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
 		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;		
 		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
@@ -362,7 +364,7 @@ public class MyDriver extends SimpleDriver {
 //			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
 //			System.out.println(highestL+"  "+highest+"  "+highestR);
 
-
+			System.out.println(turn+"   "+edgeDetector.turn);
 			if (highestPoint==null || highest<=0){
 				highestPoint = hh;
 				highest = len;
@@ -435,7 +437,7 @@ public class MyDriver extends SimpleDriver {
 //		System.out.println(highestL+"  "+highest+"  "+highestR);
 
 
-		if ( (distRaced>480 && distRaced<550)){			
+		if ( (distRaced>62 && distRaced<160)){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 //			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 //			if (highestPoint!=null) edges.add(highestPoint);
@@ -443,31 +445,15 @@ public class MyDriver extends SimpleDriver {
 //			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
 //			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
 			XYSeries series = new XYSeries("Curve");
-			if (hh!=null) series.add(hh.x,hh.y);
-			Edge left = edgeDetector.left;
-			Edge right = edgeDetector.right;
-			if (turn==TURNRIGHT){			
-				if (left.center!=null && left.radius<1000){
-					System.out.println(left.center+"  "+left.radius);
-					Edge.drawEdge(left, series);
-					TrackSegment.circle(left.center.x, left.center.y, left.radius-edgeDetector.trackWidth, series);
-				}
-				
-				
-				
-//				if (right.center!=null){				
-//					Edge.drawEdge(right, series);
-//				}
-			} else if (turn==TURNLEFT){			
-				if (right.center!=null && right.radius<1000){
-					System.out.println(right.center+"  "+right.radius);
-					Edge.drawEdge(right, series);
-					TrackSegment.circle(right.center.x, right.center.y, right.radius-edgeDetector.trackWidth, series);
-				}
-				
-				
-				
-			} 
+			
+			for (int i=0;i<edgeDetector.x.size();++i)
+				series.add(edgeDetector.x.get(i),edgeDetector.y.get(i));
+			
+			if (edgeDetector.center!=null){
+				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
+				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
+			}
+			 
 			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 			try {
 				Thread.sleep(300);

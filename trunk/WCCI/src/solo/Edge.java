@@ -3,6 +3,10 @@
  */
 package solo;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -15,12 +19,9 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-import com.graphbuilder.geom.Geom;
-
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import cern.colt.list.DoubleArrayList;
+
+import com.graphbuilder.geom.Geom;
 
 /**
  * @author kokichi3000
@@ -34,7 +35,7 @@ public final class Edge {
 	DoubleArrayList x = null;
 	DoubleArrayList y = null;
 	DoubleArrayList allLengths = null;	
-	Object2DoubleMap<Vector2D> p2l = null;
+	Object2IntMap<Vector2D> p2l = null;
 	double straightDist = 0;
 	
 	int size =0;	
@@ -53,7 +54,7 @@ public final class Edge {
 				
 		double[] aL = new double[sz];
 		Vector2D[] aP = new Vector2D[sz];
-		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);
+		p2l = new Object2IntOpenHashMap<Vector2D>(sz);
 		straightDist = 0;
 		
 		Vector2D prev = new Vector2D(xx[0],yy[0]);
@@ -66,7 +67,7 @@ public final class Edge {
 			Vector2D p =new Vector2D(x,y);
 			aP[i] = p;
 			aL[i] = len;
-			p2l.put(p, len);						
+			p2l.put(p, i);						
 			len += p.distance(prev);
 			prev = p;
 			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
@@ -82,8 +83,9 @@ public final class Edge {
 		x.setSize(size);
 		y.setSize(size);
 		
-		if (straightDist<totalLength){
+		if (straightDist<allPoints.get(size-1).y){
 			double[] r = new double[3];
+			index++;
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
 				index = (index+size-1)/2;
@@ -108,7 +110,7 @@ public final class Edge {
 		int sz = Math.max(size, NUM_POINTS);
 		double[] aL = new double[sz];
 		Vector2D[] aP = new Vector2D[sz];		
-		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);
+		p2l = new Object2IntOpenHashMap<Vector2D>(sz);
 		straightDist = 0;		
 		Vector2D prev = new Vector2D(xx[0],yy[0]);
 		double len = 0;
@@ -120,7 +122,7 @@ public final class Edge {
 			Vector2D p =new Vector2D(x,y);
 			aP[i] = p;
 			aL[i] = len;
-			p2l.put(p, len);						
+			p2l.put(p, i);						
 			len += p.distance(prev);
 			prev = p;			
 			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
@@ -134,7 +136,8 @@ public final class Edge {
 		x.setSize(size);
 		y.setSize(size);
 		allLengths.setSize(size);
-		if (straightDist<totalLength){
+		if (straightDist<allPoints.get(size-1).y){
+			index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
@@ -160,7 +163,7 @@ public final class Edge {
 		double[] xx = new double[sz];
 		double[] yy = new double[sz];
 		double[] aL = new double[sz];		
-		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);						
+		p2l = new Object2IntOpenHashMap<Vector2D>(sz);						
 		allPoints = ObjectArrayList.wrap(v,size);
 		
 		
@@ -176,7 +179,7 @@ public final class Edge {
 			xx[i] = x;
 			yy[i] = y;
 			aL[i] = len;						
-			p2l.put(p, len);						
+			p2l.put(p, i);						
 			len += p.distance(prev);
 			prev = p;
 			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
@@ -192,7 +195,8 @@ public final class Edge {
 		y.setSize(size);
 		allLengths.setSize(size);
 		allPoints.size(size);
-		if (straightDist<totalLength){
+		if (straightDist<allPoints.get(size-1).y){
+			index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
@@ -218,7 +222,7 @@ public final class Edge {
 		double[] xx = new double[sz];
 		double[] yy = new double[sz];
 		double[] aL = new double[sz];		
-		p2l = new Object2DoubleOpenHashMap<Vector2D>(sz);					
+		p2l = new Object2IntOpenHashMap<Vector2D>(sz);					
 		allPoints = ObjectArrayList.wrap(v,size);
 		
 		straightDist = 0;
@@ -233,7 +237,7 @@ public final class Edge {
 			xx[i] = x;
 			yy[i] = y;
 			aL[i] = len;					
-			p2l.put(p, len);						
+			p2l.put(p, i);						
 			len += p.distance(prev);
 			prev = p;
 			if (straightDist<y && x<=x0+DELTA && x>=x0-DELTA) {
@@ -248,7 +252,8 @@ public final class Edge {
 		x.setSize(size);
 		y.setSize(size);
 		allLengths.setSize(size);
-		if (straightDist<totalLength){
+		if (straightDist<allPoints.get(size-1).y){
+			index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
@@ -329,30 +334,49 @@ public final class Edge {
 		double sumx = 0;
 		double[] xx = x.elements();
 					
-		for (double a:xx) sumx +=a;
+		for (int i=0;i<size;++i) sumx +=xx[i];
 		double mean = sumx/size;
-		double highestx = xx[size-1];
-		
+		double highestx = xx[size-1];		
 		if (highestx>mean+DELTA)
 			return MyDriver.TURNRIGHT;
 		if (highestx<mean-DELTA)
 			return MyDriver.TURNLEFT;			
-				
+						
 		return MyDriver.STRAIGHT;
 	}
 	
-//	public final void append(Vector2D p){
-//		Vector2D lastPoint = allPoints.get(size-1);
-//		size++;
-//		this.x.add(p.x);
-//		this.y.add(p.y);		
-//		this.allPoints.add(p);
-//		totalLength += p.distance(lastPoint);		
-//		this.allLengths.add(totalLength);
-//		this.p2l.put(p, totalLength);
-//		double x0 = x.getQuick(0);
-//		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
-//	}
+	public final void append(Vector2D p){
+		Vector2D lastPoint = allPoints.get(size-1);
+		size++;
+		this.x.add(p.x);
+		this.y.add(p.y);		
+		this.allPoints.add(p);
+		totalLength += p.distance(lastPoint);		
+		this.allLengths.add(totalLength);
+		this.p2l.put(p, size-1);
+		double x0 = x.getQuick(0);
+		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
+		int index = y.binarySearch(straightDist);
+		if (index<0) index = -index;
+		if (straightDist<allPoints.get(size-1).y){
+			index++;
+			double[] r = new double[3];
+			Vector2D startTurn = allPoints.get(index);
+			if (index<size-2){
+				index = (index+size-1)/2;
+			} else if (index>0) index -= 1;
+			
+			if (index>=0 && index<size){
+				Vector2D point = allPoints.get(index);
+				Vector2D highestPoint = allPoints.get(size-1);
+				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
+				if (isCircle){
+					center = new Vector2D(r[0],r[1]);
+					radius = Math.sqrt(r[2]);
+				}
+			}
+		}
+	}
 	
 	public final Vector2D get(int index){
 		if (index<0 || index>=size)
