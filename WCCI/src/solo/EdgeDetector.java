@@ -180,7 +180,12 @@ public class EdgeDetector {
 				turn = MyDriver.STRAIGHT;
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
-				
+						
+		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
+	}
+
+
+	public void estimateCurve(){
 		if (turn==MyDriver.TURNRIGHT){			
 			if (left!=null && left.center!=null){
 				center = left.center;
@@ -194,11 +199,10 @@ public class EdgeDetector {
 				radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) : radiusR - trackWidth;				
 			}			
 		}
-		if (trackWidth<0 && radiusL>0 && radiusR>0)
-			trackWidth = Math.abs(radiusL-radiusR);				
-		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
+//		if (trackWidth<0 && radiusL>0 && radiusR>0)
+//			trackWidth = Math.abs(radiusL-radiusR);
 	}
-
+	
 	//-1: Left,1:Right,0:UNKNOWN
 	int guessPointOnEdge(Vector2D p){
 		if (p==null) return 0;
@@ -317,21 +321,7 @@ public class EdgeDetector {
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
 		
-		if (turn==MyDriver.TURNRIGHT){			
-			if (left!=null && left.center!=null){
-				center = left.center;
-				radiusL = left.radius;				
-				radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) : radiusL - trackWidth;
-			}
-		} else if (turn==MyDriver.TURNLEFT){			
-			if (right!=null && right.center!=null){
-				center = right.center;
-				radiusR = right.radius;				
-				radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) : radiusR - trackWidth;				
-			}			
-		}
-		if (trackWidth<0 && radiusL>0 && radiusR>0)
-			trackWidth = Math.abs(radiusL-radiusR);
+		estimateCurve();
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
 

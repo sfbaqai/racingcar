@@ -85,10 +85,10 @@ public final class Edge {
 		
 		if (straightDist<allPoints.get(size-1).y){
 			double[] r = new double[3];
-			index++;
+			if (index<size-1) index++;
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
-				index = (index+size-1)/2;
+				index = size-2;
 			} else if (index>0) index -= 1;
 			
 			if (index>=0 && index<size){
@@ -137,11 +137,11 @@ public final class Edge {
 		y.setSize(size);
 		allLengths.setSize(size);
 		if (straightDist<allPoints.get(size-1).y){
-			index++;
+			if (index<size-1) index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
-				index = (index+size-1)/2;
+				index = size-2;
 			} else if (index>0) index -= 1;
 			
 			if (index>=0 && index<size){
@@ -196,11 +196,11 @@ public final class Edge {
 		allLengths.setSize(size);
 		allPoints.size(size);
 		if (straightDist<allPoints.get(size-1).y){
-			index++;
+			if (index<size-1) index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
-				index = (index+size-1)/2;
+				index = size-2;
 			} else if (index>0) index -= 1;
 			
 			if (index>=0 && index<size){
@@ -253,11 +253,11 @@ public final class Edge {
 		y.setSize(size);
 		allLengths.setSize(size);
 		if (straightDist<allPoints.get(size-1).y){
-			index++;
+			if (index<size-1) index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
-				index = (index+size-1)/2;
+				index = size-2;
 			} else if (index>0) index -= 1;
 			
 			if (index>=0 && index<size){
@@ -358,12 +358,12 @@ public final class Edge {
 		if (straightDist==lastPoint.y && straightDist<p.y && p.x<=x0+DELTA && p.x>=x0-DELTA) straightDist=p.y;
 		int index = y.binarySearch(straightDist);
 		if (index<0) index = -index;
-		if (straightDist<allPoints.get(size-1).y){
-			index++;
+		if (straightDist<lastPoint.y){
+			if (index<size-1) index++;
 			double[] r = new double[3];
 			Vector2D startTurn = allPoints.get(index);
 			if (index<size-2){
-				index = (index+size-1)/2;
+				index = size-2;
 			} else if (index>0) index -= 1;
 			
 			if (index>=0 && index<size){
