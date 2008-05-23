@@ -14,6 +14,8 @@ import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
 
 import org.jfree.data.xy.XYSeries;
 
+import com.graphbuilder.geom.Geom;
+
 
 
 /**
@@ -43,12 +45,7 @@ public class MyDriver extends SimpleDriver {
 	int turn;
 
 	Vector2D highestPoint = null;
-	double highest =-100;
-	double highestL = -100;
-	double highestR = -100;
-	Vector2D highestPointOnLeftEdge = null;
-	Vector2D pointOnLeftEdge = null;
-	Vector2D highestPointOnRightEdge = null;
+	Vector2D highestPointOnOtherEdge = null;
 	FuzzyRuleSet fuzzyRuleSet;
 	net.sourceforge.jFuzzyLogic.rule.Variable angle,dist,speedx,speedy,pos,steering;
 	double nraced = 0;
@@ -259,12 +256,7 @@ public class MyDriver extends SimpleDriver {
 		prevEdge = edgeDetector;					
 
 		highestPoint = edgeDetector.highestPoint;		
-		highestPointOnLeftEdge = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
-		highestPointOnRightEdge = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;
-
-		highestL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
-		highestR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
-		highest = (turn==TURNRIGHT) ? highestL+highestPoint.distance(highestPointOnLeftEdge) : highestR+highestPoint.distance(highestPointOnRightEdge);
+		highestPointOnOtherEdge = null;			
 		raced = distRaced;		
 		System.out.println(System.currentTimeMillis()-time);
 	}
@@ -323,121 +315,94 @@ public class MyDriver extends SimpleDriver {
 		 		
 //		Vector2D transform = new Vector2D(ax,0);
 
-		if (distRaced>550) meta = 1;
+		System.out.println("**************** E"+distRaced+" "+nraced+" ****************");
+		if (distRaced>650) meta = 1;
 		turn = edgeDetector.turn;
-		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
-
-
+//		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
+		if (turn==UNKNOWN) {
+			prevEdge = edgeDetector;				
+			raced = distRaced;		
+			System.out.println(System.currentTimeMillis()-time);
+			return;
+		}
+		
+		Edge left = edgeDetector.left;
+		Edge right = edgeDetector.right;
 		Vector2D hh = edgeDetector.highestPoint;
 		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);
-		System.out.println(highestPointEdge+"   guess");
-		Vector2D hL = (edgeDetector.left!=null) ? edgeDetector.left.getHighestPoint() :null;
-		Vector2D hR = (edgeDetector.right!=null) ? edgeDetector.right.getHighestPoint() : null;		
-		double lenL = (edgeDetector.left==null) ? 0 : edgeDetector.left.totalLength;
-		double lenR = (edgeDetector.right==null) ? 0 : edgeDetector.right.totalLength;
-		double len = (highestPointEdge==-1) ? (hh==null) ? lenL : lenL+hh.distance(hL) : (hh==null) ? lenR : lenR+hh.distance(hR);
-		if (hh==null)
-			hh = (highestPointEdge==-1) ? hL : (highestPointEdge==1) ? hR : null;
-
-		System.out.println("*********** "+distRaced+"  "+nraced+"**************");
-
-		int edge = prevEdge.guessPointOnEdge(highestPoint);		
-		if (turn*prevEdge.turn==-1){
+		if (left==null && right==null){
 			highestPoint = hh;
-			highestPointOnLeftEdge = hL;
-			highestPointOnRightEdge = hR;
-			highest = len;
-			highestL = lenL;
-			highestR = lenR;
-		} else {
-//			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-//			System.out.println(highestL+"  "+highest+"  "+highestR);
-//			System.out.println(hL+" "+hh+"  "+hR);
-//			System.out.println(lenL+"  "+len+"  "+lenR);
-			highestPoint = convertPoint(highestPoint, highest, nraced, edge, hh,highestPointEdge, edgeDetector);
-			highestPointOnLeftEdge = convertPoint(highestPointOnLeftEdge, highestL, nraced, -1, hL,-1, edgeDetector);
-			highestPointOnRightEdge = convertPoint(highestPointOnRightEdge, highestR, nraced, 1, hR,1, edgeDetector);
-			highest = (highestPoint==null) ? 0 :(hh==null) ? highest-nraced :  (highest>=99) ? len :len+highestPoint.distance(hh);
-			highestL = (highestPointOnLeftEdge==null) ? 0 : (hL==null) ? highestL-nraced : (highestL>=99) ? lenL : lenL+highestPointOnLeftEdge.distance(hL);
-			highestR = (highestPointOnRightEdge==null) ? 0 : (hR==null) ? highestR-nraced : (highestR>=99) ? lenR : lenR+highestPointOnRightEdge.distance(hR);
-			
-//			System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-//			System.out.println(highestL+"  "+highest+"  "+highestR);
-
-			System.out.println(turn+"   "+edgeDetector.turn);
-			if (highestPoint==null || highest<=0){
-				highestPoint = hh;
-				highest = len;
-			} else if (highestPoint.y>hh.y && highestPoint.length()<99){//ok now the highest store point is the real highest point							
-				//From here we have the real highest point in current perspective
-				//Now compare it with current seen highest point hh 			 
-				double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();
-				if (!Double.isNaN(alpha)){					
-					if (alpha>0.001){//hh belongs to the right edge
-						lenR += hh.distance(hR);
-						hR = hh;
-						highestPointOnRightEdge = hh;
-						highestR = lenR;
-					} else if (alpha<-0.001){//hh belongs to the left edge
-						lenL += hh.distance(hL);
-						hL = hh;		
-						highestPointOnLeftEdge = hh;
-						highestL = lenL;
-					} else {//unlikely, hh and highest point, because hh is more accurate, highestpoint is now hh
-						highestPoint = hh;
-						highest = len;
-					}
-				}
-
-			}  else if (highestPoint.y<=hh.y){//now the old highest point is lower than current highest point
-				double alpha =(hh==null) ? Double.NaN : highestPoint.angle()-hh.angle();//calculate the angle between 2 highest points
-				if (!Double.isNaN(alpha)){					
-					if (alpha>0.01){//highest belongs to the left edge
-						if (hL!=null && hL.y<highestPoint.y){
-							lenL += highestPoint.distance(hL);
-							hL = highestPoint;
-						}
-					} else if (alpha<-0.01){//hh belongs to the left edge
-						if (hR!=null && hR.y<highestPoint.y){
-							lenR += highestPoint.distance(hR);
-							hR = highestPoint;
-						}
-					}//unlikely, hh and highest point are at nearly the same angle, because hh is more accurate, cannot determine highest belongs to left or right						
-				}
-				highestPoint = hh;
-				highest = len;
-			} else if (highestPoint.length()>=99){
-				highest = len;
-				highestPoint = hh;
-				if (highestPoint.y<hL.y){
-					highestPoint = hL;
-					highest = highestL;
-				}
-				if (highestPoint.y<hR.y){
-					highestPoint = hR;
-					highest = highestR;
-				}
-			}
-
-
-			if (highestPointOnLeftEdge==null || (hL!=null && highestPointOnLeftEdge.y<hL.y) || highestPointOnLeftEdge.y>highestPoint.y){
-				highestPointOnLeftEdge = hL;
-				highestL = lenL;
-			}
-
-			if (highestPointOnRightEdge==null || (hR !=null && highestPointOnRightEdge.y<hR.y) || highestPointOnRightEdge.y>highestPoint.y){			
-				highestPointOnRightEdge = hR;
-				highestR = lenR;
-			}
+			highestPointOnOtherEdge = null;
+			prevEdge = edgeDetector;				
+			raced = distRaced;		
+			System.out.println(System.currentTimeMillis()-time);
+			return;
 		}
+		
+		if (hh!=null && highestPointEdge==-1 && left!=null){
+			edgeDetector.left.append(hh);					
+		} else if (hh!=null && highestPointEdge==1 && right!=null){
+			edgeDetector.right.append(hh);			
+		} 
+		edgeDetector.estimateCurve();
+		
+		if (edgeDetector.center==null){
+			highestPoint = hh;
+			if (turn==TURNRIGHT && edgeDetector.right!=null)
+				highestPointOnOtherEdge = edgeDetector.right.getHighestPoint();
+			else if (turn==TURNLEFT && edgeDetector.left!=null)
+				highestPointOnOtherEdge = edgeDetector.left.getHighestPoint();
+		} else {
+			Vector2D center = edgeDetector.center;
+			double radiusR = edgeDetector.radiusR;
+			double radiusL = edgeDetector.radiusL;
+			
+			
+			double x0 = center.x;
+			double y0 = center.y;
+			Vector2D[] v = null;
+			if (turn==TURNRIGHT && radiusR>0){//look for furthest point the right edge				
+				v = Geom.ptTangentLine(0, 0, x0, y0, radiusR);
+				Vector2D rHighest = (right==null) ? null : right.getHighestPoint();
+				highestPointOnOtherEdge = (v==null) ? rHighest :  (v[0].x>v[1].x) ? v[1] : v[0];
+				
+				if (rHighest!=null && (highestPointOnOtherEdge.y<=rHighest.y || highestPointOnOtherEdge.x<rHighest.x-1))	highestPointOnOtherEdge = rHighest;
+				double[] rs = Geom.getLineCircleIntersection(0, 0, highestPointOnOtherEdge.x, highestPointOnOtherEdge.y, x0, y0, radiusL);
+				if (rs==null){ 
+					highestPoint = hh;
+				} else if (rs.length<4){
+					highestPoint = new Vector2D(rs[0],rs[1]);
+					if (hh!=null && highestPoint.y<=hh.y) highestPoint = hh;
+				} else {
+					Vector2D p1 = new Vector2D(rs[0],rs[1]);
+					Vector2D p2 = new Vector2D(rs[2],rs[3]);
+					highestPoint = (p1.y<p2.y) ? p2 : p1;
+					if (hh!=null && highestPoint.y<=hh.y) highestPoint = hh;
+				}				
+			} else if (turn==TURNLEFT && radiusL>0){//look for furthest point the right edge
+				v = Geom.ptTangentLine(0, 0, x0, y0, radiusL);
+				Vector2D lHighest = (left==null) ? null : left.getHighestPoint();
+				highestPointOnOtherEdge = (v==null) ? lHighest :  (v[0].x<v[1].x) ? v[1] : v[0];
+				
+				if (lHighest!=null && (highestPointOnOtherEdge.y<=lHighest.y || highestPointOnOtherEdge.x>lHighest.x+1)) highestPointOnOtherEdge = lHighest;
+				double[] rs = Geom.getLineCircleIntersection(0, 0, highestPointOnOtherEdge.x, highestPointOnOtherEdge.y, x0, y0, radiusR);
+				if (rs==null){ 
+					highestPoint = hh;
+				} else if (rs.length<4){
+					highestPoint = new Vector2D(rs[0],rs[1]);
+					if (hh!=null && highestPoint.y<=hh.y) highestPoint = hh;
+				} else {
+					Vector2D p1 = new Vector2D(rs[0],rs[1]);
+					Vector2D p2 = new Vector2D(rs[2],rs[3]);
+					highestPoint = (p1.y<p2.y) ? p2 : p1;
+					if (hh!=null && highestPoint.y<=hh.y) highestPoint = hh;
+				}				
+			}
+			
+		}				
 
-//		System.out.println(hL+" "+hh+"  "+hR);
-//		System.out.println(lenL+"  "+len+"  "+lenR);
-//		System.out.println(highestPointOnLeftEdge+"   "+highestPoint+"   "+highestPointOnRightEdge);
-//		System.out.println(highestL+"  "+highest+"  "+highestR);
 
-
-		if ( (distRaced>62 && distRaced<160)){			
+		if ( (distRaced>62 && distRaced<650) ){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 //			ObjectArrayList<Vector2D> edges = ObjectArrayList.wrap(edgeDetector.getEdges(),edgeDetector.numpoint);
 //			if (highestPoint!=null) edges.add(highestPoint);
@@ -445,14 +410,15 @@ public class MyDriver extends SimpleDriver {
 //			if (highestPointOnRightEdge!=null) edges.add(highestPointOnRightEdge);
 //			EdgeDetector.drawEdge(edges, "E"+distRaced+" "+nraced+"b");
 			XYSeries series = new XYSeries("Curve");
-			
+			if (highestPoint!=null) series.add(highestPoint.x,highestPoint.y);
+			if (highestPointOnOtherEdge!=null) series.add(highestPointOnOtherEdge.x,highestPointOnOtherEdge.y);
 			for (int i=0;i<edgeDetector.x.size();++i)
 				series.add(edgeDetector.x.get(i),edgeDetector.y.get(i));
-			
-			if (edgeDetector.center!=null){
-				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
-				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
-			}
+//			
+//			if (edgeDetector.center!=null){
+//				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
+//				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
+//			}
 			 
 			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 			try {

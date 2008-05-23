@@ -583,4 +583,21 @@ public final class Geom {
 		return (rs.size()==0) ? null : rs.toDoubleArray();
 		
 	}
+	
+	//calculate the point on the circle centre at (x0,y0) radius a which make a tangent line with x,y
+	//x,y must be outside of the circle otherwise null is returned
+	public static Vector2D[] ptTangentLine(double x,double y,double x0,double y0,double a){
+		double dx = x0-x;
+		double dy = y0-y;
+		double d = dx*dx+dy*dy;
+		if (d<=a*a) return null;
+		
+		double tmp1 = (-a*dx+dy*Math.sqrt(d-a*a))/d;
+		double tmp2 = (-a*dx-dy*Math.sqrt(d-a*a))/d;
+		double t1 = Math.acos(tmp1);
+		double t2 = -Math.acos(tmp2);
+		Vector2D p1 = new Vector2D(x0+a*tmp1,y0+a*Math.sin(t1));
+		Vector2D p2 = new Vector2D(x0+a*tmp2,y0+a*Math.sin(t2));
+		return new Vector2D[]{p1,p2};
+	}
 }
