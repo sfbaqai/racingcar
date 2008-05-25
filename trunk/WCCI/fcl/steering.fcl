@@ -43,10 +43,10 @@ FUZZIFY dist
 	TERM Near	     := trape 7 10 15 20;
 	TERM Medium	 := trape 15 20 46 50;
 	TERM Far	 := trape 50 52 62 65;
-	TERM VeryFar	 := trape 60 70 199 200;
+	TERM VeryFar	 := trape 60 70 499 500;
 
 
-	RANGE := (0 .. 200);	// Difference between heading and WP
+	RANGE := (0 .. 500);	// Difference between heading and WP
 END_FUZZIFY
 
 
@@ -73,7 +73,7 @@ DEFUZZIFY steer
 	TERM Neutral  := 0;
 	TERM Safe 	:= FUNCTION (angle);		//16
 	TERM AdjustQuick := FUNCTION ((0.0-pos)/10);
-	TERM AdjustSlow := FUNCTION (speedx/120*(-0.96-pos)*dist/1200);
+	TERM AdjustSlow := FUNCTION (speedx/120*(-0.96-pos)*dist/800);
 	TERM Small 	:= trian 0 122.173047639603058 122.173047639603059 ;
 
 	ACCU : MAX;
@@ -90,13 +90,13 @@ RULEBLOCK No1
 	AND : PROD;
 	ACT : MIN;
 	//Driving rules
-	RULE 1 : IF dist IS Far AND angle IS Small THEN steer IS AdjustSlow;
-	RULE 2 : IF dist IS Far AND speedx IS Medium AND angle IS Small THEN steer IS AdjustSlow;	
+//	RULE 1 : IF dist IS Far AND angle IS Small THEN steer IS AdjustSlow;
+//	RULE 2 : IF dist IS Far AND speedx IS Medium AND angle IS Small THEN steer IS AdjustSlow;	
 	RULE 3 : IF dist IS Far and speedx IS VeryFast THEN steer IS Safe;
 	RULE 4 : IF dist IS NOT Far AND dist IS NOT VeryFar THEN steer is Safe;
 	RULE 5 : IF angle IS NOT Small AND dist is NOT VeryFar THEN steer IS Safe;
-	RULE 6 : IF dist IS VeryFar THEN steer IS AdjustSlow;
-	RULE 7 : IF pos IS Dangerous THEN steer IS AdjustQuick;
+//	RULE 6 : IF dist IS VeryFar AND angle IS Small THEN steer IS AdjustSlow;
+//	RULE 7 : IF pos IS Dangerous THEN steer IS AdjustQuick;
 	
 END_RULEBLOCK
 
