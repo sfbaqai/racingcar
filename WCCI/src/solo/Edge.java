@@ -393,9 +393,10 @@ public final class Edge {
 		}
 		
 		if (edge.center!=null){
-			TrackSegment.circle(edge.center.x, edge.center.y, edge.radius, series);
+//			if (edge.radius<550) TrackSegment.circle(edge.center.x, edge.center.y, edge.radius, series);
+			series.add(edge.center.x, edge.center.y);
 		}
-		series.add(edge.center.x, edge.center.y);
+		
 
 		XYDataset xyDataset = new XYSeriesCollection(series);
 		

@@ -427,7 +427,7 @@ public class TrackSegment {
 	public static void circle(double xx,double yy,double r,XYSeries series) {
 		long x = Math.round(xx*10);
 		long y = Math.round(yy*10);
-		long radius = Math.round(r*10);
+		long radius = Math.round(r*10);		
 		long discriminant = (5 - radius<<2)>>2 ;
 		long i = 0, j = radius ;
 		while (i<=j) {

@@ -54,7 +54,7 @@ public class EdgeDetector {
 	DoubleArrayList y = null;
 	int numpoint = 0;
 	int firstIndexMax = -1,lastIndexMax = -1;
-	
+
 	double maxDistance=-1;
 	public double leftStraight = -1;
 	public double rightStraight = -1;
@@ -73,33 +73,33 @@ public class EdgeDetector {
 	 */
 	public EdgeDetector(EdgeDetector edgeDetector) 
 	{
-	    this.cp = edgeDetector.cp;
-	    this.trackWidth = edgeDetector.trackWidth;
-	    this.curPos = edgeDetector.curPos;
-	    this.distRaced = edgeDetector.distRaced;
-	    this.curAngle = edgeDetector.curAngle;
-	    this.maxY = edgeDetector.maxY;
-	    this.left = edgeDetector.left;
-	    this.right = edgeDetector.right;
-	    this.firstIndexMax = edgeDetector.firstIndexMax;
-	    this.lastIndexMax = edgeDetector.lastIndexMax;
-	    this.maxDistance = edgeDetector.maxDistance;
-	    this.leftStraight = edgeDetector.leftStraight;
-	    this.rightStraight = edgeDetector.rightStraight;
-	    this.straightDist = edgeDetector.straightDist;
-	    this.highestPoint = edgeDetector.highestPoint;
-	    this.x = edgeDetector.x;
-	    this.y = edgeDetector.y;
-	    this.numpoint = edgeDetector.numpoint;
-	    this.turn = edgeDetector.turn;
-	    this.polar2Cartesian = edgeDetector.polar2Cartesian;
+		this.cp = edgeDetector.cp;
+		this.trackWidth = edgeDetector.trackWidth;
+		this.curPos = edgeDetector.curPos;
+		this.distRaced = edgeDetector.distRaced;
+		this.curAngle = edgeDetector.curAngle;
+		this.maxY = edgeDetector.maxY;
+		this.left = edgeDetector.left;
+		this.right = edgeDetector.right;
+		this.firstIndexMax = edgeDetector.firstIndexMax;
+		this.lastIndexMax = edgeDetector.lastIndexMax;
+		this.maxDistance = edgeDetector.maxDistance;
+		this.leftStraight = edgeDetector.leftStraight;
+		this.rightStraight = edgeDetector.rightStraight;
+		this.straightDist = edgeDetector.straightDist;
+		this.highestPoint = edgeDetector.highestPoint;
+		this.x = edgeDetector.x;
+		this.y = edgeDetector.y;
+		this.numpoint = edgeDetector.numpoint;
+		this.turn = edgeDetector.turn;
+		this.polar2Cartesian = edgeDetector.polar2Cartesian;
 	}
 
 
 	public EdgeDetector() {		
 	}
 
-	
+
 	public EdgeDetector(CarState cs) {
 		// TODO Auto-generated constructor stub
 		init(cs);
@@ -118,7 +118,7 @@ public class EdgeDetector {
 
 		if (Math.abs(cs.angle)<0.001)
 			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(cs.angle));
-		
+
 		double[] x = new double[NUM_POINTS];//x is axis along track axis
 		double[] y = new double[NUM_POINTS];
 		double[] rx = new double[NUM_POINTS];//x is axis along track axis
@@ -128,13 +128,13 @@ public class EdgeDetector {
 		leftStraight=-1;
 		rightStraight=-1;	
 		numpoint = 19;
-	
+
 		for (int i=0;i<19;++i){
 			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;											
 			double xx =Math.round(tracks[i]* Math.cos(angle)*10000.0d)/10000.0d;
 			double yy =Math.round(tracks[i]* Math.sin(angle)*10000.0d)/10000.0d;
 			angle=Math.round((Math.PI-angle)*ANGLEACCURACY)/ANGLEACCURACY;
-	
+
 			polar2Cartesian.put(angle, new Vector2D(xx,yy));
 			x[i] = xx;
 			y[i] = yy;
@@ -160,7 +160,7 @@ public class EdgeDetector {
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
 		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR;
-		
+
 		if (turnL==MyDriver.UNKNOWN || turnR == MyDriver.UNKNOWN){
 			turn = (int)(d/MyDriver.UNKNOWN);
 		} else if (d > 0){
@@ -170,7 +170,7 @@ public class EdgeDetector {
 		} else {
 			turn = MyDriver.UNKNOWN;
 		}
-				
+
 		if (turn==MyDriver.UNKNOWN && highestPoint!=null){
 			if (highestPoint.x<x[0])
 				turn = MyDriver.TURNLEFT;
@@ -180,12 +180,27 @@ public class EdgeDetector {
 				turn = MyDriver.STRAIGHT;
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
-						
+
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
 	}
 
 
-	public void estimateCurve(){
+	public void estimateCurve(int h){
+		if (h==-1 && left!=null && left.center!=null){
+			center = left.center;
+			radiusL = left.radius;				
+			radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) 
+					: (turn==MyDriver.TURNRIGHT) ? radiusL - trackWidth : radiusL+trackWidth;
+			return;
+		}
+
+		if (h==1 && right!=null && right.center!=null){						
+			center = right.center;
+			radiusR = right.radius;				
+			radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) 
+					: (turn==MyDriver.TURNRIGHT) ? radiusR + trackWidth : radiusR - trackWidth;
+			return;
+		}		
 		if (turn==MyDriver.TURNRIGHT){			
 			if (left!=null && left.center!=null){
 				center = left.center;
@@ -200,41 +215,86 @@ public class EdgeDetector {
 			}			
 		}
 //		if (trackWidth<0 && radiusL>0 && radiusR>0)
-//			trackWidth = Math.abs(radiusL-radiusR);
+//		trackWidth = Math.abs(radiusL-radiusR);
 	}
-	
+
 	//-1: Left,1:Right,0:UNKNOWN
 	int guessPointOnEdge(Vector2D p){
-		if (p==null) return 0;
+		if (p==null) return 0;		
 		if (left==null && right==null) return 0;
 		if (left==null) return 1;
 		if (right==null) return -1;
 		if (turn==MyDriver.UNKNOWN || turn==MyDriver.STRAIGHT)
 			return 0;
-		if (center==null || radiusL<0 || radiusR<0)
+		if (left.center==null || right.center==null || left.radius<0 || right.radius<0)
 			return -turn;
+				
+		int lsz = left.size-1;
+		int rsz = right.size-1;
+		double aL = 0;
+		double aR = 0;
+		if (p.distance(left.allPoints.get(lsz)) < trackWidth-1) return -1;
+		if (p.distance(right.allPoints.get(rsz)) < trackWidth-1) return 1;
+		if (lsz>1){
+			Vector2D s = left.allPoints.get(lsz-1);
+			Vector2D s1 = left.allPoints.get(lsz);
+			aL = s1.minus(s).angle(p.minus(s1));			
+		}
+		if (rsz>1){
+			Vector2D s = right.allPoints.get(rsz-1);
+			Vector2D s1 = right.allPoints.get(rsz);
+			aR = s1.minus(s).angle(p.minus(s1));
 		
-		double d = p.distance(center);
-		double dL = Math.abs(d-radiusL);
-		double dR = Math.abs(d-radiusR);
-		return (dL<dR) ? -1 : (dL>dR) ? 1 : -turn;
+		}
+		
+		System.out.println(aL+"  "+aR);
+
+		if (turn==MyDriver.TURNLEFT){
+			if (left.center.x>0) return 1;
+			if (right.center.x>0) return -1;
+			if (aL<0) return 1;
+			if (aR<0) return -1;
+			
+		}
+		
+		if (turn==MyDriver.TURNRIGHT){
+			if (left.center.x<0) return 1;
+			if (right.center.x<0) return -1;
+			if (aR>0) return -1;
+			if (aL>0) return 1;						
+		}
+
+		double radiusL = left.radius;
+		double radiusR = right.radius;
+		double dL = p.distance(left.center)-radiusL;		
+		double dR = p.distance(right.center)-radiusR;		
+
+		if (dL*dR>=0)
+			return (Math.abs(dL)<Math.abs(dR)) ? -1 : (Math.abs(dL)>Math.abs(dR)) ? 1 : -turn;
+		if (dL<=-trackWidth || Math.abs(dL)>Math.abs(dR))
+			return 1;
+
+		if (dR<=-trackWidth || Math.abs(dL)<Math.abs(dR))
+			return -1;
+
+		return -turn;
 	}
-	
+
 	public void combine(EdgeDetector ed,double distRaced){
 		if (distRaced>ed.straightDist) return;		
 		if (trackWidth<=0) {
 			trackWidth = ed.trackWidth;
 		}
 		double ax = -toLeftEdge()+ed.toLeftEdge();
-				 		
+
 //		long time = System.currentTimeMillis();
 		int len=ed.numpoint;
-						
+
 		double scale = this.trackWidth/ed.trackWidth;		
 		double[] xx = ed.x.elements();
 		double[] yy = ed.y.elements();		
 		DoubleSortedSet ds = this.polar2Cartesian.keySet();
-				
+
 		for (int i=0;i<len;++i){			
 			double x = xx[i]*scale;
 			double y = yy[i];
@@ -248,7 +308,7 @@ public class EdgeDetector {
 			if ( ds.contains(angle)) continue;
 			this.polar2Cartesian.put(angle, new Vector2D(x,y));					
 		}
-				
+
 
 		firstIndexMax = -1;
 		lastIndexMax = -1;
@@ -257,7 +317,7 @@ public class EdgeDetector {
 		maxY = -1;
 		maxDistance = -1;
 		numpoint = polar2Cartesian.size();
-		
+
 		int sz = (numpoint<NUM_POINTS) ? NUM_POINTS : numpoint*2;
 		this.x.ensureCapacity(sz);
 		this.y.ensureCapacity(sz);
@@ -267,20 +327,20 @@ public class EdgeDetector {
 		this.y.size(numpoint);
 		xx = x.elements();
 		yy = y.elements();				
-		
+
 		left = null;
 		right = null;
-	
+
 		int i = 0;
 		ds = this.polar2Cartesian.keySet();
-		
+
 		for (double angle:ds){
 			Vector2D v = polar2Cartesian.get(angle);		
 			xx[i] = v.x;
 			yy[i] = v.y;
 			rx[numpoint-1-i] = v.x;
 			ry[numpoint-1-i] = v.y;
-			
+
 			double dist = v.length();
 
 			if (maxDistance<dist)
@@ -310,7 +370,7 @@ public class EdgeDetector {
 		} else {
 			turn = MyDriver.UNKNOWN;
 		}
-				
+
 		if (turn==MyDriver.UNKNOWN && highestPoint!=null){
 			if (highestPoint.x<xx[0])
 				turn = MyDriver.TURNLEFT;
@@ -320,8 +380,7 @@ public class EdgeDetector {
 				turn = MyDriver.STRAIGHT;
 		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
 			turn = MyDriver.UNKNOWN;
-		
-		estimateCurve();
+
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
 
@@ -344,8 +403,8 @@ public class EdgeDetector {
 		}
 		if (all)
 //			if (maxDistance>=99)
-				return MyDriver.STRAIGHT;
-//			else return MyDriver.UNKNOWN;
+			return MyDriver.STRAIGHT;
+//		else return MyDriver.UNKNOWN;
 
 		double sum=0;		
 		for (int i=0;i<firstIndexMax;++i){
@@ -372,12 +431,12 @@ public class EdgeDetector {
 		}
 		if (meanR<=0 || rl<meanL-DELTA || meanR>rr+DELTA)
 			return MyDriver.TURNLEFT;
-		
+
 		return MyDriver.TURNRIGHT;
 	}
 
 
-	
+
 	public double toMiddle(){
 		if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
 		return Math.round(trackWidth/2*curPos*10000.0d)/10000.0d;
@@ -414,7 +473,7 @@ public class EdgeDetector {
 		return x.elements();
 	}
 
-	
+
 	/**
 	 * @return the y
 	 */
@@ -422,7 +481,7 @@ public class EdgeDetector {
 		return y.elements();
 	}
 
-		/**
+	/**
 	 * @return the firstIndexMax
 	 */
 	public int getFirstIndexMax() {
@@ -510,8 +569,8 @@ public class EdgeDetector {
 //		jf.setVisible(true);
 
 	}
-	
-	
+
+
 	public static void drawEdge(ObjectList<Vector2D> vs,final String title){			
 		XYSeries series = new XYSeries("Curve");
 
@@ -542,7 +601,7 @@ public class EdgeDetector {
 
 		p.start();
 	}
-	
+
 	public static void drawEdge(Vector2D[] vs,final String title){			
 		XYSeries series = new XYSeries("Curve");
 
@@ -573,7 +632,7 @@ public class EdgeDetector {
 
 		p.start();
 	}
-	
+
 	public static void drawEdge(EdgeDetector ed,final String title){			
 		XYSeries series = new XYSeries("Curve");
 
@@ -604,7 +663,7 @@ public class EdgeDetector {
 
 		p.start();
 	}
-	
+
 	public static void drawEdge(XYSeries series,final String title){					
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
@@ -630,7 +689,7 @@ public class EdgeDetector {
 		p.start();
 	}
 
-	
+
 
 	/* compute the radius given three points */
 	double radius(double x1, double y1, double x2, double y2, double x3, double y3)
@@ -652,7 +711,7 @@ public class EdgeDetector {
 		}
 	}
 
-		
+
 	public Vector2D[] getEdges(){
 		return Vector2D.toVector2D(x.elements(),y.elements());
 	}
@@ -660,13 +719,13 @@ public class EdgeDetector {
 	public Edge getLeftEdge(){
 		return left;
 	}
-	
+
 	public Edge getRightEdge(){
 		return right;
 	}
 
-	
-		
+
+
 	public static double[] reverse(double[] ar){
 		if (ar==null) return null;
 		int len = ar.length/2;
@@ -678,7 +737,7 @@ public class EdgeDetector {
 		}
 		return ar;
 	}
-	
+
 	public static DoubleArrayList reverse(DoubleArrayList ar){
 		if (ar==null) return null;
 		DoubleArrayList rs = new DoubleArrayList();
@@ -687,7 +746,7 @@ public class EdgeDetector {
 		for (int i=0;i<len;++i){
 			rs.add(ar.getDouble(l-i));
 		}
-		
+
 		return rs;
 	}
 
