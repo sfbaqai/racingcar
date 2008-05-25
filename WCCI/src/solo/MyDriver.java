@@ -35,6 +35,8 @@ public class MyDriver extends SimpleDriver {
 	public final static double G = 9.81;
 	public final static double PI_2 = Math.PI/2;
 	public final static double EPSILON = 1.5;
+	public final static double SIN_PI_4=0.7071068;
+	public final static double MARGIN = 2;
 	public double trackWidth =-1;
 	double workingWidth = 0;
 	double leftX;
@@ -53,6 +55,8 @@ public class MyDriver extends SimpleDriver {
 	double toMiddle = 0;
 	double mu = 0;
 	double mass = carmass;	
+	Vector2D centerOfTurn = null;
+	double radiusOfTurn=-1;
 
 	/**
 	 * 
@@ -289,6 +293,7 @@ public class MyDriver extends SimpleDriver {
 
 	public void record(){
 		if (!recording) return;
+		centerOfTurn = null;		
 		long time = System.currentTimeMillis();
 		nraced = distRaced - raced;
 		nraced = Math.round(nraced*10000.0d)/10000.0d;
@@ -315,17 +320,6 @@ public class MyDriver extends SimpleDriver {
 		Edge right = edgeDetector.right;
 		Vector2D hh = edgeDetector.highestPoint;
 		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);
-//		if ( (distRaced>145 && distRaced<170) ){
-//		if (left!=null) {
-//		System.out.println(left.radius+"   "+left.center);
-//		if (hh!=null && left!=null && left.center!=null) System.out.println(hh.distance(left.center)-left.radius);
-//		}
-//		if (right!=null && right!=null && right.center!=null) {
-//		System.out.println(right.radius+"   "+right.center);
-//		if (hh!=null) System.out.println(hh.distance(right.center)-right.radius);
-//		}
-//		System.out.println(highestPointEdge+" asdsa");			
-//		}
 
 		if (left==null && right==null){
 			highestPoint = hh;
@@ -343,7 +337,6 @@ public class MyDriver extends SimpleDriver {
 			edgeDetector.right.append(hh);			
 		} 
 		edgeDetector.estimateCurve(highestPointEdge);
-//		System.out.println(edgeDetector.center+"   "+edgeDetector.radiusL+"   "+edgeDetector.radiusR+"   radius");
 
 		if (edgeDetector.center==null){
 			highestPoint = hh;
@@ -397,12 +390,29 @@ public class MyDriver extends SimpleDriver {
 					if (hh!=null && highestPoint.y<=hh.y) highestPoint = hh;
 				}				
 			}
-
-		}				
+			
+			
+			Vector2D t = null;			
+			if (turn==TURNRIGHT && radiusR>0){
+				radiusR += W;
+				radiusL -= W;
+				t = new Vector2D(SIN_PI_4,-SIN_PI_4);
+				radiusOfTurn = 3.414*(radiusL-0.707*radiusR);
+				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusR));
+			} else if (turn==TURNLEFT && radiusL>0){
+				radiusL += W;
+				radiusR -= W;
+				t = new Vector2D(-SIN_PI_4,-SIN_PI_4);
+				radiusOfTurn = 3.414*(radiusR-0.707*radiusL);
+				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusL));
+			}
+			
+			System.out.println(maxAllowedSpeedAtRadius(radiusOfTurn)+"  Max speed");
+		}
 
 
 		boolean draw = false;
-		if (draw && (distRaced>320 && distRaced<370) ){			
+		if (draw && (distRaced>80 && distRaced<120) ){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
 			XYSeries series = new XYSeries("Curve");
 			if (highestPoint!=null) series.add(highestPoint.x,highestPoint.y);
@@ -414,8 +424,9 @@ public class MyDriver extends SimpleDriver {
 				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
 				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
 			}
+			if (centerOfTurn!=null && radiusOfTurn<550) TrackSegment.circle(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, series);
 
-			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"d");
+			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 //			if (left!=null) Edge.drawEdge(left, "E"+distRaced+" "+nraced+"b");
 //			if (right!=null) Edge.drawEdge(right, "E"+distRaced+" "+nraced+"c");
 			try {
@@ -425,6 +436,7 @@ public class MyDriver extends SimpleDriver {
 			}
 //			meta=1;
 		}
+		if (distRaced>450) meta=1;
 
 		prevEdge = edgeDetector;				
 		raced = distRaced;		
@@ -445,7 +457,7 @@ public class MyDriver extends SimpleDriver {
 	}
 
 	public double maxAllowedSpeedAtRadius(double radius){			
-		return Math.sqrt(G*radius*mu*2)*3.6;
+		return Math.sqrt(G*radius)*3.6;
 	}
 
 
@@ -458,27 +470,6 @@ public class MyDriver extends SimpleDriver {
 	}
 
 	double desireSpeed = 0;
-	public Vector2D chooseWp(){
-		if (highestPoint==null && highestPointOnOtherEdge==null)
-			return null;
-
-		if (highestPointOnOtherEdge==null)
-			return highestPoint;
-
-//		double safeDistance = stoppingDistance(speedX);
-		Vector2D hh = edgeDetector.highestPoint;
-		if (hh==null) return highestPointOnOtherEdge;
-		Vector2D p = hh.plus(highestPointOnOtherEdge).times(0.5);
-		double[] r = new double[3];
-		boolean isCircle = Geom.getCircle(p.x, p.y, highestPoint.x, highestPoint.y, 0, 0, r);
-//		System.out.println(highestPoint+"   "+highestPointOnOtherEdge);
-		if (isCircle){
-			double radius = Math.sqrt(r[2]);
-			desireSpeed = maxAllowedSpeedAtRadius(radius);			
-		}
-		return p.scale(workingWidth/trackWidth, 1);
-//		return null;
-	}
 
 
 	public double distanceToBrake(double speed,double targetspeed){
@@ -486,66 +477,58 @@ public class MyDriver extends SimpleDriver {
 	}
 	
 	public double gotoPoint(Vector2D point){
-		if (point==null) return Double.NaN;		
-
+		if (point==null) return Double.NaN;				
 		double alpha = (point==null) ?0 : PI_2-point.angle();
-//		double distance = point.length();
-		double h = point.y/2;
+		double distance = point.length();
+		System.out.println(point+"   "+centerOfTurn);
+
 		double sign = (alpha<0) ? -1 : 1;
-
-
-		if (desireSpeed<=speedX-5 ){
-//			System.out.println(speed+"   "+desireSpeed);
-//			System.out.println(distanceToBrake(speed, desireSpeed)+"   "+h);
-			if (distanceToBrake(speedX, desireSpeed) >= h){
-				maxSpeed = 0;
-				if (curAngle-alpha>-0.001) return -sign;
-			}
-		} else {
-			maxSpeed = desireSpeed;							
-		}
-		System.out.println(desireSpeed);
-		return (curAngle-alpha)/steerLock;
-
-//		if (desireSpeed<speed-2){
-//		maxSpeed = 0;
-//		if (Math.abs(curAngle-alpha)>0.05) return sign;
-//		} else if (desireSpeed>speed+2){
-//		maxSpeed = Double.MAX_VALUE;
-//		} else maxSpeed = desireSpeed;
-//		double pos = sign * curPos;
-//		double maxA = maxAngleAtSpeed(speedX)-curAngle;
-//		double speedy = speedY * sign;
-//		angle.setValue(alpha*sign);
-//		dist.setValue(distance);
-//		this.pos.setValue(pos);
-//		speedx.setValue(speedX);
-//		this.speedy.setValue(speedy);
-
-//		angle.getMembershipFunction("Small").setParameter(3,maxA);
-//		angle.getMembershipFunction("Small").setParameter(2,0.9*maxA);
-
-
-//		fuzzyRuleSet.evaluate();
-
-//		for (Object r : fuzzyRuleSet.getRules()) {
-//		FuzzyRule rule = (FuzzyRule)r;
-//		if (rule.getDegreeOfSupport()>0) System.out.println(rule);
-//		}//
-
-//		double steer = sign*steering.getLatestDefuzzifiedValue();
-//		if (Double.isNaN(steer)){		
-//		return steer;
+		desireSpeed = maxAllowedSpeedAtRadius(radiusOfTurn);
+		maxSpeed = desireSpeed;
+//		if (speed>maxSpeed){//reduce speed now
+//			if (Math.abs(curAngle-alpha)>0.001)
+//				return -sign;
 //		}
+		
+		double pos = sign * curPos;
+		double maxA = maxAngleAtSpeed(speedX)-curAngle;
+		double speedy = speedY * sign;
+		angle.setValue(alpha*sign);
+		dist.setValue(distance);
+		this.pos.setValue(pos);
+		speedx.setValue(speedX);
+		this.speedy.setValue(speedy);
 
-////		System.out.println(steer+"   "+alpha+"   "+highestPoint+"   "+curAngle);
-//		steer = curAngle - steer;
-//		steer = Math.max(steer, -steerLock);
-//		steer = Math.min(steer, steerLock);
+		angle.getMembershipFunction("Small").setParameter(3,maxA);
+		angle.getMembershipFunction("Small").setParameter(2,0.9*maxA);
 
 
-//		return steer/steerLock;
+		fuzzyRuleSet.evaluate();
 
+		for (Object r : fuzzyRuleSet.getRules()) {
+		FuzzyRule rule = (FuzzyRule)r;
+		if (rule.getDegreeOfSupport()>0) System.out.println(rule);
+		}//
+
+		double steer = sign*steering.getLatestDefuzzifiedValue();
+		if (Double.isNaN(steer)){		
+		return steer;
+		}
+
+		System.out.println(steer+"   Steer  "+alpha);
+		steer = curAngle - steer;
+		steer = Math.max(steer, -steerLock);
+		steer = Math.min(steer, steerLock);
+
+
+		return steer/steerLock;
+
+	}
+	
+	public static double findPoint(double x0,double y0,double r,double x){//assume that y0<0
+		double dx = x-x0;
+		double dy = Math.sqrt(r*r-dx*dx);
+		return y0+dy;
 	}
 	public double fuzzySteering(){		
 		if (turn==STRAIGHT) {
@@ -556,8 +539,18 @@ public class MyDriver extends SimpleDriver {
 		}		
 //		maxSpeed=120;
 
-		if (highestPoint==null) return prevSteer;
-		Vector2D point = chooseWp();				
+		if (centerOfTurn==null || radiusOfTurn<0) return prevSteer;
+		Vector2D point = null;
+		double sign = (turn==TURNRIGHT) ? -1 : 1;
+		Vector2D t = new Vector2D(radiusOfTurn*sign,0);
+//		double alpha = new Vector2D(-centerOfTurn.x,-centerOfTurn.y).angle();
+		double distToCenterOfTurn = centerOfTurn.length();
+//		double angle = Math.PI/2;
+		if (centerOfTurn.y>0)
+			point = new Vector2D(centerOfTurn.x+radiusOfTurn*sign,centerOfTurn.y);
+		else if (distToCenterOfTurn<radiusOfTurn){//if car is still inside the circle
+			point = new Vector2D(-sign*0.2,findPoint(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, -sign*0.2));
+		} else point = new Vector2D(-sign*0.2,findPoint(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, -sign*0.2));
 		double steer = gotoPoint(point);
 		if (Double.isNaN(steer))
 			return prevSteer;
