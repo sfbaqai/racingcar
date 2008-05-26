@@ -332,7 +332,7 @@ public class Variable implements Comparable,TObjectProcedure<LinguisticTerm> {
 	}
 
 	/** Evaluate 'termName' membershipfunction at 'value' */
-	public double getMembership(MutableString termName) {
+	public double getMembership(MutableString termName) {		
 		MembershipFunction mf = linguisticTerms.get(termName).membershipFunction;
 		if( mf == null ) throw new RuntimeException("No such termName: \"" + termName + "\"");
 		return mf.membership(this.value);
