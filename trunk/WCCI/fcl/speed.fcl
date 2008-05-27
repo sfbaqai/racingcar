@@ -10,18 +10,33 @@ VAR_INPUT
 	pos   : REAL;
 	curAngle : REAL;
 	slipSpeed : REAL;
-	turning : REAL;
-	
+	difference : REAL;
+	spaceRemain : REAL;
 END_VAR
 
 VAR_OUTPUT
-	steer : REAL; 	// Steering angle
+	brake : REAL; 	// Steering angle
 END_VAR
 
-FUZZIFY turning
-	TERM Turning := 1;
-	RANGE := (0 .. 1);	// Difference between heading and WP
+//Need to understand how to get negative values
+FUZZIFY difference
+	TERM Small 	 := trape 0 0 9 10 ;
+	TERM Medium  := trape 10 21 29 35;
+	TERM Large	 := trape 29 31 59 60;
+	TERM VeryLarge	 := trape 29.55 30 350 360;
+
+
+	RANGE := (0 .. 360);	// Difference between heading and WP
 END_FUZZIFY
+
+FUZZIFY spaceRemain
+	TERM Enough 	 := trape -2 0 350 360 ;
+	TERM NotEnough	 := trape -360 -350 -0 0;
+
+
+	RANGE := (-360 .. 360);	// Difference between heading and WP
+END_FUZZIFY
+
 
 
 //Need to understand how to get negative values
@@ -37,8 +52,8 @@ FUZZIFY speedx
 END_FUZZIFY
 
 FUZZIFY speedy
-	TERM VerySlow 	 := trape -1.5 -1.5 1.5 1.5 ;
-	TERM Slow	     := (-15,0) (-15,1) (-8,1) (-8,0) (8,0) (8,1) (15,1) (15,0);
+	TERM VerySlow 	 := trape -3 -2.5 2.5 3 ;
+	TERM Slow	     := (-15,0) (-13,1) (-10,1) (-5,0) (5,0) (10,1) (13,1) (15,0);
 	TERM Medium	 := (-25,0) (-20,1) (-15,1) (-13,0) (13,0) (15,1) (20,1) (25,0);
 	TERM Fast	 := (-60,0) (-50,1) (-25,1) (-20,0) (20,0) (25,1) (50,1) (60,0);
 	TERM VeryFast	 := (-360,0) (-350,1) (-60,1) (-50,0) (50,0) (60,1) (350,1) (360,0);
@@ -60,7 +75,7 @@ FUZZIFY dist
 	TERM Near	     := trape 7 10 15 20;
 	TERM Medium	 := trape 15 20 46 50;
 	TERM Far	 := trape 50 52 62 65;
-	TERM VeryFar	 := trape 60 70 200 200;
+	TERM VeryFar	 := trape 60 70 94 95;
 
 	RANGE := (0 .. 200);	// Difference between heading and WP
 END_FUZZIFY
@@ -76,10 +91,8 @@ FUZZIFY angle
 END_FUZZIFY
 
 FUZZIFY pos
-	TERM Ok   := trape -0.95 -0.85 0.85 0.95 ;
+	TERM Ok   := trape -0.95 -0.9 0.9 0.95 ;
 	TERM Dangerous := (-3,0) (-2,1) (-0.96,1) (-0.93,0);
-	TERM SafeSlipZone := trape 0.0 0.0 1 1 ;
-
 
 	RANGE := (-3 .. 3);	// Difference between heading and WP
 END_FUZZIFY
@@ -87,19 +100,18 @@ END_FUZZIFY
 
 
 //Steer : [0,16]
-DEFUZZIFY steer
-	TERM Neutral  := 0;
-	TERM Safe 	:= FUNCTION (angle);		//16
+DEFUZZIFY brake
+	TERM Hard  := 0;
+	TERM Moderate	:= FUNCTION (speedx);		//16
 	TERM Smooth := FUNCTION ( angle );
-	TERM Simple := FUNCTION ( curAngle );
-	TERM AdjustSlow := FUNCTION ((curAngle/0.7853 -(0.96-pos)/10)*0.7853);
+	TERM Accelerate := FUNCTION (speedx+1);
+	TERM Decelerate := FUNCTION (speedx-1);
 
 	ACCU : MAX;
 	METHOD : COGF;
 	DEFAULT := 0.0;
-	RANGE := (-3.14 .. 3.14);
+	RANGE := (-100000 .. 100000);
 END_DEFUZZIFY
-
 
 
 //Acceleration : [0, 0.01]
@@ -109,15 +121,14 @@ RULEBLOCK No1
 	AND : PROD;
 	ACT : MIN;
 	//Driving rules
-//	RULE 1 : IF turning IS NOT Turning AND dist IS VeryFar AND angle IS Small AND speedy IS VerySlow AND slipSpeed IS NOT Dangerous THEN steer IS //AdjustSlow;
-//	RULE 2 : IF angle IS Large THEN steer IS Smooth;
-//	RULE 3 : IF angle IS NOT Small OR pos IS Dangerous AND slipSpeed IS NOT Dangerous THEN steer IS Safe;
-//      RULE 4 : IF slipSpeed IS Dangerous AND pos IS NOT SafeSlipZone AND pos IS Dangerous THEN steer IS Neutral;
-//	RULE 5 : IF dist IS NOT VeryFar THEN steer IS Safe;
-//	RULE 6 : IF turning IS Turning AND dist IS VeryFar AND angle IS Small AND speedy IS NOT VerySlow THEN steer IS Safe;
-//    RULE 7 : IF slipSpeed IS Dangerous AND pos IS SafeSlipZone THEN steer IS Safe;
-	RULE 8 : IF turning IS Turning THEN steer IS Safe;
-	RULE 9 : IF turning IS NOT Turning AND (dist IS NOT VeryFar OR angle IS NOT Small OR speedy IS NOT VerySlow OR slipSpeed IS Dangerous) THEN steer IS Simple;
+	RULE 1 : IF difference IS Small AND slipSpeed IS NOT Dangerous THEN brake IS Accelerate;
+	RULE 2 : IF spaceRemain IS NotEnough THEN brake IS Hard;
+	RULE 3 : IF slipSpeed IS Dangerous THEN brake IS Decelerate;
+	RULE 8 : IF slipSpeed IS Dangerous AND speedx IS VeryFast THEN brake IS Hard;
+	RULE 4 : IF pos IS Dangerous AND speedx IS NOT Slow THEN brake IS Decelerate;
+	RULE 5 : IF slipSpeed IS Dangerous AND difference IS Medium THEN brake IS Decelerate;
+	RULE 6 : IF pos IS NOT Dangerous AND slipSpeed IS NOT Dangerous AND difference IS Medium THEN brake IS Accelerate;
+	RULE 7 : IF spaceRemain IS Enough THEN brake IS Accelerate;
 
 	
 END_RULEBLOCK
