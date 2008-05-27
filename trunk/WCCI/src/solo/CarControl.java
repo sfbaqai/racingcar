@@ -4,7 +4,7 @@ package solo;
  * @author kokichi3000
  *
  */
-public class CarControl {
+public class CarControl{
 	double accel;
 	double brake;
 	int gear;
@@ -37,6 +37,10 @@ public class CarControl {
 		steer = (str==null)?0:Double.parseDouble(str);
 		str = (String)(mp.getReading("meta"));
 		meta = (str==null)?0:Integer.parseInt(str);		
+	}
+	
+	public CarControl(){
+		meta = 1;
 	}
 
 	public CarControl(double accel, double brake, int gear, double steer,

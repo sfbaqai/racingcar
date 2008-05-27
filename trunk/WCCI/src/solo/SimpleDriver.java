@@ -3,13 +3,17 @@
  */
 package solo;
 
+import raceclient.Action;
+import raceclient.Controller;
+import raceclient.SensorModel;
+
 /**
  * @author kokichi3000
  *
  */
-public abstract class SimpleDriver extends BaseDriver {
+public abstract class SimpleDriver extends BaseDriver implements Controller{
 	final static int[] gearUp = new int[]{5000,6000,6000,6500,7000,7500};
-	final static int[] gearDown = new int[]{0,2500,3000,3000,3500,3500};
+	final static int[] gearDown = new int[]{0,2500,3000,3000,3250,3500};
 //	final static double[] gearUp = new double[]{58.157894736842096,86.91011235955057,118.99999999999999,154.7,209.05405405405406};
 //	final static double[] wheelRadius = new double[]{0.2159, 0.2159,0.2286,0.2286}; 
 	final static int FRONT_RGT = 0;
@@ -197,5 +201,52 @@ public abstract class SimpleDriver extends BaseDriver {
 
 	public double speedAtRpm(double rpm,double gearRatio){
 		return SHIFT*rpm*0.009575597*wheelRadiusInInch[2]/DIFFERENTIAL_RATIO/gearRatio;
+	}
+
+	/* (non-Javadoc)
+	 * @see raceclient.Controller#control(raceclient.SensorModel)
+	 */
+	@Override
+	public Action control(SensorModel sensors) {
+		// TODO Auto-generated method stub
+		CarState cs = new CarState(sensors);
+		carState = cs;
+		curAngle = cs.getAngle();
+		speedX = cs.getSpeedX();
+		speedY = cs.getSpeedY();
+		distRaced = cs.getDistRaced();
+		distFromStartLine = cs.getDistFromStart();
+		curPos = -cs.getTrackPos();
+		tracks = cs.getTrack();
+		curLapTime = cs.getCurLapTime();
+		damage = cs.getDamage();
+		fuel = cs.getFuel();
+		gear = cs.getGear();
+		lastLapTime = cs.getLastLapTime();
+		racePos = cs.getRacePos();
+		rpm = cs.getRpm();
+		wheelSpinVel = cs.getWheelSpinVel();
+		opponents = cs.getOpponents();
+		speed = Math.sqrt(speedX*speedX+speedY*speedY);
+//		System.out.println("Toi day roi");		
+		CarControl cc = wDrive(cs);		
+//		System.out.println(cc);
+		Action action = new Action();
+		action.steering = cc.steer;
+		action.brake = (cc.brake>0);
+		action.accelerate = (cc.accel>0);
+		action.gear = cc.gear;
+		action.restartRace = (cc.meta==1);
+		return action;	
+
+	}
+
+	/* (non-Javadoc)
+	 * @see raceclient.Controller#reset()
+	 */
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
 	}
 }
