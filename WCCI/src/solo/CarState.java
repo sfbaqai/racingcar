@@ -5,6 +5,8 @@ package solo;
 
 import java.util.Arrays;
 
+import raceclient.SensorModel;
+
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 
@@ -12,7 +14,111 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
  * @author kokichi3000
  *
  */
-public class CarState {
+public class CarState implements SensorModel{
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getAngleToTrackAxis()
+	 */
+	@Override
+	public double getAngleToTrackAxis() {
+		// TODO Auto-generated method stub
+		return angle;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getCurrentLapTime()
+	 */
+	@Override
+	public double getCurrentLapTime() {
+		// TODO Auto-generated method stub
+		return curLapTime;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getDistanceFromStartLine()
+	 */
+	@Override
+	public double getDistanceFromStartLine() {
+		// TODO Auto-generated method stub
+		return distFromStart;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getDistanceRaced()
+	 */
+	@Override
+	public double getDistanceRaced() {
+		// TODO Auto-generated method stub
+		return distRaced;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getFuelLevel()
+	 */
+	@Override
+	public double getFuelLevel() {
+		// TODO Auto-generated method stub
+		return fuel;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getLateralSpeed()
+	 */
+	@Override
+	public double getLateralSpeed() {
+		// TODO Auto-generated method stub
+		return speedY;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getOpponentSensors()
+	 */
+	@Override
+	public double[] getOpponentSensors() {
+		// TODO Auto-generated method stub
+		return opponents;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getRacePosition()
+	 */
+	@Override
+	public int getRacePosition() {
+		// TODO Auto-generated method stub
+		return racePos;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getRPM()
+	 */
+	@Override
+	public double getRPM() {
+		// TODO Auto-generated method stub
+		return rpm;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getSpeed()
+	 */
+	@Override
+	public double getSpeed() {
+		// TODO Auto-generated method stub
+		return speedX;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getTrackEdgeSensors()
+	 */
+	@Override
+	public double[] getTrackEdgeSensors() {
+		// TODO Auto-generated method stub
+		return track;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getTrackPosition()
+	 */
+	@Override
+	public double getTrackPosition() {
+		// TODO Auto-generated method stub
+		return trackPos;
+	}
+	/* (non-Javadoc)
+	 * @see raceclient.SensorModel#getWheelSpinVelocity()
+	 */
+	@Override
+	public double[] getWheelSpinVelocity() {
+		// TODO Auto-generated method stub
+		return wheelSpinVel;
+	}
 	final static int OPPONENTS_SENSORS_NUM = 18;
 	
 	double angle;
@@ -36,6 +142,7 @@ public class CarState {
 	 *
 	 * @param carState a <code>CarState</code> object
 	 */
+    
 	public CarState(CarState carState) 
 	{
 	    this.angle = carState.angle;
@@ -58,6 +165,30 @@ public class CarState {
 	/**
 	 * 
 	 */
+	
+	public CarState(SensorModel carState) 
+	{
+	    this.angle = carState.getAngleToTrackAxis();
+	    this.curLapTime = carState.getCurrentLapTime();
+	    this.damage = carState.getDamage();
+	    this.distFromStart = carState.getDistanceFromStartLine();
+	    this.distRaced = carState.getDistanceRaced();
+	    this.fuel = carState.getFuelLevel();
+	    this.gear = carState.getGear();
+	    this.lastLapTime = carState.getLastLapTime();
+	    this.opponents = carState.getOpponentSensors();
+	    this.racePos = carState.getRacePosition();
+	    this.rpm = carState.getRPM();
+	    this.speedX = carState.getSpeed();
+	    this.speedY = carState.getLateralSpeed();
+	    this.track = carState.getTrackEdgeSensors();
+	    this.trackPos = carState.getTrackPosition();
+	    this.wheelSpinVel = carState.getWheelSpinVelocity();
+	}
+	/**
+	 * 
+	 */
+
 	public CarState() {
 		
 	}

@@ -87,12 +87,15 @@ public class Test {
 //        
         
         DatagramSocket socket = new DatagramSocket();
-        InetAddress remote = InetAddress.getByName("127.0.01");
+        InetAddress remote = InetAddress.getByName("127.0.0.1");
+        byte[] send = new CarControl().toString().getBytes();
+        
         String toSend = "wcci2008";
         byte[] outBuffer = toSend.getBytes();
         
        
     	socket.setSoTimeout(5000);
+    	socket.send(new DatagramPacket  (send, send.length, remote, port));
     	do {
     		try{
     			socket.send(new DatagramPacket  (outBuffer, outBuffer.length, remote, port));
