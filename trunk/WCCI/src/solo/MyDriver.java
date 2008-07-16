@@ -50,6 +50,7 @@ public class MyDriver extends SimpleDriver {
 	boolean recording = false;	
 	int turn;
 	boolean isTurning = false;
+	Vector2D optimalPoint = null;
 	
 	static private Random random = new Random(1234);
 
@@ -206,14 +207,15 @@ public class MyDriver extends SimpleDriver {
 
 
 
-	public void init(){
+	public void init(){		
 		edgeDetector = new EdgeDetector(carState);
 //		edgeDetector.init(carState);
 		if (edgeDetector.trackWidth<=0 && prevEdge!=null)
 			edgeDetector.trackWidth = prevEdge.trackWidth;
 		trackWidth = edgeDetector.getTrackWidth();//must keep this line
 		workingWidth = trackWidth-2*W;
-		curPos *= trackWidth/workingWidth;
+		
+//		curPos /= trackWidth/workingWidth;
 		toMiddle = edgeDetector.toMiddle();		
 		mu = estimateMu(speed);
 		mass = carmass + fuel;		
@@ -442,11 +444,26 @@ public class MyDriver extends SimpleDriver {
 			}
 						
 		}
-		
+		//Now looking for optimal point
+		Vector2D cntr = null;
+		if (centerOfTurn!=null && hh!=null){
+			Vector2D t = hh.minus(centerOfTurn).normalized();
+			optimalPoint = centerOfTurn.plus(t.times(radiusOfTurn));
+			
+		}
 		Vector2D startTurnPoint = startTurnPoint();
+		double rr=0;
+		if (startTurnPoint!=null && optimalPoint!=null){
+			double[] r = new double[3];
+			if (Geom.getCircle(0, 0, startTurnPoint.x, startTurnPoint.y, optimalPoint.x, optimalPoint.y, r)){
+				cntr=new Vector2D(r[0],r[1]);				
+				rr = Math.sqrt(r[2]);
+			}
+		}
+		System.out.println(cntr+"   "+optimalPoint+"    "+startTurnPoint+"   New");
 		Vector2D hc = (centerOfTurn==null) ? null : new Vector2D(centerOfTurn.x,centerOfTurn.y+radiusOfTurn);
 		if (highestPoint==null) highestPoint=hh;
-		boolean draw = true;
+		boolean draw = false;
 		if (hc!=null && startTurnPoint!=null) System.out.println((hc.distance(startTurnPoint))+"   "+hc.minus(startTurnPoint).angle()+"    Check coi");
 		if (draw && (distRaced>60 && distRaced<200) ){			
 			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
@@ -460,12 +477,14 @@ public class MyDriver extends SimpleDriver {
 			for (int i=0;i<edgeDetector.x.size();++i)
 				series.add(edgeDetector.x.get(i),edgeDetector.y.get(i));
 
-			if (edgeDetector.center!=null){
-				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
-				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
-			}
+//			if (edgeDetector.center!=null){
+//				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
+//				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
+//			}
 			if (centerOfTurn!=null && radiusOfTurn<550) TrackSegment.circle(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, series);
 			if (startTurnPoint!=null) series.add(startTurnPoint.x,startTurnPoint.y);
+			if (optimalPoint!=null) series.add(optimalPoint.x,optimalPoint.y);
+			if (cntr!=null && rr<550) TrackSegment.circle(cntr.x, cntr.y, rr, series);
 
 			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
 //			if (left!=null) Edge.drawEdge(left, "E"+distRaced+" "+nraced+"b");
@@ -501,7 +520,7 @@ public class MyDriver extends SimpleDriver {
 	}
 
 	public double maxAllowedSpeedAtRadius(double radius){			
-		return Math.sqrt(G*radius*2)*3.6;
+		return Math.sqrt(G*radius*1.5)*3.6;
 	}
 
 
@@ -541,7 +560,7 @@ public class MyDriver extends SimpleDriver {
 		double maxA = Math.max(Math.abs(curAngle-PI_2+point.minus(startTurnPoint).angle()),maxB);	
 		double far = (startTurnPoint.y<=5) ? point.length()+L : point.distance(startTurnPoint)+L;
 		System.out.println("Cond : "+startTurnPoint+"   "+maxA+"   "+alpha);
-		if (centerOfTurn.y<=5 && centerOfTurn.length()>radiusOfTurn-5 && !isTurning)
+		if ((centerOfTurn.y<=5) && !isTurning)
 			isTurning = true;
 		if (isTurning) 
 			turning.setValue(1);
@@ -785,8 +804,9 @@ public class MyDriver extends SimpleDriver {
 //		}
 		
 		
-		steer = gotoPoint(highestPoint);
-		maxSpeed =120;
+		steer = gotoPoint(hh);
+		maxSpeed = desireSpeed;
+//		maxSpeed =120;
 //		if (speedX<desireSpeed)
 //			maxSpeed = Double.MAX_VALUE;
 //		else maxSpeed = brakeControl(hh);	
@@ -847,12 +867,34 @@ public class MyDriver extends SimpleDriver {
 	double start = -1;
 	double SPEED=120;
 	double targetSpeed = 100;
+	boolean go = false;
+	double startPos =0;
+	double beta = steerLock;
 	double getSteer() {
 		// TODO Auto-generated method stub
 		//		jf.setVisible(true);		
 		if (meta==1)
 			return 0;
-
+		
+//		maxSpeed = 100;
+//		if (Math.abs(maxSpeed-speedX)<0.5 && !go){
+//			start=distRaced;
+//			startPos = curPos; 		
+//			System.out.println(curAngle+"   "+beta);
+//			go = true;
+//			return 0;
+//		}
+//		
+//		if (Math.abs(curAngle)>=Math.PI/2-0.1 && go){
+//			double d = distRaced-start;
+//			double lateral = (startPos-curPos)*18/2;
+//			System.out.println(d+"   "+lateral+"   "+beta+"   "+Math.atan2(lateral, d));
+//			go =false;
+//			meta = 1;
+//		}
+//
+//		if (go) return beta/steerLock;
+//		if (true) return curAngle/steerLock-(1-curPos)/10;
 //		if (speedX>SPEED){
 //			brake = true;
 //			start = distRaced;

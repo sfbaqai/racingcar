@@ -154,12 +154,12 @@ public abstract class SimpleDriver extends BaseDriver implements Controller{
 			return new CarControl(1.0,0.0,gear,steer,meta);
 		} else {// car is not stuck
 			// compute accel/brake command
+			double steer = getSteer();
 			double accel_and_brake = getAccel();
 			// compute gear 
 			int gear = getGear();
 			// compute steering
-			double steer = getSteer();
-
+			
 
 			// normalize steering
 			if (steer < -1)
