@@ -116,9 +116,9 @@ public class EdgeDetector {
 		distRaced = cs.distRaced;			
 		trackWidth =-1;
 
-		if (Math.abs(cs.angle)<0.001)
+		if (Math.abs(curAngle)<0.01)
 			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(cs.angle));
-
+		
 		double[] x = new double[NUM_POINTS];//x is axis along track axis
 		double[] y = new double[NUM_POINTS];
 		double[] rx = new double[NUM_POINTS];//x is axis along track axis
