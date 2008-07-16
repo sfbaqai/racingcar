@@ -12,7 +12,7 @@ import java.net.InetAddress;
 public class SoloDistanceEvaluator implements Evaluator {
 
     final int numberOfTrials = 1;
-    final int numberOfTimesteps = 3000;
+    final int numberOfTimesteps = 10000;
     final int maxAllowedDamage = 5000;
     final Connection connection;
 
