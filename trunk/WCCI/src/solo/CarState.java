@@ -3,6 +3,7 @@
  */
 package solo;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import raceclient.SensorModel;
@@ -14,7 +15,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
  * @author kokichi3000
  *
  */
-public class CarState implements SensorModel{
+public class CarState implements SensorModel,Serializable{
 	/* (non-Javadoc)
 	 * @see raceclient.SensorModel#getAngleToTrackAxis()
 	 */

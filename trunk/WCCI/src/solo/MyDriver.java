@@ -5,10 +5,12 @@ package solo;
 
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 import it.unimi.dsi.lang.MutableString;
 
 import java.awt.geom.AffineTransform;
 import java.util.Random;
+import java.util.TreeMap;
 
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.membership.MembershipFunction;
@@ -928,7 +930,7 @@ public class MyDriver extends SimpleDriver {
 //		maxSpeed = Double.MAX_VALUE;
 //		return 0;
 //		}
-
+		
 		if (trackWidth<=0)
 			return curAngle/steerLock+curPos/10;
 
