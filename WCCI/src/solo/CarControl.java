@@ -1,15 +1,17 @@
 package solo;
 
+import java.io.Serializable;
+
 /**
  * @author kokichi3000
  *
  */
-public class CarControl{
+public class CarControl implements Serializable{
 	double accel;
 	double brake;
 	int gear;
 	double steer;
-	int meta;
+	int meta;//1 = RESTART, 2= SHUTDOWN
 	
 	/**
 	 * Copy Constructor

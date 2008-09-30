@@ -19,7 +19,37 @@ import cern.jet.math.Functions;
 public class Test {
 
     final static int port = 3001;
-    final static int UDP_CLIENT_TIMEOUT=1000000;
+    final static int UDP_CLIENT_TIMEOUT=50;
+    public static DatagramSocket socket=null;
+    static InetAddress remote = null;
+
+    public static void identify() throws Exception{    	
+    	do {    		
+    		try{
+    			if (socket==null) socket = new DatagramSocket();
+                if (remote==null) remote = InetAddress.getByName("127.0.0.1");
+                byte[] send = new CarControl().toString().getBytes();
+                
+                String toSend = "wcci2008";
+                byte[] outBuffer = toSend.getBytes();
+                
+               
+            	socket.setSoTimeout(UDP_CLIENT_TIMEOUT);
+            	socket.send(new DatagramPacket  (send, send.length, remote, port));	
+    			socket.send(new DatagramPacket  (outBuffer, outBuffer.length, remote, port));
+	    		byte[] inBuffer = new byte[1024];
+	            DatagramPacket packet = new DatagramPacket (inBuffer, inBuffer.length);
+	            socket.receive (packet);
+	            String received = new String(packet.getData(), 0, packet.getLength());                
+	            if (received.startsWith("***identified***")){                	
+	            	break;
+	            }
+    		 } catch (Exception e){
+    			 	//e.printStackTrace();    			 	
+    	     }
+            
+    	} while(true);                   
+    }
 
     public static void main(String[] args) throws Exception {
         System.out.println("Starting");
@@ -85,65 +115,44 @@ public class Test {
 //        	System.out.print(i*Math.PI/18+",");
 //        System.out.println("}");
 //        
-        
-        DatagramSocket socket = new DatagramSocket();
-        InetAddress remote = InetAddress.getByName("127.0.0.1");
-        byte[] send = new CarControl().toString().getBytes();
-        
-        String toSend = "wcci2008";
-        byte[] outBuffer = toSend.getBytes();
-        
-       
-    	socket.setSoTimeout(5000);
-    	socket.send(new DatagramPacket  (send, send.length, remote, port));
-    	do {
-    		try{
-    			socket.send(new DatagramPacket  (outBuffer, outBuffer.length, remote, port));
-	    		byte[] inBuffer = new byte[1024];
+        identify();
+        BaseDriver sd = new NewTestDriver();
+        socket.setSoTimeout(UDP_CLIENT_TIMEOUT*20);
+        while (true) {
+        	try{
+	        	byte[] inBuffer = new byte[1024];
 	            DatagramPacket packet = new DatagramPacket (inBuffer, inBuffer.length);
+	            socket.setSoTimeout(UDP_CLIENT_TIMEOUT*200);
 	            socket.receive (packet);
-	            String received = new String(packet.getData(), 0, packet.getLength());                
-	            if (received.startsWith("***identified***")){                	
+	            
+	            String received = new String(packet.getData(), 0, packet.getLength());            
+	            if (received.startsWith("***shutdown***")){
+	            	sd.onShutdown();
+	            	socket.close();
 	            	break;
 	            }
-    		 } catch (Exception e){
-    	        	
-    	     }
-            
-    	} while(true);
-   
-        
-        
-        BaseDriver sd = new MyDriver();
-        socket.setSoTimeout(50000);
-        while (true) {
-        	byte[] inBuffer = new byte[1024];
-            DatagramPacket packet = new DatagramPacket (inBuffer, inBuffer.length);
-            socket.receive (packet);
-            String received = new String(packet.getData(), 0, packet.getLength());
-            
-            if (received.startsWith("***shutdown***")){
-            	System.out.println(received);
-            	System.exit(0);
-            }
-            
-            if (received.startsWith("***restart***")){
-            	System.out.println(received);
-            	System.exit(0);
-            }
-        	
-        	toSend = sd.drive(received);
-                    	
-            outBuffer = toSend.getBytes();
-            socket.send(new DatagramPacket  (outBuffer, outBuffer.length, remote, port));
-            //System.out.println(toSend);
-            
-            //System.out.println(i); // + "   " + received);
-            //MessageParser parser = new MessageParser (received);
-            //parser.printAll ();
-            //i++;
+	            
+	            if (received.startsWith("***restart***")){
+	            	sd.onRestart();
+	            	identify();
+	            	continue;
+	            }	        	
+	        	String toSend = sd.drive(received);
+	                    	
+	            byte[] outBuffer = toSend.getBytes();
+	            socket.send(new DatagramPacket  (outBuffer, outBuffer.length, remote, port));
+	            //System.out.println(toSend);
+	            
+	            //System.out.println(i); // + "   " + received);
+	            //MessageParser parser = new MessageParser (received);
+	            //parser.printAll ();
+	            //i++;
+        	} catch (Exception e){
+        		//e.printStackTrace();
+        	}        	
         }
+        System.out.println("Finished");
     }
 
-
+    
 }
