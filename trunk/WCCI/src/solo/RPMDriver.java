@@ -116,24 +116,24 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 			CarControl cc = new CarControl(1.0d,0,1,steer,0);
 			ol.add(cc);
 		}//*/
-		if (speed>225){
-			CarControl cc = new CarControl(0,1,4,steer,0);
-			ol.add(cc);
-		} else if (speed>126){
-			CarControl cc = new CarControl(0,0.569,3,steer,0);
-			ol.add(cc);
-		} else if (speed>83){
-			CarControl cc = new CarControl(0,0.363,2,steer,0);
-			ol.add(cc);
-		} else {
-			CarControl cc = new CarControl(0,0.36,1,steer,0);
-			ol.add(cc);
-		}
-		if (speed<226.541 && speed>200){
-			ol.clear();
-			CarControl cc = new CarControl(0,0.6,4,steer,0);
-			ol.add(cc);
-		}
+//		if (speed>225){
+//			CarControl cc = new CarControl(0,1,4,steer,0);
+//			ol.add(cc);
+//		} else if (speed>126){
+//			CarControl cc = new CarControl(0,0.569,3,steer,0);
+//			ol.add(cc);
+//		} else if (speed>83){
+//			CarControl cc = new CarControl(0,0.363,2,steer,0);
+//			ol.add(cc);
+//		} else {
+//			CarControl cc = new CarControl(0,0.36,1,steer,0);
+//			ol.add(cc);
+//		}
+//		if (speed<226.541 && speed>200){
+//			ol.clear();
+//			CarControl cc = new CarControl(0,0.6,4,steer,0);
+//			ol.add(cc);
+//		}
 		//}//*/ 
 		/*if (speed<3*3.6){
 			CarControl cc = new CarControl(0,1.0d,0,steer,0);
@@ -162,6 +162,8 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 		System.out.println(slip+"   "+brake);
 		CarControl cc = new CarControl(0,brake,0,steer,0);
 		ol.add(cc);//*/
+		CarControl cc = new CarControl(0,1.0d,0,steer,0);
+		ol.add(cc);
 		return ol;
 	}
 
