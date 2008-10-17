@@ -4,7 +4,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="lib" path="lib/antlr-2.7.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/dsiutils-1.0.5.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/fastutil5-5.1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jfreechart-1.0.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/junit-3.8.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/trove-2.0.2.jar"/>
@@ -12,5 +11,7 @@
 	<classpathentry kind="lib" path="lib/jcommon-1.0.12-junit.jar"/>
 	<classpathentry kind="lib" path="lib/jcommon-xml-1.0.12.jar"/>
 	<classpathentry kind="lib" path="lib/colt-1.2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/fastutil-5.1.5.jar"/>
+	<classpathentry kind="lib" path="lib/jdom.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

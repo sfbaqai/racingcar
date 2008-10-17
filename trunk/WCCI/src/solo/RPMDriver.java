@@ -16,6 +16,10 @@ import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
  * @author kokichi3000
  *
  */
+/**
+ * @author Ha Thai Duong
+ *
+ */
 public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 	
 	private BufferedWriter writer;
@@ -166,6 +170,57 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 		ol.add(cc);
 		return ol;
 	}
+	/*//
+	 * calculate the distant required to break fron initSpeed to endSpeed.
+	 * This using best fit.
+	 * For each gear a break coefficient is calculated using best fit
+	 * input should be  
+	 */
+	public double DistantBreakRequired(double intSpeed, double endSpeed){
+		double coefficient [] = {26.07/022, 47.041/046, 48.389/0.592, 42.0275/0.616, 80.46715/1.364};
+		double speedRange [] = {296.8,225,176,126,83};
+		double distantRange [] ={0,25.619, 24.83111,17.8811 ,0};
+		double tempT=0;
+		double tempDistant =0;
+		int intIndex=0, endIndex=0;
+		if (intSpeed < endSpeed){
+			return -1;
+		}
+		if (intSpeed>225 && endSpeed > 225){
+			tempT = (intSpeed - endSpeed)/(26.087/0.22);
+			return (intSpeed+endSpeed)*tempT/2;
+		}
+		if(intSpeed>80){
+			tempT = (intSpeed - endSpeed)/(26.087/0.22);
+			return (intSpeed+endSpeed)*tempT/2;
+		}
+		
+		for (int i = 0; i < speedRange.length; i++) {
+			if (intSpeed>speedRange[i]) {
+				tempT = (intSpeed - speedRange[i])/coefficient[i];
+				tempDistant = (intSpeed+speedRange[i])*tempT/2;
+				intIndex = i;
+			}
+		}
+		for (int y = 0; y < speedRange.length; y++) {
+			if (speedRange[y]>=endSpeed) {
+				tempT = (speedRange[y]- intSpeed)/coefficient[y];
+				tempDistant = tempDistant+(intSpeed+speedRange[y])*tempT/2;
+				endIndex =y;
+			}
+			
+		}
+		
+		for (int z = intIndex+1; z < endIndex; z++) {
+			tempDistant = tempDistant + distantRange[z];
+			return tempDistant;
+		}
+		
+		
+		
+		return 0;
+		
+	}
 
 	@Override
 	public CarControl restart() {
@@ -192,6 +247,7 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 			writer.newLine();			
 			writer.close();
 			System.out.println((current.state.getDistanceRaced()-start.state.getDistanceRaced())+"    "+current.state.getDistanceRaced()+"    "+current.state.getCurLapTime());
+			System.out.println(DistantBreakRequired(200, 40));
 			//save("all-speed.txt");
 			/*ObjectSortedSet<CarRpmState> ss = map.keySet();
 			for (CarRpmState st:ss){							
@@ -251,6 +307,7 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 				writer.write(round(input.getSpeed())+"\t\t"+round(action.getBrake())+"\t\t"+round(output.getSpeed()));
 				writer.newLine();
 				writer.flush();
+				
 			}
 		} catch (Exception e){
 			e.printStackTrace();
