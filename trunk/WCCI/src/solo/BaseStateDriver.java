@@ -26,6 +26,7 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 	}
 	
 	State<T, V> start;
+	public int repeatNum =1;
 	public MyTreeMap<T, V> map;
 	public boolean ignoredExisting = false;
 	public boolean storeNewState = true;
@@ -37,7 +38,8 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 	public State<T,V> target;
 	public V targetAction;
 	public List<State<T,V>> startStates = null;
-	public ObjectList<State<T,V>> pathToTarget; 
+	public ObjectList<State<T,V>> pathToTarget;
+	int index = 0;
 	/**
 	 * 
 	 */
@@ -54,6 +56,10 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 		target = null;
 		targetAction = null;
 		map = new MyTreeMap<T, V>(name);
+	}
+	
+	public void setRepeatNum(int n){
+		repeatNum = n;
 	}
 	
 	public void addStartState(T state){
@@ -94,6 +100,9 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 	}
 	
 	public abstract boolean stopCondition(State<T, V> state);
+	public boolean shutdownCondition(State<T, V> state){
+		return false;
+	}
 	public abstract ObjectList<V> drive(State<T, V> state);
 	public abstract void storeSingleAction(T input,V action,T output);
 	public abstract void init();
@@ -111,12 +120,15 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 				target = null;
 			 else target = startStates.remove(0);
 			start = target;
+			index++;
 			init();			
 		}
 		State<T, V> s = null;
-		if (map.isEmpty()){
-			storeSingleAction(null, null, state);
-			if (storeNewState) map.store(current,null,state);
+		if (map.isEmpty()){			
+			if (storeNewState) {
+				storeSingleAction(null, null, state);
+				map.store(current,null,state);
+			}
 			current = new State<T,V>(0,state,null,null);
 		} else {
 			s = map.get(state);
@@ -130,8 +142,8 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 				current = (current==null) ? new State<T, V>(0,state,null,null):new State<T, V>(current.num+1,state,current,action);
 			} else {				
 				if (!ignoredExisting && current!=null && current.compareTo(s)>=0){
-					storeSingleAction(current.state, action, state);
-					if (stack.isEmpty() && (startStates==null || startStates.isEmpty())){							
+					storeSingleAction(current.state, action, state);					
+					if (stack.isEmpty() && (startStates==null || startStates.isEmpty())&& index==repeatNum && repeatNum>1){							
 						return shutdown();
 					};			
 					if (stack.isEmpty()){
@@ -151,8 +163,9 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 		
 		//System.out.println(current.state+"    ");
 		//System.out.println(state);
+		if (shutdownCondition(current)) return shutdown();
 		if (stopCondition(current)){			
-			if (stack.isEmpty() && (startStates==null || startStates.isEmpty())){							
+			if (stack.isEmpty() && (startStates==null || startStates.isEmpty()) && index==repeatNum && repeatNum>1){							
 				return shutdown();
 			};			
 			if (stack.isEmpty()){

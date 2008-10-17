@@ -116,7 +116,7 @@ public class Test {
 //        System.out.println("}");
 //        
         identify();
-        BaseDriver sd = new NewTestDriver();
+        BaseDriver sd = new TurnDriver();
         socket.setSoTimeout(UDP_CLIENT_TIMEOUT*20);
         while (true) {
         	try{
