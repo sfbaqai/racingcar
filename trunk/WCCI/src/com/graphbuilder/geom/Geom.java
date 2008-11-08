@@ -592,12 +592,11 @@ public final class Geom {
 		double d = dx*dx+dy*dy;
 		if (d<=a*a) return null;
 		
-		double tmp1 = (-a*dx+dy*Math.sqrt(d-a*a))/d;
-		double tmp2 = (-a*dx-dy*Math.sqrt(d-a*a))/d;
-		double t1 = Math.acos(tmp1);
-		double t2 = -Math.acos(tmp2);
-		Vector2D p1 = new Vector2D(x0+a*tmp1,y0+a*Math.sin(t1));
-		Vector2D p2 = new Vector2D(x0+a*tmp2,y0+a*Math.sin(t2));
+		double r = Math.sqrt(d - a*a);
+		double[] p = getCircleCircleIntersection(x, y, r, x0, y0, a);
+		if (p==null) return null;
+		Vector2D p1 = new Vector2D(p[0],p[1]);
+		Vector2D p2 = new Vector2D(p[2],p[3]);
 		return new Vector2D[]{p1,p2};
 	}
 }

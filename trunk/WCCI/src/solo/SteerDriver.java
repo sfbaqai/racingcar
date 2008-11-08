@@ -25,7 +25,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 	 */	
 	double brake = 1.0d;
 	double targetSpeed = 360;
-	double targetSteer = -1;
+	double targetSteer = -0.011;
 	double maxSpeed = 0;
 	double smaxSpeed = 0;
 	double x1,y1,x2,y2,x3,y3;
@@ -45,14 +45,15 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 	double maxRPM;
 	double px = -10000;
 	double py = -10000;
-	int currentGear = 1;
+	int currentGear = 2;
 
 	public static final int n = 1;
 //	public static double[] gearUp = {0,8657-2000,8746,8902,8736,8427,10000};
 //	public static double[] gearDown = {0,2094,6300,6350,6300,6300,6300};
 //	public static double[] gearUp = {0,8780,8730,8000,8900,8900,10000};//3117.03
-	public static double[] gearUp = new double[]{0,7000,7000,7000,7000,8900,10000};//3117.03
+	public static double[] gearUp = new double[]{0,7000,8400,7800,7800,9000,10000};//3117.03
 //	public static double[] gearUp = {0,8910,8840,8810,8610,8460,10000};//3117.03
+//	public static double[] gearUp = new double[]{0,8800,8800,8600,8600,8900,10000};//3117.03
 	public static double[] minRPM = {9000,9000,9000,9000,9000,9000,9000};
 	public static double[] maxRPMAtGear = {0,0,0,0,0,0,0};
 	public static double[] speedChange = {0,0,0,0,0,0,0};
@@ -181,7 +182,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 
 
 		double time = state.state.getLastLapTime(); 
-		if (time>=50 && time<=50.05){
+		if (time>=45 && time<=45.05){
 			x1 = state.state.posX;
 			y1 = state.state.posY;
 		}
@@ -189,13 +190,13 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 //		if (dist>=700)
 //		steer = targetSteer;
 
-		if (time>=53 && time<=53.05){
+		if (time>=50 && time<=50.05){
 			x2 = state.state.posX;
 			y2 = state.state.posY;
 		}
 
 
-		if (time>55){
+		if (time>53){
 			x3 = state.state.posX;
 			y3 = state.state.posY;
 			double[] r = new double[3];
@@ -216,9 +217,9 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 		return ol;
 	}
 	
-	public void reset(){
-		currentGear=1;
-		targetSteer += 0.01;
+	public void reset(){		
+		currentGear=2;
+		targetSteer += (targetSpeed>=-0.025) ? 0.0005 : (targetSteer>=-0.1) ? 0.005 : 0.05;		
 		maxDist = 0;		
 		distanceRaced = 0;		
 		for (int i=0;i<minRPM.length;++i){
@@ -228,7 +229,8 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 
 		maxSpeed = 0;
 		avgSpeed = 0;		
-		gearUp = new double[]{0,7000,7000,7000,7000,8900,10000};//3117.03
+		gearUp = new double[]{0,7000,8400,7800,7800,9000,10000};//3117.03
+		TurnDriver.radius = round(savgRadius/no);
 	}
 
 	@Override
@@ -251,7 +253,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 			savgSteer = savgSteer;
 			savgRadius = avgRadius;
 			savgAngle = avgAngle;
-			if (currentGear>2 && Math.abs(speedAtChange-speedChange[currentGear-1])==0){
+			if (currentGear>2 && Math.abs(speedAtChange-speedChange[currentGear-1])==0){				
 				reset();
 				return new CarControl(0,0,0,0,1);				
 			}
@@ -279,8 +281,8 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 				//			writer.write(round(avgSpeed/no)+"\t\t"+round(avgAngle/no)+"\t\t"+round(avgSteer/no)+"\t\t"+round(avgRadius/no)+"\t\t"+distanceRaced);
 //				System.out.println(gearUp[1]+"\t\t"+speedAtChange+"\t\t"+distanceRaced);
 //				writer.write(gearUp[1]+"\t\t"+speedAtChange+"\t\t"+distanceRaced);
-				System.out.println(targetSteer+"\t\t"+currentGear+"\t\t"+maxRPM+"\t\t"+maxAtChange+"\t\t"+round(maxDist)+"\t\t"+minRPM[currentGear]+"\t\t"+round(savgSpeed/no)+"\t\t"+round(savgRadius/no));
-				writer.write(targetSteer+"\t\t"+currentGear+"\t\t"+maxRPM+"\t\t"+maxAtChange+"\t\t"+round(maxDist)+"\t\t"+minRPM[currentGear]+"\t\t"+round(savgSpeed/no)+"\t\t"+round(savgRadius/no));
+				System.out.println(targetSteer+"\t\t"+currentGear+"\t\t"+maxRPM+"\t\t"+maxAtChange+"\t\t"+round(maxDist)+"\t\t"+minRPM[currentGear]+"\t\t"+round(savgSpeed/3.6/no)+"\t\t"+round(savgRadius/no));
+				writer.write(targetSteer+"\t\t"+currentGear+"\t\t"+maxRPM+"\t\t"+maxAtChange+"\t\t"+round(maxDist)+"\t\t"+minRPM[currentGear]+"\t\t"+round(savgSpeed/3.6/no)+"\t\t"+round(savgRadius/no));
 				writer.newLine();
 				writer.flush();//*/
 				pathToTarget = null;
@@ -302,7 +304,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 		}
 
 
-		gearUp[currentGear] += 500;
+		gearUp[currentGear] += 200;
 		distanceRaced = 0;
 		maxSpeed = 0;		//		
 		return new CarControl(0,0,0,0,1);
@@ -346,7 +348,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 	}
 
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
-		return (targetSteer>=-0.815 && stopCondition(state));
+		return (targetSteer>=-0.005 && stopCondition(state));
 	}
 
 	@Override

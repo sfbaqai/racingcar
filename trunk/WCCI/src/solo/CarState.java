@@ -94,7 +94,7 @@ public class CarState implements SensorModel,Serializable{
 	@Override
 	public double getSpeed() {
 		// TODO Auto-generated method stub
-		return speedX;
+		return Math.sqrt(speedX*speedX+speedY*speedY);
 	}
 	/* (non-Javadoc)
 	 * @see raceclient.SensorModel#getTrackEdgeSensors()
