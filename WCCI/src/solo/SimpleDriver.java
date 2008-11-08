@@ -65,7 +65,7 @@ public abstract class SimpleDriver extends BaseDriver implements Controller{
 	/* ABS Filter final staticants */
 	final static double[] wheelRadius= new double[]{0.3179,0.3179,0.3276,0.3276};
 	final static double[] wheelRadiusInInch= new double[]{8.5,8.5,9,9};
-	final static double absSlip=2.0;
+	final static double absSlip=0.5;
 	final static double absRange=3.0;
 	final static double absMinSpeed=3.0;
 	double speedX,speedY,distRaced,curPos,curAngle,distFromStartLine;

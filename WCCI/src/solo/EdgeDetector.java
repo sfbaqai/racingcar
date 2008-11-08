@@ -144,12 +144,20 @@ public class EdgeDetector {
 			if (maxDistance<tracks[i])
 				maxDistance = tracks[i];
 
-			if (maxY<yy){
+			if (maxY<yy && tracks[i]<=99.95){
 				maxY = yy;
 				firstIndexMax =i;
 				lastIndexMax =i;				
-			} else if (maxY==yy){
+			} else if (maxY==yy && lastIndexMax>=0 && tracks[lastIndexMax]<=99.95){
 				lastIndexMax =i;
+			} else if (tracks[i]>99.95){
+				maxY = Math.max(maxY,yy);
+				if (firstIndexMax>=0 && tracks[firstIndexMax]<=99.95){
+					firstIndexMax =i;
+					lastIndexMax =i;
+				} else {
+					lastIndexMax = i;
+				}
 			}
 		}
 		this.x = DoubleArrayList.wrap(x, 19);
@@ -298,13 +306,13 @@ public class EdgeDetector {
 		for (int i=0;i<len;++i){			
 			double x = xx[i]*scale;
 			double y = yy[i];
-			if (Math.sqrt(x*x+y*y)>=99) continue;
+			if (Math.sqrt(x*x+y*y)>99.95) continue;
 			x += ax;
 			y -= distRaced;
 			if (y<0 || y<straightDist) continue;						
 			double  angle = Math.PI-Math.atan2(y,x);
 			if (angle<0 || angle>Math.PI) continue;
-			angle=Math.round(angle*ANGLEACCURACY)/ANGLEACCURACY;
+//			angle=Math.round(angle*ANGLEACCURACY)/ANGLEACCURACY;
 			if ( ds.contains(angle)) continue;
 			this.polar2Cartesian.put(angle, new Vector2D(x,y));					
 		}
@@ -335,7 +343,8 @@ public class EdgeDetector {
 		ds = this.polar2Cartesian.keySet();
 
 		for (double angle:ds){
-			Vector2D v = polar2Cartesian.get(angle);		
+			Vector2D v = polar2Cartesian.get(angle);
+			if (v==null) continue;
 			xx[i] = v.x;
 			yy[i] = v.y;
 			rx[numpoint-1-i] = v.x;
@@ -346,12 +355,20 @@ public class EdgeDetector {
 			if (maxDistance<dist)
 				maxDistance = dist;
 
-			if (maxY<v.y){
+			if (maxY<v.y && dist<=99.95){
 				maxY = v.y;
 				firstIndexMax =i;
 				lastIndexMax =i;				
-			} else if (maxY==v.y){
+			} else if (maxY==v.y && lastIndexMax>=0 && new Vector2D(xx[lastIndexMax],yy[lastIndexMax]).length()<=99.95){
 				lastIndexMax =i;
+			} else if (dist>99.95){
+				maxY = Math.max(maxY,v.y);
+				if (firstIndexMax>=0 && new Vector2D(xx[firstIndexMax],yy[firstIndexMax]).length()<=99.95){
+					firstIndexMax =i;
+					lastIndexMax =i;
+				} else {
+					lastIndexMax = i;
+				}
 			}
 			i++;
 		}		
@@ -669,8 +686,8 @@ public class EdgeDetector {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
-		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+		chart.getXYPlot().getDomainAxis().setRange(-50.0,100.0);
+		chart.getXYPlot().getRangeAxis().setRange(-50.0,100.0);
 
 		Thread p = new Thread(new Runnable(){
 			@Override

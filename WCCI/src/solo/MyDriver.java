@@ -5,12 +5,10 @@ package solo;
 
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap;
 import it.unimi.dsi.lang.MutableString;
 
 import java.awt.geom.AffineTransform;
 import java.util.Random;
-import java.util.TreeMap;
 
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.membership.MembershipFunction;
@@ -148,6 +146,8 @@ public class MyDriver extends SimpleDriver {
 		else
 			return brake;
 	}
+	int maxGear = 0;
+	double targetRadius = 0;
 	@Override
 	double getAccel() {		
 		// TODO Auto-generated method stub
@@ -159,12 +159,9 @@ public class MyDriver extends SimpleDriver {
 			// accel/brake command is expontially scaled w.r.t. the difference between target speed and current one
 //			return 2/(1+Math.exp(speed - maxSpeed)) - 1;
 
-			double gr = (gear<0) ? gearRatio[GEAR_OFFSET] : gearRatio[GEAR_OFFSET+gear];
-			double rm = enginerpmRedLine;
-			if (maxSpeed==speedX) return 0;
-			if (maxSpeed>speedX+1) return 1;
-//			return (maxSpeed-speedX)/speedAtRpm(rm, gr);
-			return 2/(1+Math.exp(speed - maxSpeed)) - 1;
+			if (speed<=maxSpeed-1)
+				return 1;
+			else return 2/(1+Math.exp(speed - maxSpeed-1)) - 1;
 		} else {			
 			if (speedX>150)
 				return 0;
@@ -175,12 +172,14 @@ public class MyDriver extends SimpleDriver {
 
 	}
 
+	double accel = 0;
+	double oldSpeed = 0;
 	@Override
 	int getGear() {
 		// TODO Auto-generated method stub	    
 		// if gear is 0 (N) or -1 (R) just return 1 
-		if (gear<1)
-			return 1;
+//		if (gear<1)
+//			return 1;
 
 //		double gr_up = gearRatio[gear + GEAR_OFFSET];
 //		double omega = enginerpmRedLine/gr_up/DIFFERENTIAL_RATIO/3.6;
@@ -191,11 +190,30 @@ public class MyDriver extends SimpleDriver {
 //		return gear + 1;
 		// check if the RPM value of car is greater than the one suggested 
 		// to shift up the gear from the current one     
-		if (gear <6 && rpm >= gearUp[gear-1])
-			return gear + 1;		
-		else
+//		if (gear <6 && rpm >= gearUp[gear-1])
+//			return gear + 1;		
+//		else
 //			check if the RPM value of car is lower than the one suggested 
 //			to shift down the gear from the current one
+		
+		if (accel!=0 || oldSpeed!=0) {
+			accel = (speed-oldSpeed)/0.02;		
+		}		
+		int maxGear = 1;
+		if (targetRadius>235)
+			maxGear = 6;
+		else if (targetRadius>85) 
+			maxGear = 5;
+		else if (targetRadius>69)
+			maxGear = 4;
+		else if (targetRadius>40)
+			maxGear = 3;
+		else if (targetRadius>10)
+			maxGear = 2;		
+				
+		if (accel>0 && accel<0.5 && gear<maxGear && speed<maxSpeed) gear++;
+		if (gear<=0) gear=1;
+		oldSpeed = speed;
 			if (gear > 1 && rpm <= gearDown[gear-1])
 				return gear - 1;
 //		otherwhise keep current gear
@@ -297,39 +315,39 @@ public class MyDriver extends SimpleDriver {
 	//edge is -1 = left edge, 1: right edge, 0 : UNKNOWN
 	//len is the len to point on the edge(specified by edge) on prev
 	//hP is a point on ed ....
-	public Vector2D convertPoint(Vector2D p,double len,double nraced,int edge,Vector2D hP,int hEdge,EdgeDetector ed){
-		if (len>=99) return new Vector2D(hP);
-		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
-		double ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
-
-		if (edge==0)
-			return new Vector2D(p.x*scale+ax,p.y-nraced);
-
-		Vector2D tmp = null;
-
-		if (edge==-1){
-			if (ed.left==null) 
-				return new Vector2D(p.x*scale+ax,p.y-nraced);
-			else {
-				if (hP==null || edge!=hEdge) 
-					tmp = ed.left.estimatePointOnEdge(len-nraced, null);
-				else tmp = ed.left.estimatePointOnEdge(len-nraced, hP);				
-
-//				System.out.println(tmp+"   "+hP);
-				if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
-				return tmp;
-			}
-		}
-
-		if (ed.right==null) 
-			return new Vector2D(p.x*scale+ax,p.y-nraced);
-		if (hP==null || edge!=hEdge) 
-			tmp = ed.right.estimatePointOnEdge(len-nraced, null);
-		else tmp = ed.right.estimatePointOnEdge(len-nraced, hP);
-//		System.out.println(tmp+"   "+hP);
-		if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
-		return tmp;
-	}
+//	public Vector2D convertPoint(Vector2D p,double len,double nraced,int edge,Vector2D hP,int hEdge,EdgeDetector ed){
+//		if (len>=99) return new Vector2D(hP);
+//		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;
+//		double ax = -edgeDetector.toLeftEdge()+prevEdge.toLeftEdge();
+//
+//		if (edge==0)
+//			return new Vector2D(p.x*scale+ax,p.y-nraced);
+//
+//		Vector2D tmp = null;
+//
+//		if (edge==-1){
+//			if (ed.left==null) 
+//				return new Vector2D(p.x*scale+ax,p.y-nraced);
+//			else {
+//				if (hP==null || edge!=hEdge) 
+//					tmp = ed.left.estimatePointOnEdge(len-nraced, null);
+//				else tmp = ed.left.estimatePointOnEdge(len-nraced, hP);				
+//
+////				System.out.println(tmp+"   "+hP);
+//				if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
+//				return tmp;
+//			}
+//		}
+//
+//		if (ed.right==null) 
+//			return new Vector2D(p.x*scale+ax,p.y-nraced);
+//		if (hP==null || edge!=hEdge) 
+//			tmp = ed.right.estimatePointOnEdge(len-nraced, null);
+//		else tmp = ed.right.estimatePointOnEdge(len-nraced, hP);
+////		System.out.println(tmp+"   "+hP);
+//		if (tmp==null || tmp.distance(hP)<EPSILON) return new Vector2D(hP);
+//		return tmp;
+//	}
 
 	public void record(){
 		if (!recording) return;
@@ -445,6 +463,7 @@ public class MyDriver extends SimpleDriver {
 				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusL));
 			}
 						
+			targetRadius = radiusOfTurn;
 		}
 		//Now looking for optimal point
 		Vector2D cntr = null;
@@ -466,9 +485,11 @@ public class MyDriver extends SimpleDriver {
 		Vector2D hc = (centerOfTurn==null) ? null : new Vector2D(centerOfTurn.x,centerOfTurn.y+radiusOfTurn);
 		if (highestPoint==null) highestPoint=hh;
 		boolean draw = false;
-		if (hc!=null && startTurnPoint!=null) System.out.println((hc.distance(startTurnPoint))+"   "+hc.minus(startTurnPoint).angle()+"    Check coi");
-		if (draw && (distRaced>60 && distRaced<200) ){			
-			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+nraced+"a");
+		if (hc!=null && startTurnPoint!=null) 
+			System.out.println((hc.distance(startTurnPoint))+"   "+hc.minus(startTurnPoint).angle()+"    Check coi");
+		
+		if (draw && (distRaced>-40 && distRaced<80) ){			
+			EdgeDetector.drawEdge(edgeDetector, "E"+distRaced+" "+radiusOfTurn+"a");
 			XYSeries series = new XYSeries("Curve");
 			if (centerOfTurn!=null) {
 				series.add(centerOfTurn.x,centerOfTurn.y);
@@ -479,16 +500,16 @@ public class MyDriver extends SimpleDriver {
 			for (int i=0;i<edgeDetector.x.size();++i)
 				series.add(edgeDetector.x.get(i),edgeDetector.y.get(i));
 
-//			if (edgeDetector.center!=null){
-//				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
-//				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
-//			}
+			if (edgeDetector.center!=null){
+				if (edgeDetector.radiusL>0 && edgeDetector.radiusL<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusL, series);
+				if (edgeDetector.radiusR>0 && edgeDetector.radiusR<550) TrackSegment.circle(edgeDetector.center.x, edgeDetector.center.y, edgeDetector.radiusR, series);
+			}
 			if (centerOfTurn!=null && radiusOfTurn<550) TrackSegment.circle(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, series);
 			if (startTurnPoint!=null) series.add(startTurnPoint.x,startTurnPoint.y);
 			if (optimalPoint!=null) series.add(optimalPoint.x,optimalPoint.y);
 			if (cntr!=null && rr<550) TrackSegment.circle(cntr.x, cntr.y, rr, series);
 
-			EdgeDetector.drawEdge(series, "E"+distRaced+" "+nraced+"b");
+			EdgeDetector.drawEdge(series, "E"+distRaced+" "+rr+"b");
 //			if (left!=null) Edge.drawEdge(left, "E"+distRaced+" "+nraced+"b");
 //			if (right!=null) Edge.drawEdge(right, "E"+distRaced+" "+nraced+"c");
 			try {
@@ -515,14 +536,35 @@ public class MyDriver extends SimpleDriver {
 	public double angleWithRadius(double r){
 		return Math.asin(L/r);
 	}
-
-	public double maxAngleAtSpeed(double speed){		
-		double ds = speed/3.6;
-		return Math.asin(L/ds*ds/2/G);
+	
+	
+	public double radiusAtSpeed(double speedkmh){
+		if (speedkmh<=205)
+			return 0.0820619978719424+0.00541730524763449*speedkmh+0.00464210551818003*speedkmh*speedkmh-1.20686439387299e-05*speedkmh*speedkmh*speedkmh; 
+		if (speedkmh<274)
+			return -1192.18464416069+16.6397488904336*speedkmh-0.0740555508240852*speedkmh*speedkmh+0.000114411488519385*speedkmh*speedkmh*speedkmh;
+		if (speedkmh<285)
+			return 125181.064069584-1325.79717496569*speedkmh+4.67785276024091*speedkmh*speedkmh-0.00549045392467163*speedkmh*speedkmh*speedkmh;			
+			
+		return -83508.7895089672+887.064242540164*speedkmh-3.14306813772447*speedkmh*speedkmh+0.00372277142586774*speedkmh*speedkmh*speedkmh;
 	}
 
-	public double maxAllowedSpeedAtRadius(double radius){			
-		return Math.sqrt(G*radius*1.5)*3.6;
+	public double maxAngleAtSpeed(double speed){		
+		double ds = speed/3.6*0.02;
+		double r = radiusAtSpeed(speed);
+		return ds/r;
+	}
+
+	public double maxAllowedSpeedAtRadius(double x){			
+		if (x>=170)
+			return 85.5247084519036+2.01905340962707*x-0.00646416884272083*x*x+7.29293433335612e-06*x*x*x;
+		if (x>=100)
+			return -139.760581424782+6.04756169365199*x-0.0303044500612258*x*x+5.3961109358751e-05*x*x*x;
+		if (x>=60)
+			return 202.745158728743-4.48739317463141*x+0.0755898471248578*x*x-0.00029146122705404*x*x*x;
+		if (x>=20)
+			return 26.7657503764833+2.55982229567786*x-0.0171415320257696*x*x+0.000108671654261182*x*x*x;		
+		return -0.00728601622351035+7.7247995418915*x+-0.360701254346654*x*x+0.00788103445639814*x*x*x;
 	}
 
 
