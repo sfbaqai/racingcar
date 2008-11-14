@@ -19,11 +19,19 @@ import com.graphbuilder.geom.Geom;
  *
  */
 public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl> {
-	boolean draw = false;
+	boolean draw = false;			
 	XYSeries series = new XYSeries("Curve");
-	static double lastAccel = 1.0;
+	static boolean flying =false;
+	static boolean foundRadius = false;
+	static double lastAccel = 0.0;
+	static double lastAngle = 0.0d;
 	static double lastBrkCmd = 0;
 	static double lastDv = 0;
+	static double lastSteer = 0;
+	static double lastPos = 0;
+	static int highestPointEdge = 0;
+	Vector2D trackDirection = new Vector2D(0,1);
+	final static double WIDTHDIV = 1;
 	final static int[] gearUp = new int[]{5000,6000,6000,6500,7000,7500};
 	final static int[] gearDown = new int[]{0,2500,3000,3000,3250,3500};
 	final static double[] gearRatio = new double[]{-9.0,0,11.97,8.01,5.85,4.5,3.33,2.7,0,0};
@@ -37,6 +45,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	final static double SPEED_MARGIN = 5;
 	final static int GEAR_OFFSET = 1;
 	final static double enginerpmRedLine = 890.118;//rpm;
+	final double TCL_SLIP = 2.0;				/* [m/s] range [0..10] */
+	final double TCL_RANGE = 5.0;			/* [m/s] range [0..10] */
+
 	double radiusR = 0;
 	double radiusL = 0;
 	boolean followedPath = false;
@@ -52,6 +63,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	public final static double steerLock = 0.785398;
 	double time = 0;
 	Vector2D cntr = null;
+	Vector2D carDirection = null;
 	double rr = 0;
 	Vector2D point2Follow = null;
 	String str = "";
@@ -85,6 +97,11 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	int turn;
 	boolean isTurning = false;
 	Vector2D optimalPoint = null;
+	Edge edge = null;
+	Edge other = null;
+	double edgeRadius;
+	double nextRadius;
+	double currentSpeedRadius;
 
 	static private Random random = new Random(1234);
 
@@ -142,271 +159,225 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		return new Vector2D(0,y);
 	}
 
-	public void record(){	
-
-		if (!recording) return;
-		centerOfTurn = null;
-		if (time>=72.898)
-			System.out.println();
-//		long time = System.currentTimeMillis();
-		nraced = distRaced - raced;
-		nraced = Math.round(nraced*10000.0d)/10000.0d;		
-//		double scale = edgeDetector.trackWidth/prevEdge.trackWidth;		
-//		System.out.println(prevEdge.turn+"   "+edgeDetector.turn);	
-		if (prevEdge.turn*edgeDetector.turn!=-1 && prevEdge.straightDist-1>nraced) {
-			edgeDetector.combine(prevEdge, nraced);						
-		}		
+	public void store(){
 		series = new XYSeries("Curve");
 		for (int i=0;i<edgeDetector.numpoint;++i){				
 			series.add(edgeDetector.x.get(i), edgeDetector.y.get(i));
 		}
+		
+		TrackSegment.line(0, 0, carDirection.x*20, carDirection.y*20, series);
+	}
 
-		Vector2D trackDirection = new Vector2D(0,1);
-		Vector2D carDirection = trackDirection.rotated(-curAngle);
-		TrackSegment.line(0, 0, carDirection.x*5, carDirection.y*5, series);
-
-//		Vector2D transform = new Vector2D(ax,0);
-
-		System.out.println("**************** E"+time+" "+nraced+" ****************");
-//		if (distRaced>650) meta = 1;
-		turn = edgeDetector.turn;
-//		if (turn==MyDriver.UNKNOWN && prevEdge.turn!=STRAIGHT && prevEdge.turn!=UNKNOWN) turn = prevEdge.turn;
-		if (turn==UNKNOWN) {
-			prevEdge = edgeDetector;				
-			raced = distRaced;		
-//			System.out.println(System.currentTimeMillis()-time);
-			return;
+	public void estimateBestPath(){
+		Vector2D center = edgeDetector.center;
+		if (edge==null || center==null) return;
+		double width = trackWidth * (1-WIDTHDIV);		
+		double radiusLarge = (edgeRadius+trackWidth/2)-width-W/2;
+		double radiusSmall = (edgeRadius-trackWidth/2)+width+W/2;
+		Vector2D t = (turn==TURNRIGHT) ? new Vector2D(SIN_PI_4,-SIN_PI_4) : new Vector2D(-SIN_PI_4,-SIN_PI_4);			
+		radiusOfTurn = 3.414*(radiusLarge-0.707*radiusSmall);
+		centerOfTurn = center.plus(t.times(radiusOfTurn-radiusSmall));
+	}
+	
+	public void estimatePath(Vector2D hh){
+		if (edge==null || edge.center==null) return;
+		
+		double width = trackWidth * (1-WIDTHDIV);		
+//		double radiusLarge = (edgeRadius+trackWidth/2)-width;
+		double radiusSmall = (edgeRadius-trackWidth/2)+width+W/2;
+		Vector2D t = null;
+		if (centerOfTurn!=null && hh!=null){
+			t = hh.minus(centerOfTurn).normalized();
+			optimalPoint = centerOfTurn.plus(t.times(radiusOfTurn));				
 		}
+		
+		Vector2D[] p = Geom.ptTangentLine(0, 0, edge.center.x,edge.center.y, radiusSmall);
+		Vector2D point = (p==null) ? null : (p.length>1 && p[1].y>p[0].y) ? p[1] : p[0];
+//		if (series!=null ){
+//			if (point!=null) series.add(point.x,point.y);
+//			if (centerOfTurn!=null) series.add(centerOfTurn.x,centerOfTurn.y);
+//		}
+		
 
+		
+		double[] r = new double[3];
+//		if (point2Follow!=null && Geom.getCircle(0, 0, centerOfTurn.x, centerOfTurn.y+radiusOfTurn, point2Follow.x, point2Follow.y, r)){
+//			cntr=new Vector2D(r[0],r[1]);				
+//			rr = Math.sqrt(r[2]);		
+//		} else if (optimalPoint!=null && centerOfTurn!=null && Geom.getCircle(0, 0, centerOfTurn.x, centerOfTurn.y+radiusOfTurn, optimalPoint.x, optimalPoint.y, r)){
+//			cntr=new Vector2D(r[0],r[1]);				
+//			rr = Math.sqrt(r[2]);
+//		}
+		
+		if (centerOfTurn!=null && point!=null){			
+			if (Geom.getCircle2(point, new Vector2D(centerOfTurn.x,centerOfTurn.y+radiusOfTurn), new Vector2D(0,0), carDirection, r)!=null){				
+				rr = Math.sqrt(r[2]);
+				cntr = new Vector2D(r[0],r[1]);
+			}
+			if (!isTurning) isTurning = (cntr.y<=0);
+			if (!isTurning && centerOfTurn!=null){
+				p = Geom.ptTangentLine(0, 0, centerOfTurn.x,centerOfTurn.y, radiusOfTurn-W);
+				point2Follow = (p==null) ? null : (p.length>1 && p[1].y>p[0].y) ? p[1] : p[0];
+				if (point2Follow==null){
+//					centerOfTurn = cntr;
+//					radiusOfTurn = rr;
+					p = Geom.ptTangentLine(0, 0, cntr.x,cntr.y, rr);
+					point2Follow = (p==null) ? null : (p.length>1 && p[1].y>p[0].y) ? p[1] : p[0];
+				}
+			} else if (isTurning && cntr!=null){				
+				point2Follow = point;
+			}
+		}
+		
+		if (time>=11.9 && time<=13){
+			draw=false;
+			if (draw)store();
+//		TrackSegment.circle(other.center.x,other.center.y, edge.radius,series);
+//		if (point!=null)
+//			series.add(point.x,point.y);
+//		if (centerOfTurn!=null)
+//			series.add(centerOfTurn.x,centerOfTurn.y);		
+			display();
+			draw=false;
+	}
+
+	}
+	
+	public void display(){
+		if (!draw) return;
+		try{
+			if (series!=null) EdgeDetector.drawEdge(series, "E "+time+" "+lastSteer+" "+lastAngle+"  a");
+			Thread.sleep(200);
+		} catch (Exception e){
+			
+		}
+		if (cntr!=null) draw(cntr,rr,"Go ");
+//		if (centerOfTurn!=null) draw(centerOfTurn,radiusOfTurn,"Best ");
+//		Edge.drawEdge(edge, "E "+time+" "+str);
+		if (edge!=null && edge.center!=null) 
+		draw(edge.center,edge.radius,str);		
+//		Edge.drawEdge(other, "E "+time+" "+(str.equals("Left Edge")?"Right Edge":"Left Edge"));
+		if (other!=null && other.center!=null) 
+			draw(other.center,other.radius,(str.equals("Left Edge")?"Right Edge":"Left Edge"));
+			
+	}
+
+	public void record(){		
+		if (!recording) return;
+		if (time>=4.604)
+			System.out.println();
+		centerOfTurn = null;		
+//		long time = System.currentTimeMillis();
+		nraced = distRaced - raced;
+		nraced = Math.round(nraced*10000.0d)/10000.0d;
+		
 		Edge left = edgeDetector.left;
 		Edge right = edgeDetector.right;
+//		left.calculateRadius();
 		
 		Vector2D hh = edgeDetector.highestPoint;
-//		int highestPointEdge = 	edgeDetector.guessPointOnEdge(hh);
-		int highestPointEdge = (turn==TURNRIGHT) ? -1 : 1;
+		highestPointEdge = (turn==TURNRIGHT) ? -1 : 1;
 
 		if (left==null && right==null){
-			highestPoint = hh;
-			highestPointOnOtherEdge = null;
 			prevEdge = edgeDetector;				
 			raced = distRaced;		
-//			System.out.println(System.currentTimeMillis()-time);
 			return;
+		}		
+		
+		if (prevEdge.turn*edgeDetector.turn!=-1 && prevEdge.straightDist-1>nraced) {
+			edgeDetector.combine(prevEdge, nraced);
+			left = edgeDetector.left;
+			right = edgeDetector.right;
 		}
-
+		
 		str = "";
-		if (hh!=null && hh.length()<=99.95){
-			if (hh!=null && turn==TURNRIGHT && left!=null){
+		if (hh!=null){
+			if (hh!=null && turn==TURNRIGHT && left!=null && hh.x>left.getHighestPoint().x && left.center!=null){
 				if (Math.abs(hh.x-left.getLowestPoint().x)<=trackWidth || left.isPointOnEdge(hh)){
 					left.append(hh);
-					str = "Left ";
-				} else {
+					str = "Left Edge";					
+				} else if (right!=null && right.center!=null && right.center.distance(hh)<=right.radius){
 					right.append(hh);
 					str = "Right Edge";
-					highestPointEdge = 1;
-				}
-			} else if (hh!=null && turn==TURNLEFT && right!=null){
-				if (Math.abs(hh.x-right.getLowestPoint().x)<=trackWidth ||right.isPointOnEdge(hh)){
+					highestPointEdge = 1;					
+				} else highestPointEdge = 0;
+			} else if (hh!=null && turn==TURNLEFT && right!=null && hh.x<right.getHighestPoint().x && right.center!=null){
+				if (Math.abs(hh.x-right.getLowestPoint().x)<=trackWidth || right.isPointOnEdge(hh)){
 					right.append(hh);
-					str = "Right Edge";
-				} else {
+					str = "Right Edge";					
+				} else if (left!=null && left.center!=null && left.center.distance(hh)<=left.radius){
 					left.append(hh);
-					str = "Left ";
-					highestPointEdge=-1;
-				}
+					str = "Left Edge";
+					highestPointEdge=-1;					
+				} else highestPointEdge = 0;
 			}			
 		}
-		if (left!=null) left.calculateRadius();
-		if (right!=null) right.calculateRadius();
-
-		/*if (hh!=null && hh.length()>=99.95 && edgeDetector.straightDist<2.5){
-			double[] r = new double[3];
-			point2Follow = hh;
-			if (turn==TURNRIGHT && left!=null){
-				double nr = left.radiusNextSeg(r)-edgeDetector.trackWidth/2;				
-				targetRadius = nr;				
-			} else if (turn==TURNLEFT && right!=null){
-				double nr = right.radiusNextSeg(r)-edgeDetector.trackWidth/2;
-				targetRadius = nr;				
-			}
+		
+		if (highestPointEdge==0){
+			prevEdge = edgeDetector;				
+			raced = distRaced;				
+			return;			
+		}
+		
+		if (draw) store();
+		
+		if (left!=null) edgeDetector.left.calculateRadius();
+		if (right!=null) edgeDetector.right.calculateRadius();
+		System.out.println("**************** E"+time+" "+nraced+" ****************");//		
+		turn = edgeDetector.turn;
+		
+		if (turn==UNKNOWN) {
+			turn = prevEdge.turn;
+			edgeDetector.center = null;
+			prevEdge = edgeDetector;				
+			raced = distRaced;				
 			return;
-		}//*/
+		}
 
-		edgeDetector.estimateCurve(highestPointEdge);				
+		
+		edgeDetector.estimateCurve(highestPointEdge);
+		if (highestPointEdge==-1){
+			edge = left;
+			other = right;
+		} else {
+			edge = right;
+			other = left;
+		}
+		if (left!=null) {
+			edgeDetector.left.center = edgeDetector.center;
+			edgeDetector.left.radius = edgeDetector.radiusL;
+		}
+		if (right!=null){
+			edgeDetector.right.center = edgeDetector.center;
+			edgeDetector.right.radius = edgeDetector.radiusR;
+		}
+		double[] r = new double[3];		
+
+		if (edge!=null){ 			
+			edgeRadius = edge.radius-trackWidth/2;
+			Vector2D h = edge.getHighestPoint();
+			Vector2D l = edge.allPoints.get(edge.index);
+			if (h.x-l.x>trackWidth) 
+				nextRadius = edge.radiusNextSeg(r)-trackWidth/2;
+			else nextRadius = edgeRadius;
+		}
+
+
+
 		cntr = null;
-		rr=0;
-		double[] r = new double[3];
+		rr=0;		
 		if (edgeDetector.center==null){
 			prevEdge = edgeDetector;				
 			raced = distRaced;
 			return;
-		} else if (edgeDetector.center!=null){
-			Vector2D center = edgeDetector.center;
-			radiusR = edgeDetector.radiusR;
-			radiusL = edgeDetector.radiusL;
-
-			Vector2D t = null;			
-			if (turn==TURNRIGHT && radiusR>0){
-				radiusR += W/2;
-				radiusL -= W;
-				t = new Vector2D(SIN_PI_4,-SIN_PI_4);
-				radiusOfTurn = 3.414*(radiusL-0.707*radiusR);
-				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusR));
-			} else if (turn==TURNLEFT && radiusL>0){
-				radiusL += W;
-				radiusR -= W/2;
-				t = new Vector2D(-SIN_PI_4,-SIN_PI_4);
-				radiusOfTurn = 3.414*(radiusR-0.707*radiusL);
-				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusL));
-			}
-			if (left!=null) edgeDetector.left.center = edgeDetector.center;
-			if (right!=null) edgeDetector.right.center = edgeDetector.center;
-			if (left!=null) edgeDetector.left.radius = radiusL;
-			if (right!=null) edgeDetector.right.radius = radiusR;
-			
-			if (centerOfTurn!=null && centerOfTurn.length()>=radiusOfTurn){
-//				cntr = centerOfTurn;
-//				rr = radiusOfTurn;
-				point2Follow = trackDirection;
-				maxSpeed = speedAtRadius(radiusOfTurn)-10;
-				prevEdge = edgeDetector;				
-				raced = distRaced;
-				return;
-			}
-
-			if (centerOfTurn!=null && hh!=null){
-				t = hh.minus(centerOfTurn).normalized();
-				optimalPoint = centerOfTurn.plus(t.times(radiusOfTurn));				
-			}
-			Vector2D[] p = null;
-			if (turn==TURNLEFT){
-				p = Geom.ptTangentLine(0, 0, center.x,center.y, radiusL);
-			} else if (turn==TURNRIGHT ){				
-				p = Geom.ptTangentLine(0, 0, center.x,center.y, radiusR);
-			}
-
-			Vector2D point = (turn==TURNLEFT && p!=null) ? p[1] : (turn==TURNRIGHT && p!=null) ? p[0] : null;
-			if (point!=null && Geom.getCircle(0, 0, centerOfTurn.x, centerOfTurn.y+radiusOfTurn-W, point.x, point.y, r)){
-				cntr=new Vector2D(r[0],r[1]);				
-				rr = Math.sqrt(r[2]);		
-			} else
-				if (optimalPoint!=null && centerOfTurn!=null && Geom.getCircle(0, 0, centerOfTurn.x, centerOfTurn.y+radiusOfTurn-W, optimalPoint.x, optimalPoint.y, r)){
-					cntr=new Vector2D(r[0],r[1]);				
-					rr = Math.sqrt(r[2]);
-				}
-
-		}				
-
-		draw = false;
-
-		if (time>=72.5 && time<=74){ 
-			draw =false;
-			r = new double[3];
-
-
-//			if (left!=null && hh.length()<99.95) left.append(hh);
-//			left.removeLastPoint();
-//			if (right!=null && hh.length()<99.95) right.append(hh);
-//			if (left!=null){
-//			int index = left.index;
-//			Vector2D p1 = left.get(index+1);
-//			Vector2D p2 = left.get(index+2);
-//			Vector2D p3 = left.get(index+3);			
-//			if (p1!=null && p2!=null && p3!=null) 	{
-//			Geom.getCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, r);
-////			if (Math.sqrt(r[2])<600) TrackSegment.circle(r[0], r[1], Math.sqrt(r[2]), series);				
-//			}
-//			}
-
-//			if (right!=null){
-//			int index = right.index;
-//			Vector2D p1 = right.get(index+1);
-//			Vector2D p2 = right.get(index+2);
-//			Vector2D p3 = right.get(index+3);
-//			if (p1!=null && p2!=null && p3!=null) 	{
-//			Geom.getCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, r);
-//			if (Math.sqrt(r[2])<600) TrackSegment.circle(r[0], r[1], Math.sqrt(r[2]), series);
-//			}
-//			}
-
-
-//			if (left!=null) System.out.println("Left   "+left.calculateRadius()+"     "+speedAtRadius(left.radius));
-//			if (right!=null) System.out.println("Right   "+right.calculateRadius());
-//			if (left.center!=null && right.center !=null){
-//			Vector2D p1 = Geom.ptTangentLine(0, 0, right.center.x, right.center.y, right.radius)[0];
-//			Vector2D p2 = edgeDetector.highestPoint;
-//			r = new double[3];
-//			Geom.getCircle(0, 0, p1.x, p1.y, p2.x, p2.y, r);
-////			TrackSegment.line(0, 0, p1.x, p1.y, series);
-//			if (Math.sqrt(r[2])<600) TrackSegment.circle(r[0], r[1], Math.sqrt(r[2]), series);
-//			}
-//			for (int i=0;i<left.size;++i){				
-//			series.add(left.x.get(i), left.y.get(i));
-//			}
-
-
-//			double[] rad = new double[3];
-//			if (left!=null) {
-//			double rr = left.radiusNextSeg(rad);
-//			if (rr<600) TrackSegment.circle(rad[0], rad[1], rr, series);
-//			}
-
-//			if (right!=null) {
-//			double rr = right.radiusNextSeg(rad);
-//			if (rr<600) TrackSegment.circle(rad[0], rad[1], rr, series);
-//			}
-
-//			if (left!=null){
-//			int size = left.size;
-//			Vector2D p1 = left.get(size-2);
-//			Vector2D p2 = left.get(size-3);
-//			Vector2D p3 = left.get(size-4);
-//			r = new double[3];
-//			if (Geom.getCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, r)){
-//			Vector2D o = new Vector2D(r[0],r[1]);
-//			System.out.println(" Check  "+(o.distance(hh)-Math.sqrt(r[2])));
-//			if (draw) draw(o,Math.sqrt(r[2]));
-//			}
-//			}
-//			if (right!=null && draw){
-//			int size = right.size;
-//			Vector2D p1 = right.get(size-2);
-//			Vector2D p2 = right.get(size-3);
-//			Vector2D p3 = right.get(size-4);
-//			r = new double[3];
-//			if (Geom.getCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, r)){
-//			Vector2D o = new Vector2D(r[0],r[1]);
-//			if (draw) draw(o,Math.sqrt(r[2]));
-//			}
-
-//			}
-			if (draw) EdgeDetector.drawEdge(series, "E"+time+" "+"a");
-			if (draw && cntr!=null) draw(cntr,rr,"Go");
-			if (left!=null && left.center!=null) draw(edgeDetector.left.center,edgeDetector.left.radius,"L");
-//			System.out.println(left.center+"    "+left.radius);
-			if (right!=null && right.center!=null) draw(right.center,right.radius,"R");
-//			if (right!=null && right.center!=null) System.out.println(right.center+"    "+right.radius);
-			if (hh!=null && right!=null) System.out.println(hh+"   "+hh.distance(right.getHighestPoint()));
-
-//			left.removeLastPoint();
-//			right.removeLastPoint();
-			if (draw && centerOfTurn!=null) draw(centerOfTurn,radiusOfTurn,"Best");
 		}
 
-//		if (cntr!=null) draw(cntr,rr);
-//		System.out.println(cntr+"   "+optimalPoint+"    "+startTurnPoint+"   New");
-		Vector2D hc = (centerOfTurn==null) ? null : new Vector2D(centerOfTurn.x,centerOfTurn.y+radiusOfTurn);
-		if (highestPoint==null) highestPoint=hh;		
-//		if (hc!=null && startTurnPoint!=null) 
-//		System.out.println((hc.distance(startTurnPoint))+"   "+hc.minus(startTurnPoint).angle()+"    Check coi");
-//		centerOfTurn = edgeDetector.center;
-//		centerOfTurn = null;
-//		radiusOfTurn = (radiusL+radiusR)*0.5;
-//		cntr = edgeDetector.center;
-//		rr = radiusOfTurn;
+		if (edgeDetector.center!=null){
+			estimateBestPath();			
+			estimatePath(hh);						
+		}				
 		prevEdge = edgeDetector;				
 		raced = distRaced;
-
 
 //		System.out.println(System.currentTimeMillis()-time);	
 	}
@@ -481,47 +452,6 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		return gotoPoint(state, point);
 	}
 
-
-	double oldSpeed = 0;
-	double accel = 0;
-	double avgSpeed = 0;
-	double avgRadius = 0;
-	int count =0 ;
-	int n = 0;
-	boolean ok = true;
-	double mr=0;
-	double startTime=10;
-	/* (non-Javadoc)
-	 * @see solo.BaseStateDriver#drive(solo.State)
-	 */
-
-
-	double filterABS(CarState cs,double brake)	{
-		// convert speed to m/s
-		if (brake<=0) return 0;
-		brake = Math.min(1.0, brake);
-		double speed = cs.speedX/3.6;
-		// when spedd lower than min speed for abs do nothing
-		if (speed < MyDriver.absMinSpeed)
-			return brake;
-
-		// compute the speed of wheels in m/s
-		double slip = Double.MAX_VALUE;	    
-		for (int i = 0; i < 4; i++)	{
-			slip += cs.wheelSpinVel[i] * MyDriver.wheelRadius[i]/speed;			
-		}
-
-		slip = slip/4.0f;
-		// when slip too high applu ABS
-		if (slip < 0.9) {
-			brake *=slip;
-		}
-
-		// check brake is not negative, otherwise set it to zero
-
-		return brake;
-	}
-
 	public int getGear(CarState cs) {
 		// TODO Auto-generated method stub
 		int gear = cs.gear;
@@ -543,69 +473,94 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		return gear;
 	}
 
-
-
-	double speedControl(CarState cs,double targetSpeed){
+	double speedControl(CarState cs,double targetSpeed,Vector2D point){
 		int gear = cs.getGear();
 		final double Dxb  = 0.05f;
 		final double Dxxb = 0.01f;
 		double[] wheelSpinVel = cs.getWheelSpinVel();
-		double rwd = (wheelSpinVel[REAR_LFT]+wheelSpinVel[REAR_RGT])*wheelSpinVel[REAR_LFT]/2;
 //		double tcl_slip = cs.speedX/3.6*rwd;
 
+		double coeff = 1/3.6/3.6;
 		double speedX = cs.speedX/3.6;
 		double speed = cs.getSpeed();
 		double dv = targetSpeed/3.6-speedX;
+//		double rwd = (wheelSpinVel[REAR_LFT]+wheelSpinVel[REAR_RGT])*wheelSpinVel[REAR_LFT]/2-speedX;
 		double Dvv = dv - lastDv;
 		lastDv = dv;
 		double slip=0;
 		if (speedX > 0) {
-			slip = (wheelRadius[3] * wheelSpinVel[3] - speedX) / speedX;
+			slip = (wheelSpinVel[REAR_LFT]+wheelSpinVel[REAR_RGT])*wheelRadius[REAR_LFT]/2-speedX;
 		} 				
-		double acc = 0;		
+		double acc = 0;
+		flying = (slip>TCL_RANGE);			
 
-
-		if (dv>0){			
+		if (dv>=0){			
 			if (speed<=targetSpeed-1)
 				acc = 1;
 			else acc = 2/(1+Math.exp(speed - targetSpeed-1)) - 1;
 
-			if ((slip > 1.0) && (gear > 1)) {
-				acc *= 0.5;
-			} else {
-				acc = lastAccel + 50 * (acc - lastAccel) * 0.01;	
-				lastAccel = acc;		    
+			if (!flying && slip>TCL_SLIP){				
+				acc -= Math.min(acc, (slip-TCL_SLIP)/TCL_RANGE);
+				
 			}
-//			acc = Math.min(acc,Math.abs(dv/6.0d));
 		} else {			
-			slip = 0;
-			double meanSpd = 0.0d;
-			for (int i = 0; i < 4; i++) {
-				meanSpd += wheelSpinVel[i];
-			}
-			meanSpd /= 4.0;
+			double s = steerAtSpeed(speed);
+			double st = (point==null) ? cs.angle/SimpleDriver.steerLock : Math.max(-SimpleDriver.steerLock,Math.min(cs.angle-PI_2+point.angle(),SimpleDriver.steerLock));
+			if (Math.abs(st)>0.2*s && isTurning)
+				return 0;
+			double b2 = 0;
+			double meanSpd = 0.0d;			
+//			for (int i = 0; i < 4; i++) {
+//				meanSpd = wheelSpinVel[i]*wheelRadius[i]/speedX;
+//				if (slip<meanSpd) slip = meanSpd;
+//			}
+			meanSpd = (wheelSpinVel[REAR_LFT] + wheelSpinVel[REAR_RGT])*wheelRadius[REAR_LFT]/speedX;
+			meanSpd /= 2.0;
 
-			if (meanSpd > 15.0) {
-				for (int i = 0; i < 4; i++) {
-					if (((meanSpd - wheelSpinVel[i]) / meanSpd) < -0.1) {
-						slip = 1.0;
-					}
-				}
+			if (point!=null){
+				double dist = point.length()-3;
+				if (dist<0) return 0;
+				double currentBrakeDist = brakeDistAtSpeed(speed)-brakeDistAtSpeed(targetSpeed);				
+				if (dist>1.1*currentBrakeDist)
+					return 1;				
+				b2 = currentBrakeDist/dist;
 			}
-
-			double brake = Math.min(-dv * Dxb + Dvv * Dxxb, 1.0);
-			if (slip > 0.2) {
-				double maxslp = Math.exp(-3.47*(slip - 0.2));
-				brake = Math.min(brake, maxslp);
-			} else {
-				brake = (lastBrkCmd + 50 * (brake - lastBrkCmd) * 0.01);	
-				lastBrkCmd = brake;
-
-			}
-			acc = -Math.min(brake, Math.abs(dv/5.0));			
+			 
+			slip = 1;
+			double brake = (speed*speed-targetSpeed*targetSpeed)/(speed*speed);
+			if (brake<b2) brake = b2;
+			brake = Math.min(brake, 1)*meanSpd;			
+			acc = -Math.min(brake, 1);			
 		}
 
 		return acc;
+	}
+	
+	
+	public double brakeDistAtSpeed(double x){
+		return -0.30220189119619+0.0403949586208308*x+0.00221104316193883*x*x-3.56417513475425e-06*x*x*x;
+//		return -0.596348768823269+0.051461029864198*x+0.00135309496429643*x*x-2.1617586962591e-06*x*x*x;			
+	}
+	
+	public double steerAtSpeed(double x){
+		if (x>=216)
+			return 0.405956540491453-0.00402398400604155*x+1.46983630854209e-05*x*x-1.88619693222940e-08*x*x*x;
+		if (x>180)
+			return -6.40122354928717+0.100933617693404*x-0.000519289942888996*x*x+8.79221413082921e-07*x*x*x;
+		if (x>140)
+			return 1.31349334978100-0.0158496396133958*x+6.53860943510914e-05*x*x-8.64166930377492e-08*x*x*x;		
+		return 1.00309570103181-0.0115995398441519*x+4.70782598803805e-05*x*x-6.49876327849716e-08*x*x*x;	
+	}
+	
+	public double steerAtRadius(double x){
+		if (x>=100)
+			return 0.0810250510703418-0.000750740530082075*x+2.89854924506364e-06*x*x-3.95924129765923e-09*x*x*x;
+		if (x>=70)
+			return -1.36459470940743+0.0582094289481451*x-0.000746679722815475*x*x+3.04328497896615e-06*x*x*x;
+		if (x>=50)
+			return -0.485794442078747+0.0364424208448416*x-0.000642936741947271*x*x+3.44706692338737e-06*x*x*x;
+			
+		return 1.02589841472933-0.0615964400025362*x+0.00163249602462468*x*x-1.46149044885214e-05*x*x*x;		
 	}
 
 	boolean k = false;
@@ -613,17 +568,22 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	public ObjectList<CarControl> drive(State<NewCarState,CarControl> state) {
 		// TODO Auto-generated method stub		
 		ObjectList<CarControl> ol = new ObjectArrayList<CarControl>();
+		
 		point2Follow = null;		
 		double brake = 0.0d;		
 		double acc = 1;		
 		NewCarState cs = state.state;
+		double curPos = -cs.trackPos;
+		double dP = curPos-lastPos;
 		curAngle = cs.angle;
-		double speed = cs.getSpeed();		
+		carDirection = trackDirection.rotated(-curAngle);
+		double speed = cs.getSpeed();	
+		currentSpeedRadius = radiusAtSpeed(speed);
 		time = cs.getLastLapTime();
 //		double posX = cs.posX;
 //		double posY = cs.posY;
 //		double cx = cs.cx;
-//		double cy = cs.cy;				
+//		double cy = cs.cy;						
 		edgeDetector = new EdgeDetector(cs);
 		distRaced = cs.distRaced;
 
@@ -634,26 +594,43 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		toMiddle = edgeDetector.toMiddle();				
 		mass = carmass + cs.getFuel();				
 
-		if (accel!=0 || oldSpeed!=0) {
-			accel = (speed-oldSpeed)/0.02;		
-		}		
-
-
 		double steer = steerControl(cs);
-		maxSpeed=Math.min(200,maxSpeed);
-		acc = speedControl(cs, maxSpeed);
-				
+//		double s = steerAtSpeed(speed);
+//				
+		acc = speedControl(cs, maxSpeed,point2Follow);
+//		if (Math.abs(steer)>s){							
+//			acc = 0;
+//		}
+
+		if (acc>=0 && isTurning && dP*turn<0){
+//			if (curPos*turn<=WIDTHDIV-0.1)
+//				acc = (2/(1+Math.exp(-10)) - 1);			
+//			if (curPos*turn<=WIDTHDIV-0.15){
+//				acc = 0;
+//			}
+						
+			acc = 0;
+		}
+//		
 		if (acc<=0) {
 			brake = -acc;
 			acc = 0;
 		}
-		if ((turn==TURNLEFT || turn==TURNRIGHT) && (edgeDetector.curPos*turn)<0.8 && acc >0 && speed>30){
-			if ((edgeDetector.curPos*turn)>0.9)
-				brake = -0.1;
-			acc = 0;
-		}
+//		if (isTurning) brake=0;
+//		if (time>=5)
+//			System.out.println();
 		
+//		if (isTurning && curPos*turn>=0)
+//			steer = gotoPoint(cs, trackDirection);
+
 		int gear = getGear(cs);
+		
+//		steer = lastSteer + 50 * (steer - lastSteer) * 0.005;
+		lastSteer = steer;
+		lastPos = curPos;
+		lastAngle = curAngle;		
+		if (flying) steer = gotoPoint(cs, trackDirection);
+		
 		CarControl cc = new CarControl(acc,brake,gear,steer,0);
 		ol.add(cc);
 		return ol;
@@ -672,7 +649,8 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 
 	public double gotoPoint(CarState cs,Vector2D point){
 		double angle = cs.angle;
-		if (point==null) return angle/SimpleDriver.steerLock;				
+		point2Follow = point;
+		if (point==null) return angle/SimpleDriver.steerLock;		
 		double steer = Math.max(-SimpleDriver.steerLock,Math.min(angle-PI_2+point.angle(),SimpleDriver.steerLock));		
 		return (steer)/SimpleDriver.steerLock;
 
@@ -717,148 +695,61 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	public double fuzzySteering(CarState cs){
 		double curPos = -cs.trackPos;
 		double speed = cs.getSpeed();
+		final double N = 1.0;
 		if (turn==STRAIGHT) {
 			followedPath = false;
 			maxSpeed = Double.MAX_VALUE;			
 			recording = false;	
 			isTurning = false;
 			return curAngle/steerLock;
-		}		
-		Vector2D trackDirection = new Vector2D(0,1);
+		}				
 
-		double steer = Double.NaN;		
-		if (edgeDetector.center==null){
-			maxSpeed = speed;
-			prevSteer = gotoPoint(cs, trackDirection);
-			if (turn!=UNKNOWN)
-				prevSteer+=(0.2-curPos)*turn/25;
+		draw = false;
+		if (time>=12.4 && time<=13){
+			draw = false;
+			if (draw) display();
+		}
+		double s = steerAtSpeed(speed);
+		if (highestPointEdge==0){//cannot decide the highest point belong to which edge
+			prevSteer = gotoPoint(cs, trackDirection)+curPos/10;
+			if (Math.abs(prevSteer)>=s*N)
+				prevSteer = (prevSteer<0) ? -s*N : s*N;
 			return prevSteer;
-		}
-//		if (time>=41)
-//			System.out.println();
-
-		if (point2Follow!=null){
-			steer = gotoPoint(cs, point2Follow);
-			prevSteer = steer;
-			return prevSteer;
-		}
-
-//		maxSpeed = Double.MAX_VALUE;		
-
-
-//		double sign = (turn==TURNRIGHT) ? -1 : 1;				
-//		Vector2D hh = edgeDetector.highestPoint;
-		
-		double edgeRadius =0;
-//		targetRadius = radiusOfTurn;
-		if (centerOfTurn==null || radiusOfTurn<0){
-			prevSteer = gotoPoint(cs, trackDirection)+curPos/5;
-			return prevSteer;
-		}
-		Edge edge = null;
-		Edge other = null;
-
-		if (edgeDetector.left!=null && turn==TURNRIGHT){		
-			edge = edgeDetector.left;
-			other = edgeDetector.right;			
-			if (other !=null) other.radius = radiusR;
-			if (edge!=null) edge.radius = radiusL;
-		} else if (edgeDetector.right!=null && turn==TURNLEFT){				
-			edge= edgeDetector.right;
-			other = edgeDetector.left;
-			if (other !=null) other.radius = radiusL;
-			if (edge!=null) edge.radius = radiusR;
-		}
-		if (other!=null) other.center = edgeDetector.center;
-		if (edge!=null) edge.center = edgeDetector.center;
-
-		double[] r = new double[3];
-		double nextRadius = 0;
-
-		if (edge!=null){ 			
-			edgeRadius = edge.radius-trackWidth/2;
-			Vector2D h = edge.getHighestPoint();
-			Vector2D l = edge.getLowestPoint();
-			if (h.x-l.x>trackWidth) 
-				nextRadius = edge.radiusNextSeg(r)-trackWidth/2;
-			else nextRadius = rr;
-		}
-		
-		
-		if (nextRadius>=edgeRadius){//next turn is of nearly the same radius or larger, dont need to slow down
-			targetRadius = rr;
-		} else {
-			targetRadius = nextRadius;
 		}
 				
-		double currentRadiusAtSpeed = radiusAtSpeed(speed);
-		
-			
-
-		double straightDist = (edge!=null && other!=null) ? other.straightDist : 0;
-
-		if (targetRadius>=400 || (currentRadiusAtSpeed<nextRadius && currentRadiusAtSpeed<edgeRadius)){
-//			steer = gotoPoint(cs, trackDirection);
-			steer = steerAtRadius(cs, cntr.x, cntr.y, rr);
-		} else 	if (currentRadiusAtSpeed>=rr-SPEED_MARGIN || straightDist<=30){//if current speed is nearly match the 
-			steer = steerAtRadius(cs, cntr.x, cntr.y, rr);
-		} else {
-			steer = gotoPoint(cs, trackDirection);
+		double steer = Double.NaN;		
+		if (edgeDetector.center==null){			
+			prevSteer = gotoPoint(cs, trackDirection);
+			if (Math.abs(prevSteer)>=N*s)
+				prevSteer = (prevSteer<0) ? -s*N : s*N;
+//			if (turn!=UNKNOWN)
+//				prevSteer+=(0.3-curPos)*turn/25;
+			return prevSteer;
 		}
-		if (steer*turn>=0) steer = gotoPoint(cs, trackDirection);
-
-
-
-//		if (centerOfTurn.length()>=radiusOfTurn){
-////		System.out.println(radiusOfTurn+"\t"+time);
-//		targetRadius = Math.min(radiusOfTurn,rr);
-//		steer = steerAtRadius(cs, centerOfTurn.x, centerOfTurn.y, radiusOfTurn);
-//////	steer = gotoPoint(cs, new Vector2D(0,1));			
-//////	draw(centerOfTurn,targetRadius);
-
-////		} else if (straightDist>=30){		
-////		double tmp = (edge!=null && edge.center!=null) ?edge.center.length()-W/2:0;
-////		if (maxRadius<=tmp && edge!=null && edge.center!=null){
-////		targetRadius = tmp;
-////		steer = steerAtRadius(cs, edge.center.x, edge.center.y, targetRadius);
-////		} else steer = gotoPoint(cs, new Vector2D(0,1));
-////		} else if (straightDist >15 && straightDist<30){
-////		steer = gotoPoint(cs, new Vector2D(0,1));
-//		} else if (centerOfTurn!=null && centerOfTurn.length()<radiusOfTurn && straightDist<35){
-//		System.out.println(rr+"\t"+time);			
-//		if (edge!=null) targetRadius = edge.radiusNextSeg(r)-trackWidth/2;
-//		if (other!=null) edgeRadius = other.radius;
-
-////		targetRadius = Math.min(targetRadius,rr);
-//		if (maxRadius<=rr || rr<=targetRadius)
-//		steer = steerAtRadius(cs, cntr.x, cntr.y, rr);
-//		else {
-////		targetRadius =Math.min(Math.min(targetRadius,rr),edgeRadius);				
-////		if (other!=null && targetRadius>other.radius)
-////		targetRadius = other.radius;
-//		targetRadius = edgeRadius;
-////		if (centerOfTurn!=null) 
-////		steer = steerAtRadius(cs, centerOfTurn.x, centerOfTurn.y, maxRadius);
-////		else steer = gotoPoint(cs, new Vector2D(0,1));
-//		steer = gotoPoint(cs, new Vector2D(0,1));
-////		if (curPos*turn<0) 
-////		steer += curPos/5;	
-//		}
-
-
-//		if (steer*turn>=0) steer = 0;
-////		draw(cntr,targetRadius);
-//		} else if (straightDist>80){
-//		steer = gotoPoint(cs, new Vector2D(0,1))+(0.5-curPos)*turn/1000;
-//		} else {
-//		steer = gotoPoint(cs, new Vector2D(0,1));
-//		}
+//		double straightDist = (edge!=null && other!=null) ? other.straightDist : 0;
+		
+		if (!isTurning){
+			targetRadius = Math.max(radiusOfTurn,rr);
+//			targetRadius = Math.min(Math.min(radiusOfTurn, edgeRadius-trackWidth/2),nextRadius-trackWidth/2);
+//			steer = gotoPoint(cs, trackDirection)+(curPos+WIDTHDIV/4*turn)/20;
+//			steer = (centerOfTurn!=null) ? steerAtRadius(cs, centerOfTurn.x, centerOfTurn.y, radiusOfTurn-W) : gotoPoint(cs, trackDirection)+curPos/15;						
+		} else {
+			if (nextRadius<=edgeRadius+trackWidth/2)
+				targetRadius = nextRadius-trackWidth/2;
+			else targetRadius = nextRadius;//Math.min(rr,edgeRadius+trackWidth/2);			
+//			targetRadius=rr;
+//			
+//			steer = (cntr!=null) ? steerAtRadius(cs, cntr.x, cntr.y, rr) : gotoPoint(cs, trackDirection)+curPos/15;									
+		}
+		steer = gotoPoint(cs, point2Follow);
+		if (Math.abs(steer)>=s*N)
+			steer = (steer<0) ? -s*N : s*N;
 
 		if (turn!=UNKNOWN) 			
-				maxSpeed = speedAtRadius(targetRadius);			
+			maxSpeed = speedAtRadius(targetRadius);			
 		else maxSpeed = speed;
 
-		System.out.println("MSpeed "+maxSpeed+" MRadius "+currentRadiusAtSpeed+" TRadius "+targetRadius+"  EdgeRadius "+edgeRadius+" speed "+speed);
+		System.out.println("MSpeed "+maxSpeed+" MRadius "+currentSpeedRadius+" TRadius "+rr+"  EdgeRadius "+edgeRadius+" speed "+speed);
 		if (Double.isNaN(steer)){			
 			followedPath = false;
 			recording = false;			
@@ -871,9 +762,13 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 
 	public double steerControl(CarState cs){
 		double curAngle = cs.angle;
-		double curPos = -cs.trackPos;
+		double curPos = -cs.trackPos;		
+		double signPos = (curPos<0) ? -1 :1;
+		double deflect = Math.min(steerAtSpeed(cs.getSpeed())*signPos,curPos/10);
+		if (curPos>1 || curPos<-1)
+			return curAngle/steerLock+deflect;
 		if (trackWidth<=0)
-			return curAngle/steerLock+curPos/10;
+			return curAngle/steerLock+deflect;
 
 		if (recording){ 			
 			record();		
@@ -886,7 +781,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		if (!followedPath && (curPos<= -(trackWidth/workingWidth) || curPos>=(trackWidth/workingWidth))){
 			recording = false;
 			followedPath = false;			
-			return curAngle/steerLock+curPos/15;
+			return curAngle/steerLock+deflect;
 		}
 
 
@@ -894,7 +789,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			recording = false;
 			isTurning = false;
 			maxSpeed = Double.MAX_VALUE;
-			return curAngle/steerLock+curPos/15;
+			return curAngle/steerLock+deflect;
 		}
 
 		if (!recording) {
@@ -906,7 +801,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //			if (maxSpeed<150) 
 //			maxSpeed = Double.MAX_VALUE;
 //			else maxSpeed = cs.speedX-1;
-			return (curAngle+Math.abs(random.nextDouble()*0.05))/steerLock;
+			isTurning = false;						
+			double sign = curPos < 0 ? -1 : 1;
+			return (curAngle)/steerLock+sign*0.05;
 		}
 
 
@@ -936,7 +833,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //		double cx = state.state.cx;
 //		double cy = state.state.cy;
 //		return Geom.distance(posX, posY, cx, cy)<2;
-		return state.state.getLastLapTime()>=120;
+		return state.state.getLastLapTime()>=240;
 //		return (targetRadius>=300);
 	}
 

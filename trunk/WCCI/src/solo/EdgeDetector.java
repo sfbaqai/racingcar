@@ -184,12 +184,12 @@ public class EdgeDetector {
 				turn = MyDriver.TURNLEFT;
 			else if (highestPoint.x>rx[0])
 				turn = MyDriver.TURNRIGHT;
-			else if (highestPoint.length()>=99)
+			else if (highestPoint.length()>=99.95)
 				turn = MyDriver.STRAIGHT;
-		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
+		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99.95)
 			turn = MyDriver.UNKNOWN;
 
-		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;		
+		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist || turn==MyDriver.TURNRIGHT) ? right.straightDist : left.straightDist;		
 	}
 
 
@@ -393,10 +393,20 @@ public class EdgeDetector {
 				turn = MyDriver.TURNLEFT;
 			else if (highestPoint.x>rx[0])
 				turn = MyDriver.TURNRIGHT;
-			else if (highestPoint.length()>=99)
+			else if (highestPoint.length()>=99.95)
 				turn = MyDriver.STRAIGHT;
-		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99)
+		} else if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99.95)
 			turn = MyDriver.UNKNOWN;
+		
+//		if (turn==MyDriver.TURNLEFT && right!=null && right.center==null && ed.right!=null && ed.right.center!=null){
+//			right.center = ed.right.center.plus(new Vector2D(ax,-distRaced));
+//			right.radius = ed.right.radius;
+//			right.dmin = ed.right.dmin;
+//		} else if (turn==MyDriver.TURNRIGHT && left!=null && left.center==null && ed.left!=null && ed.left.center!=null){
+//			left.center = ed.left.center.plus(new Vector2D(ax,-distRaced));
+//			left.radius = ed.left.radius;
+//			left.dmin = ed.left.dmin;
+//		}
 
 		straightDist = (left==null || right==null) ? 0 : (left.straightDist>right.straightDist) ? right.straightDist : left.straightDist;
 
@@ -434,7 +444,7 @@ public class EdgeDetector {
 			sum+=x[i];
 		}
 		double meanR = Math.round(sum/(len-1-lastIndexMax)*10000.0)/10000.0d;
-
+		
 		if (firstIndexMax<=0 || lastIndexMax>=len-1)
 			return MyDriver.UNKNOWN;
 		double rl = x[firstIndexMax-1];

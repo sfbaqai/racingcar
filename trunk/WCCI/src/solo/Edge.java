@@ -37,7 +37,7 @@ public final class Edge {
 	DoubleArrayList allLengths = null;	
 	Object2IntMap<Vector2D> p2l = null;
 	double straightDist = 0;
-
+	double dmin = Double.MAX_VALUE;
 	int size =0;	
 	double totalLength =0;
 	Vector2D center = null;
@@ -62,15 +62,18 @@ public final class Edge {
 	}
 	
 	public boolean isPointOnEdge(Vector2D hh){
-		double d = calculateRadius();
-		if (d==-1) return false;
+		double d = 0;
+		if (dmin==Double.MAX_VALUE){
+			d = calculateRadius();
+			if (d==-1) return false;
+		} else d = dmin;
 		Vector2D p1 = allPoints.get(size-1);
 		Vector2D p2 = allPoints.get(size-2);
 		Vector2D p3 = allPoints.get(size-3);
 		if (d<=0.0001){//exactly correct guess
 			double dd = (radius!=Double.MAX_VALUE) ? center.distance(hh)-radius : Geom.ptLineDistSq(p1.x, p1.y, p2.x, p2.y, hh.x, hh.y, null);
 			if (radius!=Double.MAX_VALUE) dd*=dd;
-			if (dd<=0.001) return true;
+			if (dd<=0.01) return true;
 		}
 	
 		if (isStraightLine(p1, p2, hh))	return true;
@@ -78,7 +81,7 @@ public final class Edge {
 		boolean isCircle = Geom.getCircle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, r);
 		if (isCircle){
 			double dd = hh.distance(new Vector2D(r[0],r[1]))-Math.sqrt(r[2]);
-			if (dd>=-0.05) return true;			
+			if (dd>=-1) return true;			
 		}
 		
 		return false;//false means UNKNOWN
@@ -86,6 +89,12 @@ public final class Edge {
 	
 	public double radiusNextSeg(double[] r){
 		if (size<3) return -1;
+		if (dmin<0.0001 && center!=null){
+			r[0] = center.x;
+			r[1] = center.y;
+			r[2] = radius*radius;
+			return radius;
+		}
 		Vector2D p1 = allPoints.get(size-1);
 		Vector2D p2 = allPoints.get(size-2);
 		Vector2D p3 = allPoints.get(size-3);				
@@ -101,11 +110,17 @@ public final class Edge {
 //		Vector2D pp = allPoints.get(index+1); 
 //		double x0 = pp.x;
 //		double y0 = pp.y;
-		if (straightDist<allPoints.get(size-1).y && size>index+3){
-			Vector2D highestPoint = allPoints.get(index+1);			
+		if (straightDist<allPoints.get(size-1).y && size>index+3){					
 			Vector2D point = allPoints.get(size-1);
-			double[] r = new double[3];	
-			double dmin = Double.MAX_VALUE;
+			if (dmin<0.0001 && center!=null){
+				double d = center.distance(point)-radius;
+				if (d*d<0.001){
+					dmin+=d*d;
+					return dmin;
+				}
+			}
+			Vector2D highestPoint = allPoints.get(index+1);
+			double[] r = new double[3];				
 			Vector2D vmin = null;
 			double rmin = -1;
 			for (int i =index+2;i<size;++i){
@@ -127,7 +142,7 @@ public final class Edge {
 						double d = Math.sqrt(dx*dx+dy*dy)-rr;
 						s += d*d;
 					}
-					if (dmin>s && s<20){
+					if (dmin>s){
 						dmin = s;
 						vmin = new Vector2D(x,y);
 						rmin = rr;
@@ -143,7 +158,7 @@ public final class Edge {
 						double d = Geom.ptLineDistSq(startTurn.x, startTurn.y, point.x, point.y, p.x, p.y, null);
 						s += d;
 					}
-					if (dmin>s && s<20){
+					if (dmin>s){
 						dmin = s;
 						vmin = new Vector2D(Double.MAX_VALUE,Double.MAX_VALUE);
 						rmin = Double.MAX_VALUE;
@@ -153,14 +168,10 @@ public final class Edge {
 						break;					
 				}
 			}//end of for
-			if (vmin!=null && rmin>=20){
-				center = vmin;
-				radius = rmin;
-			} else {
-				center = null;
-				radius = Double.MAX_VALUE;
-				return -1;
-			}
+			if (vmin!=null && rmin>=10){
+				this.center = vmin;
+				this.radius = rmin;
+			} else dmin = Double.MAX_VALUE;
 			if (dmin<Double.MAX_VALUE)
 				return dmin;
 		}		
@@ -387,8 +398,8 @@ public final class Edge {
 		double sumx = 0;
 		double[] xx = x.elements();
 		calculateRadius();
-		if (radius>350)
-			return MyDriver.UNKNOWN;
+//		if (radius>350)
+//			return MyDriver.UNKNOWN;
 		for (int i=0;i<size;++i) sumx +=xx[i];
 		double mean = sumx/size;
 		double highestx = xx[size-1];		

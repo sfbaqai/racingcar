@@ -594,9 +594,27 @@ public final class Geom {
 		
 		double r = Math.sqrt(d - a*a);
 		double[] p = getCircleCircleIntersection(x, y, r, x0, y0, a);
-		if (p==null) return null;
+		if (p==null) return null;		
 		Vector2D p1 = new Vector2D(p[0],p[1]);
+		if (p.length<=2) return new Vector2D[]{p1};
 		Vector2D p2 = new Vector2D(p[2],p[3]);
 		return new Vector2D[]{p1,p2};
+	}
+	
+	//find a circle goes thru points a,b and touches the line c ,d
+	//return the point on c,d that the circle goes thru a,b touches at
+	//additional info stores on r(a circle centered at (r[0],r[1]) and radius squared r[2])
+	public static Vector2D getCircle2(Vector2D a,Vector2D b, Vector2D c,Vector2D d,double[] r){		 
+		Geom.getLineLineIntersection(a.x(), a.y(), b.x(), b.y(), c.x(), c.y(), d.x(), d.y(), r);
+		if (r!=null){
+			Vector2D o = new Vector2D(r[0],r[1]);
+			double dist = Math.sqrt(a.distance(o)*b.distance(o));
+			Vector2D rs = o.plus(c.minus(o).normalized().times(dist));
+			boolean isCircle = getCircle(a.x(), a.y(), b.x(), b.y(),rs.x(), rs.y(), r);
+			if (!isCircle)
+				return null;			
+			return rs;
+		}
+		return null;
 	}
 }
