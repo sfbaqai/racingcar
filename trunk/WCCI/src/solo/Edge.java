@@ -107,71 +107,36 @@ public final class Edge {
 	}
 
 	public double calculateRadius(int index){
-//		Vector2D pp = allPoints.get(index+1); 
-//		double x0 = pp.x;
-//		double y0 = pp.y;
 		if (straightDist<allPoints.get(size-1).y && size>index+3){					
 			Vector2D point = allPoints.get(size-1);
-			if (dmin<0.0001 && center!=null){
-				double d = center.distance(point)-radius;
-				if (d*d<0.001){
-					dmin+=d*d;
-					return dmin;
-				}
-			}
+//			if (dmin<0.0001 && center!=null){
+//				double d = center.distance(point)-radius;
+//				if (d*d<0.001){
+//					dmin+=d*d;
+//					return dmin;
+//				}
+//			}
 			Vector2D highestPoint = allPoints.get(index+1);
-			double[] r = new double[3];				
-			Vector2D vmin = null;
-			double rmin = -1;
+			double[] r = new double[3];							
 			for (int i =index+2;i<size;++i){
 				if (i==size-1) continue;
 				Vector2D startTurn = allPoints.get(i);				
 				boolean isCircle = Geom.getCircle(startTurn.x, startTurn.y, point.x, point.y, highestPoint.x, highestPoint.y, r);
 				if (isCircle){
-					double rr = Math.sqrt(r[2]);
-					double x = r[0];
-					double y = r[1];
-					if (y>=highestPoint.y) continue;
-
-					double s = 0;
-					for (int j=index+2;j<size;++j){
-						if (j==i || j==size-1) continue;
-						Vector2D p = allPoints.get(j);
-						double dx = p.x-x;
-						double dy = p.y-y;
-						double d = Math.sqrt(dx*dx+dy*dy)-rr;
-						s += d*d;
+					r[2] = Math.sqrt(r[2]);
+					CircleFitter cf = new CircleFitter(r,allPoints.elements(),index+1,size-1);
+					try{
+						cf.fit();
+						dmin = cf.getLMAObject().getRelativeChi2();
+						this.center = cf.getEstimatedCenter();
+						this.radius = cf.getEstimatedRadius();
+					} catch (Exception e){
+						e.printStackTrace();
+						dmin = Double.MAX_VALUE;
 					}
-					if (dmin>s){
-						dmin = s;
-						vmin = new Vector2D(x,y);
-						rmin = rr;
-					}
-
-					if (dmin<=0.0001)
-						break;
-				} else {//3 points in a line
-					double s = 0;
-					for (int j=index+2;j<size;++j){
-						if (j==i || j==size-1) continue;
-						Vector2D p = allPoints.get(j);
-						double d = Geom.ptLineDistSq(startTurn.x, startTurn.y, point.x, point.y, p.x, p.y, null);
-						s += d;
-					}
-					if (dmin>s){
-						dmin = s;
-						vmin = new Vector2D(Double.MAX_VALUE,Double.MAX_VALUE);
-						rmin = Double.MAX_VALUE;
-					}
-
-					if (dmin<0.0001)
-						break;					
-				}
+					break;
+				}				
 			}//end of for
-			if (vmin!=null && rmin>=10){
-				this.center = vmin;
-				this.radius = rmin;
-			} else dmin = Double.MAX_VALUE;
 			if (dmin<Double.MAX_VALUE)
 				return dmin;
 		}		
