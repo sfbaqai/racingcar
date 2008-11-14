@@ -1,10 +1,10 @@
 speed <<- c(0)
 radius <<- c()
 plot_data <- function(name="temp3.csv",header=FALSE,sp=1,rd=2){
-	speed<<-c(0)
-	radius<<-c(0)
+	speed<<-c()
+	radius<<-c()
 	m <- read.csv(name,header=header)
-	i <- m[,sp]<20
+	i <- m[,sp]<450
 	speed<<-c(speed,m[,sp][i])
 	radius<<-c(radius,m[,rd][i])
 	g <- lm(radius ~ speed+I(speed^2)+I(speed^3))
