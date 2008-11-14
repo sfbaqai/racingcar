@@ -398,6 +398,7 @@ public class LMA {
 					System.out.println(e.getMessage());
 				}
 				lambda *= lambdaFactor;
+				continue;
 			}
 			iterationCount++;
 		} while (!stop());
@@ -457,7 +458,7 @@ public class LMA {
 	}
 	
 	/**
-	 * @return The calculated evalution function value (chi2) for the given parameter array.
+	 * @return The calculated evaluation function value (chi2) for the given parameter array.
 	 * NOTE: Does not change the value of chi2.
 	 */
 	protected double calculateChi2(double[] a) {

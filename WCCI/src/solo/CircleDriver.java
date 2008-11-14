@@ -14,20 +14,89 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  */
 public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> {
 
-	double targetRadius = 	100;
+	double targetRadius = 	5;
 	double maxSpeed = 0;
 	double AllowTime = 60;
 	/**
 	 * 
 	 */
+	final static int MAX_GEARS = 10;
 	double x =0 ;
 	double y = 0;
+	final static int GEAR_OFFSET = 1;
+	final static double enginerpmRedLine = 890.118;//rpm;
+	final static double[] wheelRadius= new double[]{0.3179,0.3179,0.3276,0.3276};
+	final static double[] wheelRadiusInInch= new double[]{8.5,8.5,9,9};
+	final static double WIDTHDIV = 1;
+	final static int[] gearUp = new int[]{5000,6000,6000,6500,7000,7500};
+	final static int[] gearDown = new int[]{0,2500,3000,3000,3250,3500};
+	final static double[] gearRatio = new double[]{-9.0,0,11.97,8.01,5.85,4.5,3.33,2.7,0,0};
+	
+	double[] shift = new double[MAX_GEARS];
+	
 	public CircleDriver() {
 		// TODO Auto-generated constructor stub
 		ignoredExisting = true;
 		storeNewState = false;
+		int i = 0;
+		int j = 0;
+		for (i = 0; i < MAX_GEARS; i++) {
+			j = i + 1;
+			if (j < MAX_GEARS) {
+				if ((gearRatio[j] != 0) && (gearRatio[i] != 0)) {				
+					shift[i] = enginerpmRedLine * .95  * wheelRadius[2] / gearRatio[i];
+					/* GfOut("   Gear %d: shift %d km/h\n", i, (int)(shiftThld[idx][i] * 3.6)); */
+				} else {
+					shift[i] = 10000.0;
+				}
+			} else {
+				shift[i] = 10000.0;
+			}				
+		}
 	}
 	
+	public int getGear(CarState cs) {
+		// TODO Auto-generated method stub
+		int gear = cs.gear;
+		double speedX = cs.speedX/3.6;
+
+		// if gear is 0 (N) or -1 (R) just return 1 
+		if (gear<1)
+			return 1;
+
+		if (speedX > shift[gear+ GEAR_OFFSET]) {
+			gear++;
+		} else if ((gear > 1) && (speedX < (shift[gear-1+GEAR_OFFSET] - 10.0))) {
+			gear--;
+		}
+		if (gear <= 0) {
+			gear++;
+		}
+
+		return gear;
+	}
+
+	
+	public double steerAtSpeed(double x){
+		if (x>=216)
+			return 0.405956540491453-0.00402398400604155*x+1.46983630854209e-05*x*x-1.88619693222940e-08*x*x*x;
+		if (x>180)
+			return -6.40122354928717+0.100933617693404*x-0.000519289942888996*x*x+8.79221413082921e-07*x*x*x;
+		if (x>140)
+			return 1.31349334978100-0.0158496396133958*x+6.53860943510914e-05*x*x-8.64166930377492e-08*x*x*x;		
+		return 1.00309570103181-0.0115995398441519*x+4.70782598803805e-05*x*x-6.49876327849716e-08*x*x*x;	
+	}
+	
+	public double steerAtRadius(double x){
+		if (x>=100)
+			return 0.0810250510703418-0.000750740530082075*x+2.89854924506364e-06*x*x-3.95924129765923e-09*x*x*x;
+		if (x>=70)
+			return -1.36459470940743+0.0582094289481451*x-0.000746679722815475*x*x+3.04328497896615e-06*x*x*x;
+		if (x>=50)
+			return -0.485794442078747+0.0364424208448416*x-0.000642936741947271*x*x+3.44706692338737e-06*x*x*x;
+			
+		return 1.02589841472933-0.0615964400025362*x+0.00163249602462468*x*x-1.46149044885214e-05*x*x*x;		
+	}
 	
 	public double radiusAtSpeed(double speedkmh){
 		if (speedkmh<=205)
@@ -111,6 +180,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 	double accel = 0;
 	double avgSpeed = 0;
 	double avgRadius = 0;
+	double avgSteer = 0;
 	int count =0 ;
 	int n = 0;
 	boolean ok = true;
@@ -133,33 +203,15 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 		int gear = state.state.getGear();
 		double brake = 0.0d;		
 		double acc = 1;
+		NewCarState cs = state.state;
 		
 		double steer = steerAtRadius(state.state,targetRadius);
 		
-		if (accel!=0 || oldSpeed!=0) {
-			accel = (speed-oldSpeed)/0.02;		
-		}		
-		int maxGear = 1;
-		if (targetRadius>235)
-			maxGear = 6;
-		else if (targetRadius>85) 
-			maxGear = 5;
-		else if (targetRadius>69)
-			maxGear = 4;
-		else if (targetRadius>40)
-			maxGear = 3;
-		else if (targetRadius>10)
-			maxGear = 2;		
-		
-		if (maxSpeed==0) maxSpeed = Math.max(speedAtRadius(targetRadius),maxSpeed);
-		if (maxSpeed<=30) maxSpeed =30;
-		if (accel>0 && accel<0.5 && gear<maxGear && speed<maxSpeed) gear++;
-		if (gear==0) gear=1;
-		oldSpeed = state.state.getSpeed();		
 				
 		if (time>=10+startTime){
 			avgSpeed += speed;
 			avgRadius += d;			
+			avgSteer += steer;
 			n++;
 			if (n>0){
 				double r = avgRadius/n;
@@ -168,7 +220,8 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 			if (n>100) {
 				
 				double sp = avgSpeed/n;
-				double r = avgRadius/n;											
+				double r = avgRadius/n;
+				double st = avgSteer/n;
 //				System.out.println(maxSpeed+"\t\t"+speed+"\t\t"+r+"\t\t"+targetRadius+"\t\t"+gear);
 				if (r<=targetRadius+0.75){
 //					System.out.println(maxSpeed+"\t\t"+speed+"\t\t"+r+"\t\t"+targetRadius+"\t\t"+count);
@@ -193,7 +246,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 				}					
 				if (count>10){
 					maxSpeed = sp-0.5;
-					System.out.println(radiusAtSpeed(speedAtRadius(r))+"\t\t"+speedAtRadius(r)+"\t\t"+sp+"\t\t"+r+"\t\t"+targetRadius+"\t\t"+(mr-r));
+					System.out.println(sp+"\t\t"+r+"\t\t"+st+"\t\t"+steerAtRadius(r)+"\t\t"+steerAtSpeed(sp));
 					targetRadius+=2.5;
 					count = 0;
 					ok = true;
@@ -205,6 +258,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 				n = 0;
 				avgSpeed = 0;
 				avgRadius = 0;
+				avgSteer = 0;
 //				System.out.println(n+"   "+maxSpeed+"   "+sp+"   "+acc);			
 			}			
 		}		
@@ -226,6 +280,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 //		System.out.println(acc+"   "+maxSpeed+"    "+speed);
 
 //		System.out.println(n+"   "+maxSpeed+"   "+acc);
+		gear = getGear(cs);
 		CarControl cc = new CarControl(acc,brake,gear,steer,0);
 		ol.add(cc);
 		return ol;
@@ -255,7 +310,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 //		double cy = state.state.cy;
 //		return Geom.distance(posX, posY, cx, cy)<2;
 //		return state.state.getLastLapTime()>=AllowTime*2000+1;
-		return (targetRadius>=100);
+		return (targetRadius>=150);
 	}
 	
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
