@@ -19,7 +19,7 @@ public class MessageParser {
     private Hashtable<String, Object> table = new Hashtable<String, Object>();
 
     public MessageParser(String message) {
-    	//System.out.println(message);
+//    	System.out.println(message);
         StringTokenizer mt = new StringTokenizer(message, "(");
         while (mt.hasMoreElements()) {
             // process each reading
@@ -32,7 +32,7 @@ public class MessageParser {
                 String readingName = rt.nextToken();
                 Object readingValue;
                 if (readingName.equals("opponents") || readingName.equals("track") ||
-                        readingName.equals("wheelSpinVel")) {
+                        readingName.equals("wheelSpinVel") || readingName.startsWith("all")) {
                     // these readings have multiple values
                     readingValue = new DoubleArrayList(rt.countTokens() - 1);                    
                     while (rt.hasMoreElements()) {
