@@ -15,6 +15,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import antlr.collections.impl.Vector;
+
 import com.graphbuilder.geom.Geom;
 
 public class TrackSegment {
@@ -25,9 +27,9 @@ public class TrackSegment {
 	final static int LEFTEND=1;
 	final static int RIGHTSTART = 2;
 	final static int RIGHTEND=3;
-	final static double MAXRADIUS = 100;
-	final static double EPSILON = 0.0001;
-	final static double MINLENGTH = 1;
+	final static double MAXRADIUS = 1000;
+	final static double EPSILON = 0.005;
+	final static double MINLENGTH = 0.01;
 
 	int type;
 
@@ -73,7 +75,7 @@ public class TrackSegment {
 		double dy = endY - startY;
 		double length = Math.sqrt(dx*dx+dy*dy);
 		double centerx = (startX+endX)/2.0d;
-		double centery = (startY+endY)/2.0d;
+		double centery = (startY+endY)/2.0d;		
 		int type = STRT;
 		return new TrackSegment(type,centerx,centery,length,dist,radius,arc,startX,startY,endX,endY);
 	}
@@ -82,18 +84,33 @@ public class TrackSegment {
 		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
 		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);
 		Vector2D v3 = new Vector2D(x2-centerx,y2-centery);
-		double angle = v1.angle(v2);
-		double a = v1.angle(v3);				
+		double angle = Vector2D.angle(v1, v2);
+		if (angle<-Math.PI) 
+			angle += 2*Math.PI;
+		else if (angle>Math.PI) 
+			angle -= 2*Math.PI;
+//		double a = v1.angle(v3);				
 		//System.out.println("   "+v1.length()+"   "+v2.length()+"    "+v3.length());
 //		System.out.println(a+"    "+angle);
-		if (angle*a>0 && angle/a<1) 
-			angle = (-Math.PI*2+angle)%(Math.PI*2);
-		else if (angle*a<0)
-			angle = (-Math.PI*2+angle)%(Math.PI*2);
+//		if (angle*a>0 && angle/a<1) 
+//			angle = (-Math.PI*2+angle)%(Math.PI*2);
+//		else if (angle*a<0)
+//			angle = (-Math.PI*2+angle)%(Math.PI*2);
 		double arc = Math.abs(angle);		
 		double length = radius*arc;
 		int type = (angle<0) ? LFT : RGT;		
 		return new TrackSegment(type,centerx,centery,length,dist,radius,angle,startX,startY,endX,endY);
+	}
+	
+	public static TrackSegment createTurnSeg(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){		
+		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
+		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);		
+		double angle = Vector2D.angle(v1, v2);	
+//		angle = (-Math.PI*2+angle)%(Math.PI*2);
+		double arc = Math.abs(angle);		
+		double length = radius*arc;
+		int type = (angle<0) ? LFT : RGT;		
+		return new TrackSegment(type,centerx,centery,length,0,radius,angle,startX,startY,endX,endY);
 	}
 	
 	public static double distance(double x1,double y1,double x2,double y2){
@@ -259,7 +276,7 @@ public class TrackSegment {
 	}
 		
 	
-	public static ObjectList<TrackSegment> createSeg(ObjectList<Vector2D> vo){
+	public static ObjectList<TrackSegment> createSeg(ObjectList<Vector2D> vo,double dist){
 		if (vo==null || vo.size()<1)
 			return null;
 		Vector2D[] v = new Vector2D[vo.size()];
@@ -267,16 +284,15 @@ public class TrackSegment {
 		for (Vector2D vv:vo){
 			v[i++] = new Vector2D(vv.x,vv.y);
 		}
-		return createSeg(v);
+		return createSeg(v,dist);
 	}
 	
-	public static ObjectList<TrackSegment> createSeg(Vector2D[] v){
+	public static ObjectList<TrackSegment> createSeg(Vector2D[] v,double dist){
 		if (v==null || v.length<2)
 			return null;
 		ObjectArrayList<TrackSegment> rs = new ObjectArrayList<TrackSegment>();
 		int len = v.length;
-		int i=0;
-		double dist=0;
+		int i=0;		
 		double xx=v[0].x;
 		double yy=v[0].y;
 		while (i<len-1){
@@ -381,6 +397,343 @@ public class TrackSegment {
 
 		return rs;
 	}
+	
+	public static ObjectList<TrackSegment> segmentize(ObjectList<Vector2D> v,double dist){
+		Vector2D[] vv = new Vector2D[v.size()];
+		v.toArray(vv);
+		return segmentize(vv, dist);
+	}
+	
+	public static ObjectList<TrackSegment> segmentize(Vector2D[] v,double dist){
+		if (v==null || v.length<2)
+			return null;
+		ObjectArrayList<TrackSegment> rs = new ObjectArrayList<TrackSegment>();
+		int len = v.length;
+		int i=0;
+		double allowedDist = EPSILON*EPSILON;
+		double xx=v[0].x;
+		double yy=v[0].y;
+		TrackSegment ts = null;
+		while (i<len-1){
+			double[] result = new double[3];
+			double x1 = xx;
+			double x2 = v[i+1].x;			
+			double y1 = yy;
+			double y2 = v[i+1].y;
+			if (i==len-2){
+//				TrackSegment s = TrackSegment.createStraightSeg(0, x1, y1, x2, y2);
+//				if (ts!=null)
+//					s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+//				ts = s;
+//				rs.add(ts);
+//				dist+=ts.length;
+				break;
+			}
+			double x3 = v[i+2].x;
+			double y3 = v[i+2].y;
+			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
+			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
+			int j=i+3;
+			if (!isCircle || radius>MAXRADIUS){//is a straight line								
+				for (j=i+3;j<len;++j){
+					double x = v[j].x;
+					double y = v[j].y;
+					
+					if (Geom.ptLineDistSq(x1, y1, x2, y2, x, y, null)>allowedDist)
+						break;					
+				}
+				if (j>len) break;
+				xx = v[j-1].x;
+				yy = v[j-1].y;		
+				TrackSegment s = TrackSegment.createStraightSeg(dist, x1, y1, xx, yy);
+				if (ts!=null) s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+				ts = s;
+				rs.add(ts);						
+				if (j>=len) break; 
+				xx = v[j].x;
+				yy = v[j].y;						
+			} else {
+				int r = (int)Math.round(radius);
+				int maxj = -1;
+				int maxr = r;
+				double maxk = -1;
+				Vector2D pp = null;
+				Vector2D t = new Vector2D(x1+x2,y1+y2).times(0.5d);
+				Vector2D q = new Vector2D(result[0],result[1]);
+				double d = t.distanceSq(v[i]);
+				if (i>len-3) return rs;
+				if (i==len-3){
+					radius = r;
+					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
+					TrackSegment s = TrackSegment.createTurnSeg(dist, p.x, p.y, radius, x1, y1, x3, y3,x2,y2);
+					if (ts!=null) s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+					ts = s;
+					rs.add(ts);			
+					return rs;
+				}
+				for (int rr = r-1;rr<=r+1;++rr){
+					radius = rr;									
+					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
+					double ox = p.x;
+					double oy = p.y;
+									
+					boolean ok = false;
+					int k = (rr==r) ? 1 : 0;
+					int ti = 0;
+					for (j=i+1;j<len;++j){
+						double dx = v[j].x-ox;
+						double dy = v[j].y-oy;						
+						
+						if (Math.abs(Math.sqrt(dx*dx+dy*dy)-radius)>=0.01d || j==len-1){
+							if (j<3) break;
+							double a1 = v[j-3].x;
+							double a2 = v[j-2].x;
+							double a3 = v[j-1].x;
+							double b1 = v[j-3].y;
+							double b2 = v[j-2].y;
+							double b3 = v[j-1].y;
+							double[] rrr = new double[3];
+							Geom.getCircle(a1, b1, a2, b2, a3, b3, rrr);
+							rrr[2] = Math.sqrt(rrr[2]);
+							int tr = (int)Math.round(rrr[2]);
+							if (Math.abs(rr-tr)<=1) ok = true;
+							if (ti<4){
+								ti++;
+								if (tr==rr) k++;
+							}
+							break;			
+						}
+						if (j>i+3 &&  ti<4){
+							ti++;
+							double a1 = v[j-3].x;
+							double a2 = v[j-2].x;
+							double a3 = v[j-1].x;
+							double b1 = v[j-3].y;
+							double b2 = v[j-2].y;
+							double b3 = v[j-1].y;
+							double[] rrr = new double[3];
+							Geom.getCircle(a1, b1, a2, b2, a3, b3, rrr);
+							rrr[2] = Math.sqrt(rrr[2]);
+							int tr = (int)Math.round(rrr[2]);
+							if (Math.abs(rr-tr)>3) {
+								ok = false;
+								break;
+							}
+							if (tr==rr) k++;
+							
+						}
+					}
+										
+					if (j<=i+3) continue;
+					if (j>len) break;
+					if (ok){
+						if (j>maxj){
+							maxj = j;
+							maxr = rr;
+							pp = p;
+							maxk = (k+0.0d)/(ti+0.0d);
+						} else if (j==maxj && maxk<(k+0.0d)/(ti+0.0d)){
+							maxr = rr;
+							pp = p;
+							maxk = (k+0.0d)/(ti+0.0d);
+						}
+					}
+				}
+				if (j<=i+3 || maxj<0) {
+					i++;
+					xx = v[i].x;
+					yy = v[i].y;	
+					continue;
+				}
+				
+				j = maxj;
+				radius = maxr;
+				xx = v[j-1].x;
+				yy = v[j-1].y;
+				TrackSegment s = TrackSegment.createTurnSeg(dist, pp.x, pp.y, radius, x1, y1, xx, yy,x2,y2);
+				if (ts!=null) s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+				ts = s;
+				rs.add(ts);				
+				if (j>=len) break;
+				xx = v[j].x;
+				yy = v[j].y;				
+			}
+			i = j;
+		}//end of while
+
+		return rs;
+	}
+	
+	public static boolean isMiddle(Vector2D p, Vector2D p1, Vector2D p2){
+		return (p.x<= Math.max(p1.x, p2.x) && p.x>= Math.min(p1.x, p2.x) && (p.y<=Math.max(p1.y, p2.y)) && p.y >= Math.min(p1.y, p2.y));
+	}
+	
+	
+	public static double getDistNextSegment(TrackSegment ts,TrackSegment n){
+		double dist = ts.length+ts.distanceFromLocalOrigin;
+		double[] r = new double[3];
+		Vector2D s = new Vector2D(ts.endX,ts.endY);
+		Vector2D e = new Vector2D(n.startX,n.startY);
+		if (ts.type==0 && n.type == 0 ){
+			Geom.getLineLineIntersection(ts.startX, ts.startY, ts.endX, ts.endY, n.startX, n.startY, n.endX, n.endY, r);
+			Vector2D p = new Vector2D(r[0],r[1]);
+			dist += p.distance(ts.endX, ts.endY)+p.distance(n.startX, n.startY); 
+		} else if (ts.type==0){
+			r = Geom.getLineCircleIntersection(ts.startX, ts.startY, ts.endX, ts.endY, n.centerx, n.centery, n.radius);
+			if (r==null) {
+				r = new double[3];
+				Geom.ptLineDistSq(ts.startX, ts.startY, ts.endX, ts.endY, n.centerx, n.centery, r);				
+			}
+			Vector2D p = new Vector2D(r[0],r[1]);				
+			if (r.length>=4 && !isMiddle(p, s, e)) p = new Vector2D(r[2],r[3]);
+			Vector2D c = new Vector2D(n.centerx,n.centery);
+			double angle = Vector2D.angle(p.minus(c), new Vector2D(n.startX-n.centerx,n.startY-n.centery));
+			if (angle>Math.PI) 
+				angle -= Math.PI*2;
+			else if (angle<-Math.PI)
+				angle += Math.PI*2;
+			
+			dist += p.distance(ts.endX, ts.endY)+Math.abs(angle)*n.radius;
+		} else if (n.type==0){
+			r = Geom.getLineCircleIntersection(n.startX, n.startY, n.endX, n.endY, ts.centerx, ts.centery, ts.radius);
+			if (r==null) {
+				r = new double[3];
+				Geom.ptLineDistSq(n.startX, n.startY, n.endX, n.endY, ts.centerx, ts.centery, r);				
+			}
+			Vector2D p = new Vector2D(r[0],r[1]);
+			if (r.length>=4 && !isMiddle(p, s, e)) p = new Vector2D(r[2],r[3]);
+			Vector2D c = new Vector2D(ts.centerx,ts.centery);
+			double angle = Vector2D.angle(p.minus(c), new Vector2D(ts.startX-ts.centerx,ts.startY-ts.centery));
+			if (angle>Math.PI) 
+				angle -= Math.PI*2;
+			else if (angle<-Math.PI)
+				angle += Math.PI*2;
+			
+			dist += p.distance(e)+Math.abs(angle)*ts.radius;
+									
+		} else {
+			r = Geom.getCircleCircleIntersection(ts.centerx, ts.centery, ts.radius, n.centerx, n.centery, n.radius);
+			if (r!=null){
+				Vector2D p = new Vector2D(r[0],r[1]);
+				if (r.length>=4 && !isMiddle(p, s, e)) p = new Vector2D(r[2],r[3]);
+				Vector2D c = new Vector2D(n.centerx,n.centery);
+				double angle = Vector2D.angle(p.minus(c), new Vector2D(n.startX-n.centerx,n.startY-n.centery));
+				if (angle>Math.PI) 
+					angle -= Math.PI*2;
+				else if (angle<-Math.PI)
+					angle += Math.PI*2;
+				
+				dist += Math.abs(angle)*n.radius;
+				
+				c = new Vector2D(ts.centerx,ts.centery);
+				angle = Vector2D.angle(p.minus(c), new Vector2D(ts.startX-ts.centerx,ts.startY-ts.centery));
+				if (angle>Math.PI) 
+					angle -= Math.PI*2;
+				else if (angle<-Math.PI)
+					angle += Math.PI*2;
+				
+				dist += Math.abs(angle)*ts.radius;
+			}
+		}
+
+		return dist;
+	}
+	
+	public static ObjectList<TrackSegment> segmentize(Vector2D[] v,double dist,ObjectList<Segment> track){
+		if (v==null || v.length<2)
+			return null;
+		ObjectArrayList<TrackSegment> rs = new ObjectArrayList<TrackSegment>();
+		int len = v.length;
+		int i=0;
+		double allowedDist = EPSILON*EPSILON;
+		double xx=v[0].x;
+		double yy=v[0].y;
+		TrackSegment ts = null;
+		while (i<len-1){
+			double[] result = new double[3];
+			double x1 = xx;
+			double x2 = v[i+1].x;			
+			double y1 = yy;
+			double y2 = v[i+1].y;
+			if (i==len-2){
+				TrackSegment s = TrackSegment.createStraightSeg(0, x1, y1, x2, y2);
+				if (ts!=null)
+					s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+				rs.add(ts);
+				dist+=ts.length;
+				break;
+			}
+			double x3 = v[i+2].x;
+			double y3 = v[i+2].y;
+			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
+			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
+			int j=i+3;
+			if (!isCircle || radius>MAXRADIUS){//is a straight line								
+				for (j=i+3;j<len;++j){
+					double x = v[j].x;
+					double y = v[j].y;
+					
+					if (Geom.ptLineDistSq(x1, y1, x2, y2, x, y, null)>allowedDist)
+						break;					
+				}
+				if (j>len) break;
+				xx = v[j-1].x;
+				yy = v[j-1].y;		
+				TrackSegment s = TrackSegment.createStraightSeg(0, x1, y1, xx, yy);
+				if (ts!=null) s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+				ts = s;
+				rs.add(ts);
+				dist+=ts.length;				
+				if (j>=len) break; 
+				xx = v[j].x;
+				yy = v[j].y;						
+			} else {
+				int r = (int)Math.round(radius);
+				int maxj = -1;
+				int maxr = r;
+				Vector2D pp = null;
+				for (int rr = r-1;rr<=r-1;++rr){
+					radius = rr;				
+					Vector2D p = new Vector2D(x1+x3,y1+y3).times(0.5d);
+					Vector2D q = new Vector2D(result[0],result[1]);
+					p = p.plus(q.minus(p).normalised().times(radius));
+					double ox = p.x;
+					double oy = p.y;
+													 											
+					for (j=i+4;j<len;++j){
+						double dx = v[j].x-ox;
+						double dy = v[j].y-oy;					
+						if (Math.abs(Math.sqrt(dx*dx+dy*dy)-radius)>=0.1d)
+							break;			
+					}
+					if (j>len) break;
+					if (j>maxj){
+						maxj = j;
+						maxr = rr;
+						pp = new Vector2D(ox,oy);
+					}
+				}
+				j = maxj;
+				radius = maxr;
+				xx = v[j-1].x;
+				yy = v[j-1].y;
+				TrackSegment s = TrackSegment.createTurnSeg(0, pp.x, pp.y, radius, x1, y1, xx, yy,x2,y2);
+				if (ts!=null) s.distanceFromLocalOrigin = getDistNextSegment(ts, s);
+				ts = s;
+				rs.add(ts);
+				dist += ts.length;
+				if (j>=len) break;
+				xx = v[j].x;
+				yy = v[j].y;				
+			}
+			i = j;
+		}//end of while
+
+		return rs;
+	}
+
+
+
 
 
 	public static void line(double xx0, double yy0, double xx1, double yy1,XYSeries series)
@@ -466,8 +819,69 @@ public class TrackSegment {
 		}		
 	}
 
+	public static TrackSegment cutOff(TrackSegment ts,double dist){
+		if (ts.distanceFromLocalOrigin+ts.length<dist)
+			return null;
+		if (ts.distanceFromLocalOrigin>dist)
+			return ts;
+		double d = dist-ts.distanceFromLocalOrigin;
+		if (ts.type==STRT){
+			TrackSegment t = TrackSegment.createStraightSeg(dist, ts.startX, ts.startY-d, ts.endX, ts.endY-d);
+		} else {
+			double arc = d/ts.radius;
+			if (ts.type==LFT) arc = -arc;
+			Vector2D center = new Vector2D(ts.centerx,ts.centery);
+			Vector2D v = new Vector2D(ts.startX-ts.centerx,ts.startY-ts.centery);
+			v = center.plus(v.rotated(-arc));
+			Vector2D e = new Vector2D(ts.endX-ts.centerx,ts.endY-ts.centery);
+			e = center.plus(e.rotated(-arc));
+			return TrackSegment.createTurnSeg(dist, ts.centerx, ts.centery, ts.radius, v.x, v.y, e.x, e.y, center.x, center.y);
+		}
+		return null;
+	}
+
+	public static void drawTrack(ObjectList<TrackSegment> ts,final String title,double dist){			
+		XYSeries series = new XYSeries("Curve");
+		if (ts==null) return;
+		for (TrackSegment t : ts){
+			if (t.distanceFromLocalOrigin+t.length<dist)
+				continue;
+			
+			t= TrackSegment.cutOff(t, dist);
+			if (t.type==STRT){
+				line(t.startX, t.startY, t.endX, t.endY, series);
+			} else {
+				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);								
+			}
+		}
+
+		XYDataset xyDataset = new XYSeriesCollection(series);
+
+		// Create plot and show it
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
+		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
+
+		Thread p = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try{
+					BufferedImage image = chart.createBufferedImage(500, 500);
+					ImageIO.write(image, "png", new File(title+".png"));
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+		});
+
+		p.start();
 
 
+	}
+
+	
 
 	public static void drawTrack(ObjectList<TrackSegment> ts,final String title){			
 		XYSeries series = new XYSeries("Curve");
@@ -494,8 +908,8 @@ public class TrackSegment {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
-		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 //		chart.getXYPlot().getDomainAxis().setRange(-5.0,5.0);
 //		chart.getXYPlot().getRangeAxis().setRange(-5.0,5.0);
 
@@ -505,7 +919,7 @@ public class TrackSegment {
 			public void run() {
 				// TODO Auto-generated method stub
 				try{
-					BufferedImage image = chart.createBufferedImage(600, 400);
+					BufferedImage image = chart.createBufferedImage(500, 500);
 					ImageIO.write(image, "png", new File(title+".png"));
 				} catch (Exception e) {
 					// TODO: handle exception
@@ -543,8 +957,7 @@ public class TrackSegment {
 	 */
 	public int getType() {
 		return type;
-	}
-
+	}	
 
 
 	/**
@@ -815,6 +1228,82 @@ public class TrackSegment {
 
 		return retValue;
 	}
+	
+	public Vector2D[] getSegIntersection(double x1,double y1,double x2,double y2){
+		double[] r = null;
+		if (type==STRT){	
+			r = new double[3];
+			Object rs = Geom.getSegSegIntersection(x1, y1, x2, y2, startX, startY, endX, endY, r);
+			if (rs!=null && rs != Geom.PARALLEL){
+				return new Vector2D[]{new Vector2D(r[0],r[1])};
+			}			
+		} else {
+			r = Geom.getSegArcIntersection(x1, y1, x2, y2, centerx, centery, radius, arc, startX, startY, endX, endY);
+			if (r==null || r.length<2) return null;
+			Vector2D[] rs = new Vector2D[r.length/2];
+			for (int i = 0;i<rs.length;++i)
+				rs[i] = new Vector2D(r[i*2],r[i*2+1]);				
+			return rs;
+		}
+		return null;
+	}
 
+	public static ObjectArrayList<TrackSegment> combine(TrackSegment a, TrackSegment b){
+		ObjectArrayList<TrackSegment> rs = new ObjectArrayList<TrackSegment>();
+		double dist1 = a.distanceFromLocalOrigin;
+		double l1 = a.length;
+		double dist2 = b.distanceFromLocalOrigin;
+		double l2 = b.length;
+		 
+		if (a.type==b.type){
+			if (a.type!=STRT){
+				if (dist1+l1<dist2){
+					rs.add(a);
+					rs.add(b);
+					return rs;
+				} else if (dist2+l2<dist1){
+					rs.add(b);
+					rs.add(a);
+					return rs;
+				}				
+			}	
+			if (Math.abs(a.radius-b.radius)<=0.1){
+				double d = Math.min(dist1, dist2);
+				double e = Math.max(dist1+l1, dist2+l2);
+				double l = e-d;
+				double r = Math.round(a.radius);
+				double startX = (dist1<dist2) ? a.startX : b.startX;
+				double startY = (dist1<dist2) ? a.startY : b.startY;
+				Vector2D v = new Vector2D(startX-a.centerx,startY-a.centery);
+				Vector2D center = new Vector2D(a.centerx,a.centery);
+				double arc = (r==0) ? 0 : l/r;
+				if (a.type==LFT) arc = -arc;
+				if (arc!=0) 
+					v = center.plus(v.rotated(arc));
+				else v = v.plus(new Vector2D(0,l));
+				double endX = v.x;
+				double endY = v.y;			
+				TrackSegment ts = (a.type==STRT) ? createStraightSeg(d, 0, 0, 0, e) : createTurnSeg(d, a.centerx, a.centery, a.radius, startX, startY, endX, endY, a.centerx, a.centery);
+				rs.add(ts);
+			} else {
+				rs.add(a);
+//				rs.add(b);
+			}
+		} else {
+			if (dist1>dist2+l2){
+				rs.add(b);
+				rs.add(a);				
+			} else if (dist2>dist1+l1){
+				rs.add(a);
+				rs.add(b);			
+			} else if (dist1+l1>dist2+l2){
+				rs.add(a);
+			} else {
+				rs.add(a);
+			}
+		}
+		
+		return rs;
+	}
 
 }
