@@ -102,27 +102,29 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 	}
 	
 	public static double angle(Vector2D a, Vector2D b)	{
-	  double cosine = (a.x * b.x + a.y * b.y) / Math.sqrt((a.x*a.x+a.y*a.y) * (b.x*b.x+b.y*b.y));
-	  // rounding errors might make dotproduct out of range for cosine
-	  if (cosine > 1) cosine = 1;
-	  else if (cosine < -1) cosine = -1;
-	 
-	  if ((a.x * b.y - a.y * b.x) < 0)
-	    return -Math.acos(cosine);
-	  else
-	    return Math.acos(cosine);
+//	  double cosine = (a.x * b.x + a.y * b.y) / Math.sqrt((a.x*a.x+a.y*a.y) * (b.x*b.x+b.y*b.y));
+//	  // rounding errors might make dotproduct out of range for cosine
+//	  if (cosine > 1) cosine = 1;
+//	  else if (cosine < -1) cosine = -1;
+//	 
+//	  if ((a.x * b.y - a.y * b.x) < 0)
+//	    return -Math.acos(cosine);
+//	  else
+//	    return Math.acos(cosine);
+		return -Math.atan2(b.y, b.x)+Math.atan2(a.y, a.x);
 	}
 	
 	public double angle(Vector2D b)	{
-		  double cosine = (x * b.x + y * b.y) / Math.sqrt((x*x+y*y) * (b.x*b.x+b.y*b.y));
-		  // rounding errors might make dotproduct out of range for cosine		  
-		  if (cosine > 1) cosine = 1;
-		  else if (cosine < -1) cosine = -1;
-		 
-		  if ((x * b.y - y * b.x) < 0)
-		    return -Math.acos(cosine);
-		  else
-		    return Math.acos(cosine);
+//		  double cosine = (x * b.x + y * b.y) / Math.sqrt((x*x+y*y) * (b.x*b.x+b.y*b.y));
+//		  // rounding errors might make dotproduct out of range for cosine		  
+//		  if (cosine > 1) cosine = 1;
+//		  else if (cosine < -1) cosine = -1;
+//		 
+//		  if ((x * b.y - y * b.x) < 0)
+//		    return -Math.acos(cosine);
+//		  else
+//		    return Math.acos(cosine);
+		return -Math.atan2(b.y, b.x)+Math.atan2(y, x);
 		}
 
 
@@ -191,7 +193,11 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 	 * it, we'll reverse the polarity from minus to plus and plus to
 	 * minus!".
 	 **/
-	public Vector2D negated() { return new Vector2D(-x, -y); }
+	public Vector2D negated() {
+		double xx =  (x==0) ? 0 : -x;
+		double yy = (y==0) ? 0 : -y;
+		return new Vector2D(xx, yy); 
+	}
 	
 
 	public static Vector2D[] toVector2D(double[] x,double[] y){
