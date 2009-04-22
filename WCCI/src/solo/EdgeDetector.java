@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleArrays;
+import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
 import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -353,28 +354,43 @@ public class EdgeDetector {
 
 		double[] thisX = this.x.toDoubleArray();
 		double[] thisY = this.y.toDoubleArray();
+		AffineTransform at = new AffineTransform();
+		at.scale(scale, 1);
+		at.translate(ax, -distRaced);
+		Vector2D p = null;
+		double key = -1;
 		for (int i=0;i<len;++i){			
 			double x = xx[i]*scale;
 			double y = yy[i];
-			if (Math.sqrt(x*x+y*y)>99.0) continue;
+			if (Math.sqrt(x*x+y*y)>99.0) continue;			
 			x += ax;
-			y -= distRaced;
+			y -= distRaced;			
 //			x = Math.round(x*10000.0d)/10000.0d;
 //			y = Math.round(y*10000.0d)/10000.0d;
-			if (y<0 || y<straightDist) continue;			
-			if (i>0 && i<len-1 && xx[i]>xx[i-1] && xx[i]<xx[i+1]){
-				int index = java.util.Arrays.binarySearch(thisX, x);
-				if (index>0) continue;
-				index = -index-1;
-				if (index>=0 && index<thisX.length && Math.hypot(thisX[index]-x,thisY[index]-y)<0.5) continue;
-				index--;
-				if (index>=0 && index<thisX.length && Math.hypot(thisX[index]-x,thisY[index]-y)<0.5) continue;
-			}
-					
+			if (y<0 || y<straightDist) continue;
 			double  angle = (x==0) ? PI_2 : Math.PI-Math.atan2(y,x);
 			if (angle<0 || angle>Math.PI) continue;
 			angle=Math.round(angle*PRECISION)/PRECISION;
 			if ( ds.contains(angle)) continue;			
+			if (i>0 && i<len-1){				
+				DoubleBidirectionalIterator iter = ds.iterator(angle);
+				
+				if (iter.hasPrevious()){
+					key = iter.previousDouble();
+					p = polar2Cartesian.get(key);
+					if (Math.hypot(p.x-x,p.y-y)<0.5) continue;
+					iter.next();
+				}
+				
+				if (iter.hasNext()){
+					key = iter.nextDouble();
+					p = polar2Cartesian.get(key);
+					if (Math.hypot(p.x-x,p.y-y)<0.5) continue;					
+				}
+			}
+					
+			
+			
 			this.polar2Cartesian.put(angle, new Vector2D(x,y));					
 		}
 
@@ -474,9 +490,7 @@ public class EdgeDetector {
 
 		straightDist = (left==null || right==null) ? 0 : (turn==MyDriver.TURNRIGHT) ? right.straightDist : left.straightDist;
 		if (straightDist<ed.straightDist-distRaced) straightDist = ed.straightDist-distRaced;
-		AffineTransform at = new AffineTransform();
-		at.scale(scale, 1);
-		at.translate(ax, -distRaced);
+		
 		return at;
 	}
 	

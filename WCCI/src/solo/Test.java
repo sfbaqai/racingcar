@@ -45,13 +45,16 @@ public class Test {
     }
 
     public static void main(String[] args) throws Exception {
-        /*System.out.println("Starting");
-        Vector2D p = new Vector2D(-98.4817,17.3597);
-        Vector2D q1 = new Vector2D(-5.08131,0.0);
-        Vector2D q2 = new Vector2D(-5.0813,18.9);
-        double[] r = new double[3];
-    	Geom.getSegSegIntersection(0,0,p.x,p.y,q1.x,q1.y,q2.x,q2.y,r);
-    	System.out.println(r[0]+"   "+r[1]);
+        System.out.println("Starting");
+//        Vector2D p = new Vector2D(0,0);
+//        Vector2D q1 = new Vector2D(1,1.0);
+//        Vector2D q2 = new Vector2D(2,2);
+//        double[] xx = new double[]{0,0.001,-0.001};
+//        double[] yy = new double[]{0,2,6};
+//        LineFitter lf = new LineFitter(new double[]{1,1},xx,yy);
+//        lf.fit();        
+//    	System.out.println(lf.getA()+"\t"+lf.getB());
+//    	System.exit(0);
                 
        /* Vector2D v = new Vector2D(0,10);
         Vector2D c = new Vector2D(20,20);

@@ -462,6 +462,80 @@ public final class Geom {
 		return result;
 	}
 	
+	public static double[] getLineArcIntersection(double x1,double y1,double x2,double y2,double x,double y,double r,double arc,double sx,double sy,double ex,double ey){
+		double[] rr = getLineCircleIntersection(x1, y1, x2, y2, x, y, r);
+		if (rr==null)
+			return null;
+		
+		Vector2D p1 = new Vector2D(rr[0],rr[1]);
+		Vector2D c = new Vector2D(x,y);
+		double a = Vector2D.angle(new Vector2D(sx-x,sy-y),p1.minus(c));
+		
+		DoubleArrayList dal = new DoubleArrayList();
+		
+		if (a*arc>=0 && Math.abs(a)<=Math.abs(arc)) {
+			dal.add(rr[0]);
+			dal.add(rr[1]);
+		} else if (a*arc<0 && Math.abs(a)+Math.abs(arc)>=Math.PI*2) {
+			dal.add(rr[0]);
+			dal.add(rr[1]);
+			
+		}
+		if (rr.length==2 && dal.size()==0)
+			return null;
+		
+		p1 = new Vector2D(rr[2],rr[3]);		
+		a = Vector2D.angle(new Vector2D(sx-x,sy-y),p1.minus(c));
+		if (a*arc>=0 && Math.abs(a)<=Math.abs(arc)) {
+			dal.add(rr[2]);
+			dal.add(rr[3]);
+		} else if (a*arc<0 && Math.abs(a)+Math.abs(arc)>=Math.PI*2) {
+			dal.add(rr[2]);
+			dal.add(rr[3]);
+			
+		}
+						
+		return dal.toDoubleArray();			
+	}
+	
+	
+	public static double[] getSegArcIntersection(double x1,double y1,double x2,double y2,double x,double y,double r,double arc,double sx,double sy,double ex,double ey){
+		double[] rr = getLineSegCircleIntersection(x1, y1, x2, y2, x, y, r);
+		if (rr==null)
+			return null;
+		
+		Vector2D p1 = new Vector2D(rr[0],rr[1]);
+		Vector2D c = new Vector2D(x,y);
+		double a = Vector2D.angle(new Vector2D(sx-x,sy-y),p1.minus(c));		
+		
+		DoubleArrayList dal = new DoubleArrayList();
+		
+		if (a*arc>=0 && Math.abs(a)<=Math.abs(arc)) {
+			dal.add(rr[0]);
+			dal.add(rr[1]);
+		} else if (a*arc<0 && Math.abs(a)+Math.abs(arc)>=Math.PI*2) {
+			dal.add(rr[0]);
+			dal.add(rr[1]);
+			
+		}
+		if (rr.length==2 && dal.size()==0)
+			return null;
+		if (rr.length==2) return dal.toDoubleArray();
+
+		p1 = new Vector2D(rr[2],rr[3]);		
+		a = Vector2D.angle(new Vector2D(sx-x,sy-y),p1.minus(c));
+		if (a*arc>=0 && Math.abs(a)<=Math.abs(arc)) {
+			dal.add(rr[2]);
+			dal.add(rr[3]);
+		} else if (a*arc<0 && Math.abs(a)+Math.abs(arc)>=Math.PI*2) {
+			dal.add(rr[2]);
+			dal.add(rr[3]);
+			
+		}
+						
+		return (dal.size()==0) ? null : dal.toDoubleArray();		
+	}
+	
 	public static double[] getLineSegCircleIntersection(double x1,double y1,double x2,double y2,double x,double y,double r){
 		x2 -= x;
 		x1 -= x;
@@ -530,7 +604,7 @@ public final class Geom {
 		Vector2D n = t.orthogonal();
 		Vector2D point = new Vector2D(x1,y1).plus(t.times(a));
 		double h = Math.sqrt(r*r-a*a);
-		
+		if (Double.isNaN(h)) return null;
 		Vector2D p1 = point.plus(n.times(h));
 		Vector2D p2 = point.plus(n.times(-h));
 		double[] rs = new double[4];		
@@ -617,4 +691,6 @@ public final class Geom {
 		}
 		return null;
 	}
+	
+	
 }
