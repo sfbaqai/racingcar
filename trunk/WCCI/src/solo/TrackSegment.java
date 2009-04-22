@@ -2,6 +2,7 @@ package solo;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Collection;
 
 import javax.imageio.ImageIO;
 
@@ -28,7 +29,7 @@ public class TrackSegment {
 	final static int RIGHTSTART = 2;
 	final static int RIGHTEND=3;
 	final static double MAXRADIUS = 1000;
-	final static double EPSILON = 0.005;
+	final static double EPSILON = 0.001;
 	final static double MINLENGTH = 0.01;
 
 	int type;
@@ -107,6 +108,10 @@ public class TrackSegment {
 		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);		
 		double angle = Vector2D.angle(v1, v2);	
 //		angle = (-Math.PI*2+angle)%(Math.PI*2);
+		if (angle<-Math.PI) 
+			angle += 2*Math.PI;
+		else if (angle>Math.PI) 
+			angle -= 2*Math.PI;
 		double arc = Math.abs(angle);		
 		double length = radius*arc;
 		int type = (angle<0) ? LFT : RGT;		
@@ -398,7 +403,7 @@ public class TrackSegment {
 		return rs;
 	}
 	
-	public static ObjectList<TrackSegment> segmentize(ObjectList<Vector2D> v,double dist){
+	public static ObjectList<TrackSegment> segmentize(Collection<Vector2D> v,double dist){
 		Vector2D[] vv = new Vector2D[v.size()];
 		v.toArray(vv);
 		return segmentize(vv, dist);
@@ -471,6 +476,7 @@ public class TrackSegment {
 					rs.add(ts);			
 					return rs;
 				}
+				int lim = 5;
 				for (int rr = r-1;rr<=r+1;++rr){
 					radius = rr;									
 					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
@@ -483,7 +489,7 @@ public class TrackSegment {
 					for (j=i+1;j<len;++j){
 						double dx = v[j].x-ox;
 						double dy = v[j].y-oy;						
-						
+//						System.out.print(Math.abs(Math.sqrt(dx*dx+dy*dy)-radius)+"    ");
 						if (Math.abs(Math.sqrt(dx*dx+dy*dy)-radius)>=0.01d || j==len-1){
 							if (j<3) break;
 							double a1 = v[j-3].x;
@@ -497,13 +503,13 @@ public class TrackSegment {
 							rrr[2] = Math.sqrt(rrr[2]);
 							int tr = (int)Math.round(rrr[2]);
 							if (Math.abs(rr-tr)<=1) ok = true;
-							if (ti<4){
+							if (ti<lim){
 								ti++;
 								if (tr==rr) k++;
 							}
 							break;			
 						}
-						if (j>i+3 &&  ti<4){
+						if (j>i+3 && ti<lim){
 							ti++;
 							double a1 = v[j-3].x;
 							double a2 = v[j-2].x;
@@ -523,8 +529,9 @@ public class TrackSegment {
 							
 						}
 					}
+//					System.out.println();
 										
-					if (j<=i+3) continue;
+					if (j<i+3) continue;
 					if (j>len) break;
 					if (ok){
 						if (j>maxj){
@@ -539,7 +546,7 @@ public class TrackSegment {
 						}
 					}
 				}
-				if (j<=i+3 || maxj<0) {
+				if (j<i+3 || maxj<0) {
 					i++;
 					xx = v[i].x;
 					yy = v[i].y;	
@@ -548,6 +555,17 @@ public class TrackSegment {
 				
 				j = maxj;
 				radius = maxr;
+				
+				if (j==i+3){
+					if (j>len-3){
+						if (v[i].distance(v[i+1])>v[i+2].distance(v[i+3])){
+							i++;
+							xx = v[i].x;
+							yy = v[i].y;	
+							continue;
+						}							
+					}
+				}
 				xx = v[j-1].x;
 				yy = v[j-1].y;
 				TrackSegment s = TrackSegment.createTurnSeg(dist, pp.x, pp.y, radius, x1, y1, xx, yy,x2,y2);

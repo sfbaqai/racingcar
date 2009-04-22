@@ -1,6 +1,7 @@
 package solo;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.io.Serializable;
 
@@ -18,6 +19,23 @@ public class NewCarState extends CarState implements Serializable{
 	double cx;
 	double cy;
 	double cz;
+	Vector2D[] vertex;
+	public Vector2D[] center;
+	public double[] l;
+	public double[] arc;
+	public double[] type;
+	public double[] radiusL;
+	public double[] radiusR;
+	public double[] sXL;
+	public double[] sXR;
+	public double[] sYL;
+	public double[] sYR;
+	public double[] eXL;
+	public double[] eXR;
+	public double[] eYL;
+	public double[] eYR;
+	
+	double toMiddle;
 	/**
 	 * Copy Constructor
 	 *
@@ -54,6 +72,8 @@ public class NewCarState extends CarState implements Serializable{
 		this.cx = newCarState.cx;
 		this.cy = newCarState.cy;
 		this.cz = newCarState.cz;
+		this.toMiddle = newCarState.toMiddle;
+		this.vertex = newCarState.vertex.clone();
 	}
 	public double getRadius() {
 		return radius;
@@ -216,7 +236,7 @@ public class NewCarState extends CarState implements Serializable{
 	}
 		
 	
-	public void fromString(String s){
+	public void fromString(String s){		
 		MessageParser mp = new MessageParser(s);		
 		String str = (String)(mp.getReading("angle"));
 		angle = (str==null)?0:Double.parseDouble(str);
@@ -265,6 +285,56 @@ public class NewCarState extends CarState implements Serializable{
 		
 		dal = (DoubleArrayList)(mp.getReading("wheelSpinVel"));
 		wheelSpinVel = (dal==null)?null:dal.toDoubleArray();
+				
+		dal = (DoubleArrayList)(mp.getReading("allLength"));
+		l = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allArc"));
+		arc = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allRadiusL"));
+		radiusL = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allRadiusR"));
+		radiusR = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allTypes"));
+		type = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allX"));
+		center = new Vector2D[dal.size()];
+		for (int i=0;i<dal.size();++i){
+			center[i] = new Vector2D(dal.getDouble(i),0);
+		}
+		
+		dal = (DoubleArrayList)(mp.getReading("allY"));
+		for (int i=0;i<dal.size();++i){
+			center[i].y = dal.getDouble(i);
+		}
+		
+		dal = (DoubleArrayList)(mp.getReading("allSXL"));
+		sXL = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allSXR"));
+		sXR = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allSYL"));
+		sYL = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allSYR"));
+		sYR = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allEXL"));
+		eXL = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allEXR"));
+		eXR = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allEYL"));
+		eYL = (dal==null)?null:dal.toDoubleArray();
+		
+		dal = (DoubleArrayList)(mp.getReading("allEYR"));
+		eYR = (dal==null)?null:dal.toDoubleArray();//*/
 		
 		str = (String)(mp.getReading("posX"));
 		posX = (str==null)?0:Double.parseDouble(str);
@@ -304,6 +374,34 @@ public class NewCarState extends CarState implements Serializable{
 		
 		str = (String)(mp.getReading("length"));
 		length = (str==null)?0:Double.parseDouble(str);
+		
+		str = (String)(mp.getReading("toMiddle"));
+		toMiddle = (str==null)?0:Double.parseDouble(str);
+		
+		vertex = new Vector2D[4];
+		for (int i=0;i<4;++i)
+			vertex[i] = new Vector2D();
+		
+		str = (String)(mp.getReading("v0x"));
+		vertex[0].x = (str==null)?0:Double.parseDouble(str);
+		str = (String)(mp.getReading("v0y"));
+		vertex[0].y = (str==null)?0:Double.parseDouble(str);
+		
+		str = (String)(mp.getReading("v1x"));
+		vertex[1].x = (str==null)?0:Double.parseDouble(str);
+		str = (String)(mp.getReading("v1y"));
+		vertex[1].y = (str==null)?0:Double.parseDouble(str);
+		
+		str = (String)(mp.getReading("v2x"));
+		vertex[2].x = (str==null)?0:Double.parseDouble(str);
+		str = (String)(mp.getReading("v2y"));
+		vertex[2].y = (str==null)?0:Double.parseDouble(str);
+		
+		str = (String)(mp.getReading("v3x"));
+		vertex[3].x = (str==null)?0:Double.parseDouble(str);
+		str = (String)(mp.getReading("v3y"));
+		vertex[3].y = (str==null)?0:Double.parseDouble(str);
+		
 	}
 
 }

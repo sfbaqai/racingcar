@@ -198,8 +198,8 @@ public final class Edge {
 	}
 	
 	public void calculateRadiusWhileInTurn(Segment seg,double tW,double toMiddle,double dist){
-		int r = seg.radius;
-		int rad = 0;
+		double r = seg.radius;
+		double rad = 0;
 		int i=0;
 		for (i=0;i<size;++i)
 			if (allPoints.get(i).y>=0)
@@ -264,7 +264,7 @@ public final class Edge {
 	
 	
 	public Segment calculateRadiusWhileNotInTurn(Segment seg,double tW,double toMiddle,double dist){
-		int r = (seg!=null) ? seg.radius : -1;
+		double r = (seg!=null) ? seg.radius : -1;
 		int rad = 0;
 		int i=0;		
 		double x0 = allPoints.get(0).x;
@@ -371,8 +371,7 @@ public final class Edge {
 	}
 	
 	
-	public double reCalculateRadius(){
-		
+	public double reCalculateRadius(){		
 			double[] r = new double[3];			
 			r[0] = center.x;
 			r[1] = center.y;

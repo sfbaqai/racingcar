@@ -28,8 +28,8 @@ public class ExampleFit {
 			new ExampleFunction(),
 			new double[] {1, 1},
 			new double[][] {
-				{0, 2, 6, 8, 9}, 
-				{5, 10, 23, 33, 40}}
+				{0, 1, 2, 3, 4}, 
+				{0, 1, 2, 3, 4}}
 		);
 		lma.fit();
 		System.out.println("iterations: " + lma.iterationCount);
