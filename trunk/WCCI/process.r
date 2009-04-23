@@ -1,18 +1,45 @@
-speed <<- c(0)
+	speed <<- c(0)
 radius <<- c()
 plot_data <- function(name="temp3.csv",header=FALSE,sp=1,rd=2){
 	speed<<-c()
 	radius<<-c()
 	m <- read.csv(name,header=header)
-	i <- m[,sp]<450
-	speed<<-c(speed,m[,sp][i])
+	i <- (-m[,sp]<360)
+	speed<<-c(speed,-m[,sp][i])
 	radius<<-c(radius,m[,rd][i])
-	g <- lm(radius ~ speed+I(speed^2)+I(speed^3))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(speed^4)+I(speed^5))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(speed^4))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(speed^4)+I(speed^5)+I(1/speed)+I(1/speed^2)+I(1/speed^3))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(exp(1/speed)))
+	#g <- lm(radius ~ I(1/speed)+I(1/speed^2)+I(1/speed^3)+I(1/speed^4))
+	g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(speed^4)+I(speed^5)+I(1/speed)+I(1/speed^2)+I(1/speed^3)+I(1/speed^4)+I(1/speed^5)+I(log(speed)))
+	#g <- lm(radius ~ speed+I(speed^2)+I(speed^3)+I(speed^4)+I(speed^5)+I(1/speed)+I(1/speed^2)+I(1/speed^3)+I(1/speed^4)+I(1/speed^5))
+	#g <- lm(radius ~ I(exp(1/speed))+I(exp(1/speed/speed))+I(exp(1/speed/speed/speed))+I(exp(1/speed/speed/speed/speed)) )
 	plot(radius~speed)
 	lines(g$fitted.values~speed)
 	summary(g)
+	#print(g)
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x*x+",g$coefficients[[4]],"*x*x*x",sep=""))
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4",sep=""))
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4+",g$coefficients[[6]],"*x5",sep=""))
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x*x+",g$coefficients[[4]],"*x*x*x+",g$coefficients[[5]],"*exp(1/x)",sep=""))
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x*x+",g$coefficients[[4]],"*x*x*x+",g$coefficients[[5]],"*log(x)",sep=""))
 
-	print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x*x+",g$coefficients[[4]],"*x*x*x",sep=""))
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4+"
+	#	,g$coefficients[[6]],"*x5+",g$coefficients[[7]],"/x+",g$coefficients[[8]],"/x2+",g$coefficients[[9]],"/x3",sep=""))
+
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4+"
+	#	,g$coefficients[[6]],"*x5+",g$coefficients[[7]],"/x+",g$coefficients[[8]],"/x2+",g$coefficients[[9]],"/x3+",g$coefficients[[10]],"/x4+",g$coefficients[[11]],"/x5",sep=""))
+
+
+	#print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4+"
+	#	,g$coefficients[[6]],"*x5+",g$coefficients[[7]],"/x+",g$coefficients[[8]],"/x2+",g$coefficients[[9]],"/x3",sep=""))
+
+	print(paste(g$coefficients[[1]],"+",g$coefficients[[2]],"*x+",g$coefficients[[3]],"*x2+",g$coefficients[[4]],"*x3+",g$coefficients[[5]],"*x4+"
+		,g$coefficients[[6]],"*x5+",g$coefficients[[7]],"/x+",g$coefficients[[8]],"/x2+",g$coefficients[[9]],"/x3+",g$coefficients[[10]],"/x4+",g$coefficients[[11]],"/x5+",g$coefficients[[12]],"*Math.log(x)",sep=""))
+
+
 	#f <<- function(x){
 	#	g$coefficients[[1]]+g$coefficients[[2]]*x+g$coefficients[[3]]*x*x
 	#}
