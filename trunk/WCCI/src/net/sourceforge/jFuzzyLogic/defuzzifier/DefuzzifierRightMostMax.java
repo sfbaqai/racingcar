@@ -13,6 +13,7 @@ public class DefuzzifierRightMostMax extends DefuzzifierContinuous {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public double defuzzify() {
 		double max = 0, maxX = 0;
 
@@ -31,6 +32,7 @@ public class DefuzzifierRightMostMax extends DefuzzifierContinuous {
 
 	}
 
+	@Override
 	public String toStringFCL() {
 		return "METHOD : RM;";
 	}

@@ -29,6 +29,7 @@ public class MinFunction implements Function {
 		return numParam >= 0;
 	}
 
+	@Override
 	public String toString() {
 		return "min(x1, x2, ..., xn)";
 	}

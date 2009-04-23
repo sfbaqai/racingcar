@@ -104,14 +104,15 @@ public abstract class MembershipFunction {
 
 	public final void setUniverseMax(double universeMax) {
 		this.universeMax = universeMax;
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	public final void setUniverseMin(double universeMin) {
 		this.universeMin = universeMin;
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
+	@Override
 	public String toString() {
 		return getName();
 	}

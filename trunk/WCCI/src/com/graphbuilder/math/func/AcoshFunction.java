@@ -24,6 +24,7 @@ public class AcoshFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "acosh(x)";
 	}

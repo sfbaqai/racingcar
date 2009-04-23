@@ -23,6 +23,7 @@ public class AcosFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "acos(x)";
 	}

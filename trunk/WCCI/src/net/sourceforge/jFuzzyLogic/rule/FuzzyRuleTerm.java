@@ -62,6 +62,7 @@ public class FuzzyRuleTerm {
 		this.variable = variable;
 	}
 
+	@Override
 	public String toString() {
 		String is = "is";
 		if( negated ) is = " is not";

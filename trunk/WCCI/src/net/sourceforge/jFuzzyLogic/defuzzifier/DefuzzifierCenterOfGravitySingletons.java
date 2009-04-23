@@ -16,6 +16,7 @@ public class DefuzzifierCenterOfGravitySingletons extends DefuzzifierDiscrete {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public double defuzzify() {
 		double x, y, sum = 0, sumWeight = 0;
 		for( Iterator it = iterator(); it.hasNext(); ) {
@@ -30,6 +31,7 @@ public class DefuzzifierCenterOfGravitySingletons extends DefuzzifierDiscrete {
 		return Double.NaN;
 	}
 
+	@Override
 	public String toStringFCL() {
 		return "METHOD : COGS;";
 	}

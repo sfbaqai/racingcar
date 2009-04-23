@@ -1,9 +1,9 @@
 package wox.serial;
 
-import sun.reflect.ReflectionFactory;
-
-import java.security.AccessController;
 import java.lang.reflect.Constructor;
+import java.security.AccessController;
+
+import sun.reflect.ReflectionFactory;
 
 /**
  * Created by IntelliJ IDEA.

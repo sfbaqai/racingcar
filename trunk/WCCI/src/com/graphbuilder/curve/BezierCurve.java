@@ -34,6 +34,7 @@ public class BezierCurve extends ParametricCurve {
 		super(cp, gi);
 	}
 
+	@Override
 	public void eval(double[] p) {
 		double t = p[p.length - 1];
 
@@ -74,6 +75,7 @@ public class BezierCurve extends ParametricCurve {
 		}
 	}
 
+	@Override
 	public int getSampleLimit() {
 		return sampleLimit;
 	}
@@ -131,6 +133,7 @@ public class BezierCurve extends ParametricCurve {
 	/**
 	The only requirement for this curve is the group-iterator must be in range or this method returns quietly.
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 
@@ -148,6 +151,7 @@ public class BezierCurve extends ParametricCurve {
 		BinaryCurveApproximationAlgorithm.genPts(this, t_min, t_max, mp);
 	}
 
+	@Override
 	public void resetMemory() {
 		if (a.length > 0)
 			a = new double[0];

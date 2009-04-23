@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.doubles.Double2IntMap;
 import it.unimi.dsi.fastutil.doubles.Double2IntRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
+import it.unimi.dsi.fastutil.doubles.DoubleSet;
 import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
@@ -97,10 +97,11 @@ public final class Segment {
 		map.put(radius, 1);
 	}
 
-	public final Segment combine(Segment s){
+	public final ObjectList<Segment> combine(Segment s){
 		double e = Math.max(dist+length, s.dist+s.length);		
 		double ss = Math.min(dist, s.dist);
 		double l = Math.min(dist+length, s.dist+s.length)-Math.max(dist, s.dist);
+		ObjectList<Segment> ol = new ObjectArrayList<Segment>();
 		if (s.type==type && s.radius==radius){
 			int nr = map.get(radius);
 			nr++;
@@ -108,30 +109,67 @@ public final class Segment {
 			length = e-ss;
 			if (s.dist+s.length>dist+length)
 				end = s.end;
-			arc = length/(radius+0.0d);
-			return this;
+			arc = type*length/(radius+0.0d);
+			ol.add(this);
+			return ol;
 		}
-		if (s.dist>dist+length || dist>s.dist)
-			return this;
-
-		else if (l/length>=0.1 && s.type==type){
-			if (Math.abs(s.radius-radius)<5){//probably the same radius
-				int nr = map.get(s.radius);
-				if (nr==map.defaultReturnValue()) nr = 0;
-				nr++;
-				map.put(s.radius, nr);
-				if (nr>map.get(radius)){
-					radius = s.radius;
-					Vector2D p = start.plus(end).times(0.5d);
-					length = e-ss;
-					center = p.plus(center.minus(p).normalized().times(radius));
-					arc = type*length/radius;
+		if (s.dist>dist+length) return null;
+		
+				
+		if (s.type==type){			
+			int nr = map.get(s.radius);
+			if (nr==map.defaultReturnValue()) nr = 0;
+			nr++;
+			map.put(s.radius, nr);
+			if (Math.abs(s.radius-radius)<3){//probably the same radius
+				dist = ss;
+				if (nr>map.get(radius))
+					radius = s.radius;													
+				length = e-ss;					
+				arc = type*length/radius;
+				ol.add(this);
+				return ol;
+			} else if (s.dist+s.length>dist+length){
+				Segment t = new Segment();
+				t.copy(s);
+				t.length = t.dist + t.length - dist - length;
+				t.dist = dist+length; 
+				if (t.type!=0) t.arc = t.type * t.length / t.radius;
+				ol.add(this);
+				ol.add(t);
+				return ol;
+			} else if (s.dist<dist) return s.combine(this); 
+		} else  {
+			if (s.dist<dist) return s.combine(this);
+			double em = Math.min(dist+length, s.dist+s.length);
+			length = s.dist-ss;
+			dist = ss;
+			arc = type*length/radius;
+			ol.add(this);
+			Segment ns = new Segment();
+			ns.copy(this);
+			ns.length = em - s.dist;
+			if (ns.type!=0) ns.arc = ns.type * ns.length / ns.radius;
+			int nr = (s.type!=0) ? ns.map.get(-s.radius) : ns.map.get(s.radius);
+			if (nr==ns.map.defaultReturnValue()) nr = 0;
+			nr++;
+			if (s.type!=0) 
+				ns.map.put(-s.radius, nr);
+			else ns.map.put(s.radius, nr);
+			if (nr>ns.map.get(ns.radius)){
+				ns.type = s.type;
+				ns.radius = s.radius;
+				Double2IntMap m = new Double2IntRBTreeMap();
+				for (double d:ns.map.keySet()){
+					m.put(-d, ns.map.get(d));
 				}
+				ns.map = null;
+				ns.map = m;				
 			}
-		} else if (s.dist+s.length<dist+length && s.type!=type){
-			return this;
+			ol.add(ns);
+			return ol;
 		}
-
+				
 		return null;
 	}
 	
@@ -450,6 +488,16 @@ public final class Segment {
 			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
 			s.radius = rad;
 			s.length = Math.abs(s.arc * rad);
+			Double2IntMap m = new Double2IntRBTreeMap();
+			if (s.map!=null && s.map.size()>0){
+				DoubleSet ds = s.map.keySet();
+				for (double d:ds){
+					int n = s.map.get(d);
+					m.put(d+t, n);
+				}
+			}
+			s.map = null;
+			s.map = m;
 		}
 		return s;
 	}
@@ -466,6 +514,7 @@ public final class Segment {
 		
 		return radius*Math.abs(angle);
 	}
+	
 	
 	public final static void estimateDist(Segment s,Segment t){
 		if (s.type==0 && t.type==0){
@@ -489,7 +538,10 @@ public final class Segment {
 			t.dist = d + p.distance(t.start);
 		} else { 
 			double[] r = Geom.getCircleCircleIntersection(s.center.x, s.center.y, s.radius, t.center.x, t.center.y, t.radius);
-			if (r==null || r.length==0) return;
+			if (r==null || r.length==0) {
+				t.dist=s.dist+s.length+s.end.distance(t.start);
+				return;
+			}
 			Vector2D p1 = new Vector2D(r[0],r[1]);
 			if (r.length==2){
 				double d = s.dist + distance(p1,s.start,s.center,s.radius);
@@ -983,6 +1035,7 @@ public final class Segment {
 
 	}
 
+	@Override
 	public String toString()
 	{
 		final String TAB = "    ";

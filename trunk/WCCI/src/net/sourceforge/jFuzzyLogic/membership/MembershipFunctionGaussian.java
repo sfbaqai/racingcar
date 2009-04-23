@@ -41,6 +41,7 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 	/**
 	 * @param time the time to set
 	 */
+	@Override
 	public final void setTime(double time,boolean isOutput) {
 //		if (this.time==time) return;
 
@@ -53,7 +54,7 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 		double mean = parameters[0];
 		double stdev = parameters[1];
 		if (perturbations.length>0 && perturbations[0]!=null){
-			ObjectArrayList<Perturbation> l = (ObjectArrayList<Perturbation>)(perturbations[0]);
+			ObjectArrayList<Perturbation> l = (perturbations[0]);
 			if (l!=null){
 				for (Perturbation p : l){
 					mean += p.get(time);
@@ -62,7 +63,7 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 		}
 
 		if (perturbations.length>1 && perturbations[1]!=null){
-			ObjectArrayList<Perturbation> l = (ObjectArrayList<Perturbation>)(perturbations[1]);
+			ObjectArrayList<Perturbation> l = (perturbations[1]);
 			if (l!=null ){
 				for (Perturbation p : l){
 					stdev += p.get(time);
@@ -92,6 +93,7 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 		DoubleArrays.fill(lookup,Double.NaN);
 	}
 
+	@Override
 	public final void preCalculate(){
 		double[] lookup=this.lookup;
 		double x=universeMin,mean=this.mean,stdev=this.stdev;
@@ -120,12 +122,13 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 		if( (!Double.isNaN(universeMin)) && (!Double.isNaN(universeMax)) ) return;
 		universeMin = parameters[0] - 4.0 * parameters[1];
 		universeMax = parameters[0] + 4.0 * parameters[1];
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public final double membership(double in) {
 		double mean=this.mean,stdev=this.stdev;
 		double index = (in-universeMin)/step;
@@ -138,11 +141,13 @@ public class MembershipFunctionGaussian extends MembershipFunctionContinuous {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : " + this.parameters[0] + " , " + this.parameters[1];
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "gauss " + this.parameters[0] + " " + this.parameters[1];
 	}

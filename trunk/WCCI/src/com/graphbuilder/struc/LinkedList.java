@@ -164,6 +164,7 @@ public class LinkedList {
 		return size == 0;
 	}
 
+	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer(6 * size);
 		sb.append("[");

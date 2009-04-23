@@ -15,6 +15,7 @@ public class RuleAggregationMethoNormedSum extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#aggregate(double, double)
 	 */
+	@Override
 	public double aggregate(double defuzzifierValue, double valueToAggregate) {
 		return ( defuzzifierValue + valueToAggregate )  / Math.max(1.0, defuzzifierValue + valueToAggregate);
 	}
@@ -22,6 +23,7 @@ public class RuleAggregationMethoNormedSum extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#toStringFCL()
 	 */
+	@Override
 	public String toStringFCL() {
 		return "ACCU : NSUM;";
 	}

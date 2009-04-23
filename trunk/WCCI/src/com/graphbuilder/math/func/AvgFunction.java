@@ -26,6 +26,7 @@ public class AvgFunction implements Function {
 		return numParam > 0;
 	}
 
+	@Override
 	public String toString() {
 		return "avg(x1, x2, ..., xn)";
 	}

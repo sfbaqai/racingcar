@@ -53,6 +53,7 @@ public class CarRpmState extends CarState implements Comparable<CarRpmState>,Ser
 		return (rs<0)?-1:(rs>0)?1:0;
 	}
 
+	@Override
 	public boolean equals(Object obj){
 		if (this == obj)
 			return true;

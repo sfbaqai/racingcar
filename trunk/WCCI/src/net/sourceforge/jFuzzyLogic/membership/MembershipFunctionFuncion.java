@@ -1,6 +1,8 @@
 package net.sourceforge.jFuzzyLogic.membership;
 
 
+import it.unimi.dsi.lang.MutableString;
+
 import java.util.Iterator;
 
 import net.sourceforge.jFuzzyLogic.Gpr;
@@ -20,7 +22,6 @@ import net.sourceforge.jFuzzyLogic.membership.functions.MffSum;
 import net.sourceforge.jFuzzyLogic.membership.functions.MffTan;
 import net.sourceforge.jFuzzyLogic.membership.functions.MffTimes;
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
-import it.unimi.dsi.lang.MutableString;
 import antlr.collections.AST;
 
 /**
@@ -146,6 +147,7 @@ public class MembershipFunctionFuncion extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#iterator()
 	 */
+	@Override
 	public Iterator<Double> iterator() {
 		return new Iterator<Double>() {
 
@@ -166,6 +168,7 @@ public class MembershipFunctionFuncion extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		return ( in == parameters[0] ) ? parameters[1]:0;
 	}
@@ -173,6 +176,7 @@ public class MembershipFunctionFuncion extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#membership(int)
 	 */
+	@Override
 	public double membership(int index) {
 		return ( index == 0 )?parameters[1]:0;
 
@@ -205,11 +209,13 @@ public class MembershipFunctionFuncion extends MembershipFunctionDiscrete {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + ": " + function.toString();
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "FUNCTION " + function.toString();
 	}

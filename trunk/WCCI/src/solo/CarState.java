@@ -3,12 +3,12 @@
  */
 package solo;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
 import raceclient.SensorModel;
-
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 
 /**
@@ -354,6 +354,7 @@ public class CarState implements SensorModel,Serializable{
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
+	@Override
 	public String toString()
 	{
 	    final String TAB = "    ";

@@ -23,6 +23,7 @@ public class LnFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "ln(x)";
 	}

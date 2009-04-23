@@ -252,7 +252,8 @@ public class MLP {
         return "Straight mlp, mean connection weight " + (sum() / numberOfConnections);
     }
 
-    public String toString () {
+    @Override
+	public String toString () {
         return "MLP:" + firstConnectionLayer.length + "/"+ secondConnectionLayer.length + "/" + outputs.length;
     }
 }

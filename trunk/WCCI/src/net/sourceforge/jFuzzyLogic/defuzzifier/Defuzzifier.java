@@ -53,6 +53,7 @@ public abstract class Defuzzifier {
 		this.discrete = discrete;
 	}
 
+	@Override
 	public String toString() {
 		return getName();
 	}

@@ -143,7 +143,8 @@ public class RMLP {
                 title, s);  */
     }
 
-    public String toString () {
+    @Override
+	public String toString () {
         return "RecurrentMLP:" + firstConnectionLayer.length + "/"+ secondConnectionLayer.length + "/" + outputs.length;
     }
 }

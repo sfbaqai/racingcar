@@ -93,6 +93,7 @@ public class ControlStringParseException extends RuntimeException {
 	/**
 	Returns a nicely formatted string of this exception.
 	*/
+	@Override
 	public String toString() {
 		String e = "";
 		if (epe != null)

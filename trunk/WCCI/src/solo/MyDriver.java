@@ -120,6 +120,7 @@ public class MyDriver extends SimpleDriver {
 	}
 
 
+	@Override
 	double filterABS(double brake)	{
 		// convert speed to m/s
 		brake = Math.min(1.0, brake);
@@ -227,6 +228,7 @@ public class MyDriver extends SimpleDriver {
 
 
 
+	@Override
 	public void init(){		
 		edgeDetector = new EdgeDetector(carState);
 //		edgeDetector.init(carState);
@@ -914,6 +916,7 @@ public class MyDriver extends SimpleDriver {
 	boolean go = false;
 	double startPos =0;
 	double beta = steerLock;
+	@Override
 	double getSteer() {
 		// TODO Auto-generated method stub
 		//		jf.setVisible(true);		

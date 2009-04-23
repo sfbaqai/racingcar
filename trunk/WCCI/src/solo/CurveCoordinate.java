@@ -345,6 +345,7 @@ public class CurveCoordinate {
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
+	@Override
 	public String toString()
 	{
 		final String TAB = "    ";

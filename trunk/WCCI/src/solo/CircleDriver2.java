@@ -12,7 +12,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
-import java.util.Random;
 
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
 
@@ -25,6 +24,10 @@ import com.graphbuilder.geom.Geom;
  *
  */
 public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl> {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6254760984999310075L;
 	boolean draw = false;			
 	XYSeries series = new XYSeries("Curve");
 	final static double PRECISION = 1000000.0d;
@@ -126,8 +129,6 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	double edgeRadius;
 	double nextRadius;
 	double currentSpeedRadius;
-
-	static private Random random = new Random(1234);
 
 	Vector2D highestPoint = null;
 	Vector2D highestPointOnOtherEdge = null;
@@ -1006,8 +1007,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		}
 		
 		if (time>=21.88){
+			Segment.drawTrack(rm, "Test ");
 			storeTrack(edgeDetector,cs,rm);
-		
+			
 		}
 		
 		if (inTurn && l!=null && r!=null){
@@ -1296,7 +1298,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		return null;
 	}
 	
-public Vector2D getNextHighestSeenPoint(Edge left,Edge right){		
+	public Vector2D getNextHighestSeenPoint(Edge left,Edge right){		
 		Vector2D p1 = (left.nextCenter==null) ? null : left.getHighestPoint();			
 		Vector2D p2 = (right.nextCenter==null) ? null : right.getHighestPoint();
 		
@@ -1306,6 +1308,39 @@ public Vector2D getNextHighestSeenPoint(Edge left,Edge right){
 			return higherPoint(p1,p2,left.center);
 		}
 		return null;
+	}
+	
+	public final static void estimateStartEnd(Segment s,double currentDist,double toMiddle){
+		if (s.type==0) {
+			s.start.x = toMiddle;
+			s.end.x = toMiddle;
+			s.start.y = s.dist - currentDist;
+			s.end.y = s.dist + s.length - currentDist;
+			return;
+		}
+		s.center.y = 0;
+		s.center.x = s.type*s.radius+toMiddle;
+		double d = s.dist-currentDist;
+		double arc = -s.type*d/s.radius;	
+		s.start = s.center.plus(new Vector2D(-s.type*s.radius,0).rotated(arc));
+		arc = -s.type*(d+s.length)/s.radius;
+		s.end = s.center.plus(new Vector2D(-s.type*s.radius,0).rotated(arc));
+	}
+	
+	public final static void analyze(ObjectList<Segment> track,double toMiddle,int from){
+		for (int i=from;i<track.size()-1;++i){
+			Segment s = track.get(i);			
+			Segment t = track.get(i+1);
+			while (s.type!=t.type || Math.abs(s.radius-t.radius)>=3){				
+				if (s.type==t.type && Math.abs(s.radius-t.radius)<3) {
+					track.remove(i+1);
+					ObjectList<Segment> ol = s.combine(t);
+					if (ol!=null) s.copy(ol.get(0));		
+				}
+				if (i==track.size()-1) return;
+				t = track.get(i+1);
+			}					
+		}
 	}
 	
 	public void storeTrack(EdgeDetector ed,CarState cs,ObjectList<Segment> ol){
@@ -1326,66 +1361,70 @@ public Vector2D getNextHighestSeenPoint(Edge left,Edge right){
 				Segment t = track.get(i+1);
 				Segment.estimateDist(s, t);
 			}
+			analyze(track, dist, 0);
+			tIndex = 0;
 			return;
 		}
 		
-//		for (int i=tIndex;i<track.size();++i){
-//			Segment s = track.get(i);
-//			if (s.dist+s.length<=dist){
-//				tIndex++;
-//				continue;
-//			}
-//			while (j<ol.size()){
-//				Segment t = ol.get(j);
-//				if (i==tIndex){
-//					if (t.type==s.type && s.type==0){
-//						if (Math.abs(t.end.x-t.start.x)<=TrackSegment.EPSILON){
-//							s.start.x = (s.start.x+t.start.x)*0.5;
-//							s.end.x = s.start.x;
-//							double m = Math.max(s.end.y, t.end.y);
-//							s.length += m-s.end.y;
-//							s.end.y = m;
-//						}
-//					} else if (t.type!=s.type && j==0){
-//						if (s.dist+s.length>=t.dist) tIndex++;
-//						continue;
-//					} else if (s.type==t.type && s.type!=0){
-//						if (Math.abs(s.radius-t.radius)<3 && t.end.y>=0){
-//							TrackSegment ts = TrackSegment.createTurnSeg(t.center.x, t.center.y, t.radius, 0, 0, t.end.x, t.end.y);
-//							if (s.dist+s.length<dist+ts.length){
-//								double d = dist+ts.length - s.dist-s.length;
-//								s.length += d;
-//								s.arc += d/s.radius;							
-//							} 
-//							int nr = s.map.get(s.radius);
-//							if (nr==s.map.defaultReturnValue()) nr = 0;
-//							s.map.put(s.radius, nr++);
-//						} else if (t.end.y>=0){
-//							Segment next = track.get(tIndex+1);
-//							if (next!=null && next.type==t.type && j==1 && Math.abs(next.radius-t.radius)<1){
-//								s.length = dist-0.5-s.dist;
-//								s.arc = s.length/s.radius;
-//								next.length += next.dist-dist;
-//								next.dist = dist;
-//								next.arc = next.length/next.radius;
-//								tIndex++;
-//								continue;
-//							} else if (s.dist+s.length>dist && dist+t.length>=next.dist){
-//								tIndex++;
-//								continue;
-//							} else {
-//								TrackSegment ts = TrackSegment.createTurnSeg(t.center.x, t.center.y, t.radius, 0, 0, t.start.x, t.start.y);
-//								t.dist = dist+ts.length;
-//								if (t.dist>s.dist+s.length) {
-//									tIndex++;
-//									continue;
-//								} else s = s.combine(t);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
+		for (int i=tIndex;i<track.size();++i){
+			Segment s = track.get(i);
+			if (s.dist+s.length<=dist){
+				tIndex++;
+				continue;
+			}
+			boolean ok = false;
+			while (j<ol.size()){
+				Segment t = ol.get(j);
+				if (i==tIndex){					
+					if (!ok) {
+						estimateStartEnd(s,dist,toMiddle);
+						ok = true;
+					}
+					
+					if (t.type==s.type && s.type==0){
+						if (Math.abs(t.end.x-t.start.x)<=TrackSegment.EPSILON){
+							s.start.x = (s.start.x+t.start.x)*0.5;
+							s.end.x = s.start.x;
+							double m = Math.max(s.end.y, t.end.y);
+							s.length += m-s.end.y;
+							s.end.y = m;
+							j++;
+							break;
+						}
+					}
+				}
+				
+				if (t.type!=s.type){
+					if (s.dist+s.length>=t.dist && i==0) tIndex++;
+					break;
+				} else if (s.type==t.type && s.type!=0){
+					if (Math.abs(s.radius-t.radius)<3 && t.end.y>=0){
+						int nr = s.map.get(t.radius);
+						if (nr==s.map.defaultReturnValue()) nr = 0;
+						s.map.put(t.radius, ++nr);
+						if (Math.abs(s.radius-t.radius)>=1 && nr>s.map.get(s.radius)) {
+							s.radius = t.radius;
+							if (i==tIndex) 
+								estimateStartEnd(s, dist, toMiddle);							
+						}
+						double ds = Segment.distance(new Vector2D(toMiddle,0), t.end, s.center, s.radius);
+						if (s.dist+s.length<dist+ds){								
+							s.length = dist+ds - s.dist;
+							s.arc = s.type*s.length/s.radius;
+							s.end = t.end;
+						} 
+					} else if (t.end.y>=0){												
+						ObjectList<Segment> l = s.combine(t);
+						if (l==null)							
+							break;
+						track.remove(i);
+						track.addAll(i, l);
+						
+					}
+				}
+				j++;
+			}//end of while
+		}
 		
 	};
 
@@ -1724,6 +1763,7 @@ public Vector2D getNextHighestSeenPoint(Edge left,Edge right){
 //		return (targetRadius>=300);
 	}
 
+	@Override
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
 		return (stopCondition(state));
 	}

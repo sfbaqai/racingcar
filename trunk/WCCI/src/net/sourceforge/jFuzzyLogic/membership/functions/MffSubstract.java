@@ -33,6 +33,7 @@ public class MffSubstract extends MffFunction {
 		return sum;
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		

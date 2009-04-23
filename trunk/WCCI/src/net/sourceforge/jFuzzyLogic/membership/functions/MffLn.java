@@ -21,6 +21,7 @@ public class MffLn extends MffFunction {
 		return Math.log(values[0]);
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "ln( " + terms[0].toString() + " )";

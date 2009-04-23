@@ -79,7 +79,7 @@ public abstract class Parameter {
 		double epsilon = 0.01; // Default 'epsilon' for rules is 1/100
 		MutableString paramName = new MutableString("Rule_").append(fuzzyRule.getName());		
 		ParameterRuleWeight param = new ParameterRuleWeight(paramName, epsilon, fuzzyRule);
-		parameterList.add((Parameter) param);
+		parameterList.add(param);
 	}
 
 	/**
@@ -112,7 +112,7 @@ public abstract class Parameter {
 				MutableString paramName = new MutableString(variable.getName()).append("_").append(linguisticTerm.getTermName()).append("_").append(membershipFunction.getName())
 							.append("_").append(i);				
 				ParameterMembershipFunction param = new ParameterMembershipFunction(paramName, epsilon, variable, membershipFunction, i);				
-				parameterList.add((Parameter) param);
+				parameterList.add(param);
 			}
 		}
 		
@@ -148,6 +148,7 @@ public abstract class Parameter {
 		this.name = name;
 	}
 
+	@Override
 	public String toString() {
 		return name + ": " + get();
 	}

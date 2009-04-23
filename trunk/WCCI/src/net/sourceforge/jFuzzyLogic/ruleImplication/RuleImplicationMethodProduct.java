@@ -12,11 +12,13 @@ public class RuleImplicationMethodProduct extends RuleImplicationMethod {
 		name = "product";
 	}
 
+	@Override
 	public double imply(double degreeOfSupport, double membership) {
 		return degreeOfSupport * membership;
 	}
 
 	/** Printable FCL version */
+	@Override
 	public String toStringFCL() {
 		return "ACT : PROD;";
 	}

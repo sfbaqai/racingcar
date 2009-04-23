@@ -13,6 +13,7 @@ public class DefuzzifierCenterOfGravity extends DefuzzifierContinuous {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public final double defuzzify() {
 		double x = min, sum = 0, weightedSum = 0;
 
@@ -28,6 +29,7 @@ public class DefuzzifierCenterOfGravity extends DefuzzifierContinuous {
 		return ( sum <= 0 )?Double.NaN:(weightedSum / sum);
 	}
 
+	@Override
 	public String toStringFCL() {
 		return "METHOD : COG;";
 	}

@@ -175,11 +175,12 @@ public class FIS {
 	 */
 	public FuzzyRuleSet getFuzzyRuleSet(String ruleSetName) {
 		if( ruleSetName == null ) {
-			ruleSetName = (String) ruleSets.keySet().iterator().next();
+			ruleSetName = ruleSets.keySet().iterator().next();
 		}
 		return ruleSets.get(ruleSetName);
 	}
 
+	@Override
 	public String toString() {
 		return toString(false);
 	}

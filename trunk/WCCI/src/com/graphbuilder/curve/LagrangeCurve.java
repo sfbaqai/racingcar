@@ -153,10 +153,12 @@ public class LagrangeCurve extends ParametricCurve {
 	/**
 	Returns a value of 1.
 	*/
+	@Override
 	public int getSampleLimit() {
 		return 1;
 	}
 
+	@Override
 	protected void eval(double[] p) {
 		double t = p[p.length - 1];
 
@@ -191,6 +193,7 @@ public class LagrangeCurve extends ParametricCurve {
 	group-iterator must be >= numKnots, otherwise the curve does not have enough control-points
 	to define itself.  If any of these requirements are not met, then this method returns quietly.
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 		if (baseIndex + baseLength >= knotVector.size()) return;
@@ -287,6 +290,7 @@ public class LagrangeCurve extends ParametricCurve {
 		return b;
 	}
 
+	@Override
 	public void resetMemory() {
 		if (pt.length > 0)
 			pt = new double[0][];

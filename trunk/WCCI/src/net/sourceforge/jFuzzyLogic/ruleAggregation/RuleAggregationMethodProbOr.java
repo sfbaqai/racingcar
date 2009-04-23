@@ -14,6 +14,7 @@ public class RuleAggregationMethodProbOr extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#aggregate(double, double)
 	 */
+	@Override
 	public double aggregate(double defuzzifierValue, double valueToAggregate) {
 		return defuzzifierValue + valueToAggregate - defuzzifierValue * valueToAggregate;
 	}
@@ -21,6 +22,7 @@ public class RuleAggregationMethodProbOr extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#toStringFCL()
 	 */
+	@Override
 	public String toStringFCL() {
 		return "ACCU : PROBOR;";
 	}

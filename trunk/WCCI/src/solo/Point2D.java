@@ -155,7 +155,7 @@ public class Point2D extends Vector2D {
 	public Point2D in(java.util.Collection<Point2D> collection, double slop) {
 		java.util.Iterator<Point2D> iter = collection.iterator();
 		while (iter.hasNext()) {
-			Point2D position = (Point2D) iter.next();
+			Point2D position = iter.next();
 			if (distanceTo(position) < slop) return position;
 		}
 		return null;
@@ -174,7 +174,7 @@ public class Point2D extends Vector2D {
 	public Point2D in(java.util.Collection<Point2D> collection, double xSlop, double ySlop) {
 		java.util.Iterator<Point2D> iter = collection.iterator();
 		while (iter.hasNext()) {
-			Point2D position = (Point2D) iter.next();
+			Point2D position = iter.next();
 			if (this.isInRectangle(position, xSlop, ySlop)) return position;
 		}
 		return null;
@@ -208,7 +208,7 @@ public class Point2D extends Vector2D {
 		double closestDistance = java.lang.Double.MAX_VALUE;
 		Iterator<Point2D> iter = positions.iterator();
 		while (iter.hasNext()) {
-			Point2D position = (Point2D) iter.next();
+			Point2D position = iter.next();
 			double distance = this.distanceTo(position);
 			if (closest == null || distance < closestDistance) {
 				closest = position;

@@ -21,6 +21,7 @@ public class MffCos extends MffFunction {
 		return Math.cos(values[0]);
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "cos( " + terms[0].toString() + " )";

@@ -347,6 +347,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 		return new CarControl(0,0,0,0,2);
 	}
 
+	@Override
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
 		return (targetSteer>=-0.005 && stopCondition(state));
 	}

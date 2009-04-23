@@ -23,6 +23,7 @@ public class FloorFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "floor(x)";
 	}

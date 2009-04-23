@@ -24,6 +24,7 @@ public class PowFunction implements Function {
 		return numParam == 2;
 	}
 
+	@Override
 	public String toString() {
 		return "pow(x, y)";
 	}

@@ -1,14 +1,11 @@
 package wox.serial;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
-
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.security.AccessController;
+
 import sun.reflect.ReflectionFactory;
 
 
@@ -48,7 +45,8 @@ public class AccessTest {
         public Sub(double z) {
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return x + " : " + y;
         }
     }

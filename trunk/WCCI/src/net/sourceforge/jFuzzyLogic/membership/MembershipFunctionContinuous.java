@@ -56,7 +56,7 @@ public abstract class MembershipFunctionContinuous extends MembershipFunction {
 			oldParams = DoubleArrays.copy(parameters);
 
 		for (int i=0;i<perturbations.length;++i){
-			ObjectArrayList<Perturbation> l = (ObjectArrayList<Perturbation>)(perturbations[i]);
+			ObjectArrayList<Perturbation> l = (perturbations[i]);
 			double mean=oldParams[i];
 			if (l!=null)
 			for (Perturbation p : l){
@@ -86,6 +86,7 @@ public abstract class MembershipFunctionContinuous extends MembershipFunction {
 	 * @param title : Title to show (if null => show membership function name)
 	 * @param showIt : If true, plot is displayed
 	 */
+	@Override
 	public JFreeChart chart(String title, boolean showIt) {
 		if( title == null ) title = getName();
 

@@ -99,6 +99,7 @@ public abstract class MffFunction {
 		return evaluateFunction();
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		String out = this.getClass().getSimpleName() + "(";

@@ -1,7 +1,6 @@
 package solo;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.io.Serializable;
 
@@ -160,6 +159,7 @@ public class NewCarState extends CarState implements Serializable{
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
+	@Override
 	public String toString()
 	{
 		final String TAB = "    ";
@@ -236,6 +236,7 @@ public class NewCarState extends CarState implements Serializable{
 	}
 		
 	
+	@Override
 	public void fromString(String s){		
 		MessageParser mp = new MessageParser(s);		
 		String str = (String)(mp.getReading("angle"));

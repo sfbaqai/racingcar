@@ -49,12 +49,13 @@ public class MembershipFunctionTriangular extends MembershipFunctionContinuous {
 		if( (!Double.isNaN(universeMin)) && (!Double.isNaN(universeMax)) ) return;
 		universeMin = this.parameters[0];
 		universeMax = this.parameters[2];
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		double a = this.parameters[0],b=this.parameters[1],c=this.parameters[2];
 		/*if( (in <= a) || (in >= c) ) return 0;
@@ -64,6 +65,7 @@ public class MembershipFunctionTriangular extends MembershipFunctionContinuous {
 				: 1 - ((in - b) / (c - b));
 	}
 	
+	@Override
 	public final void preCalculate(){
 		if (lookup==null) lookup = new double[numberOfPoints+1];
 		double[] lookup=this.lookup;
@@ -79,11 +81,13 @@ public class MembershipFunctionTriangular extends MembershipFunctionContinuous {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : " + this.parameters[0] + " , " + this.parameters[1] + " , " + this.parameters[2];
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "trian " + parameters[0] + " " + parameters[1] + " " + parameters[2];
 	}

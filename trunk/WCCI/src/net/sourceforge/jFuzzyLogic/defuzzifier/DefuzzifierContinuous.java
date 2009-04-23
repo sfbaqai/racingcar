@@ -69,6 +69,7 @@ public abstract class DefuzzifierContinuous extends Defuzzifier {
 	 * @param title : Title to show (if null => show membership function name)
 	 * @param showIt : If true, plot is displayed
 	 */
+	@Override
 	public JFreeChart chart(String title, boolean showIt) {
 		// Default title
 		if( title == null ) title = getName();
@@ -83,7 +84,7 @@ public abstract class DefuzzifierContinuous extends Defuzzifier {
 		XYSeries series = new XYSeries(title);
 		int numberOfPoints = values.length;
 		double xx = min;
-		double step = (max - min) / ((double) numberOfPoints);
+		double step = (max - min) / (numberOfPoints);
 		for( int i = 0; i < numberOfPoints; i++, xx += step )
 			series.add(xx, values[i]);
 		XYDataset xyDataset = new XYSeriesCollection(series);
@@ -97,6 +98,7 @@ public abstract class DefuzzifierContinuous extends Defuzzifier {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public abstract double defuzzify();
 
 
@@ -161,11 +163,13 @@ public abstract class DefuzzifierContinuous extends Defuzzifier {
 		this.stepSize = (max - min) / numberOfPoints;
 	}
 
+	@Override
 	public final boolean isDiscrete() {
 		return discrete;
 	}
 
 	/** Reset values (in 'values[] array) */
+	@Override
 	public final void reset() {
 		if( values != null ) {
 			values =null;
@@ -173,6 +177,7 @@ public abstract class DefuzzifierContinuous extends Defuzzifier {
 		}
 	}
 
+	@Override
 	public void setDiscrete(boolean discrete) {
 		this.discrete = discrete;
 	}

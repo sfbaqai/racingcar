@@ -14,6 +14,7 @@ public class ValNode extends Expression {
 	/**
 	Returns the value.
 	*/
+	@Override
 	public double eval(VarMap v, FuncMap f) {
 		return val;
 	}

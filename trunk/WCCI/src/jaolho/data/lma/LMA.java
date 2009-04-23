@@ -567,12 +567,12 @@ public class LMA {
 				result += (float) (dy / fy); 
 			}
 		}
-		return result / (float) yDataPoints.length;
+		return result / yDataPoints.length;
 	}
 	
 	/** @return Estimate for goodness of fit, Sum[(y_data - y_fit)^2] / n */
 	public float chi2Goodness() {
-		return (float) (chi2 / (double) (yDataPoints.length - parameters.length));
+		return (float) (chi2 / (yDataPoints.length - parameters.length));
 	}
 	
 	/**

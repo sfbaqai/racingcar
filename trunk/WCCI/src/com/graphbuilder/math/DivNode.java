@@ -12,12 +12,14 @@ public class DivNode extends OpNode {
 	/**
 	Divides the evaluation of the left side by the evaluation of the right side and returns the result.
 	*/
+	@Override
 	public double eval(VarMap v, FuncMap f) {
 		double a = leftChild.eval(v, f);
 		double b = rightChild.eval(v, f);
 		return a / b;
 	}
 
+	@Override
 	public String getSymbol() {
 		return "/";
 	}

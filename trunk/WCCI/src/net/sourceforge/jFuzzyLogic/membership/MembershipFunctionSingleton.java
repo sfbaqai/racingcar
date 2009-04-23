@@ -49,6 +49,7 @@ public class MembershipFunctionSingleton extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#iterator()
 	 */
+	@Override
 	public Iterator<Double> iterator() {
 		return new Iterator<Double>() {
 
@@ -69,6 +70,7 @@ public class MembershipFunctionSingleton extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		return( in == parameters[0] ) ? parameters[1] :0;		
 	}
@@ -76,6 +78,7 @@ public class MembershipFunctionSingleton extends MembershipFunctionDiscrete {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#membership(int)
 	 */
+	@Override
 	public double membership(int index) {
 		if( index == 0 ) return parameters[1];
 		return 0;
@@ -89,11 +92,13 @@ public class MembershipFunctionSingleton extends MembershipFunctionDiscrete {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : {" + parameters[0] + ", " + parameters[1] + "}";
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return " " + parameters[0];
 	}

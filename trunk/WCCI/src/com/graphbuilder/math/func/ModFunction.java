@@ -22,6 +22,7 @@ public class ModFunction implements Function {
 		return numParam == 2;
 	}
 
+	@Override
 	public String toString() {
 		return "mod(x, y)";
 	}

@@ -17,6 +17,7 @@ public class DefuzzifierCenterOfGravityFunctions extends DefuzzifierDiscrete {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public double defuzzify() {
 		double x, y, sum = 0, sumWeight = 0;
 		for( Iterator it = iterator(); it.hasNext(); ) {
@@ -32,10 +33,12 @@ public class DefuzzifierCenterOfGravityFunctions extends DefuzzifierDiscrete {
 	}
 
 	/** Reset values */
+	@Override
 	public void reset() {
 		discreteValues = new HashMap<Double, Double>();
 	}
 
+	@Override
 	public String toStringFCL() {
 		return "METHOD : COGF;";
 	}

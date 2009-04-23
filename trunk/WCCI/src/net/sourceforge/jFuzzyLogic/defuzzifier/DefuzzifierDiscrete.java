@@ -40,6 +40,7 @@ public abstract class DefuzzifierDiscrete extends Defuzzifier {
 	 * @param title : Title to show (if null => show membership function name)
 	 * @param showIt : If true, plot is displayed
 	 */
+	@Override
 	public JFreeChart chart(String title, boolean showIt) {
 		if( title == null ) title = getName();
 
@@ -60,6 +61,7 @@ public abstract class DefuzzifierDiscrete extends Defuzzifier {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public abstract double defuzzify();
 
 	/** Get a point's 'y' value */
@@ -75,6 +77,7 @@ public abstract class DefuzzifierDiscrete extends Defuzzifier {
 	}
 
 	/** Reset values */
+	@Override
 	public void reset() {
 		if( discreteValues != null ) {
 			for( Iterator it = iterator(); it.hasNext(); ) {

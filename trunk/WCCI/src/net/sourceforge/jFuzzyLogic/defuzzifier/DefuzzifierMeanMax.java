@@ -13,6 +13,7 @@ public class DefuzzifierMeanMax extends DefuzzifierContinuous {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public double defuzzify() {
 		double max = 0, maxX = 0;
 		double sum = 0;
@@ -39,6 +40,7 @@ public class DefuzzifierMeanMax extends DefuzzifierContinuous {
 		return maxX / count;
 
 	}
+	@Override
 	public String toStringFCL() {
 		return "METHOD : MM;";
 	}

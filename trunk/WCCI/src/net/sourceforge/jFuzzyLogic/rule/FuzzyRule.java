@@ -134,6 +134,7 @@ public class FuzzyRule {
 		this.weight = weight;
 	}
 
+	@Override
 	public String toString() {
 		String strAnt = "", strCon = "";
 

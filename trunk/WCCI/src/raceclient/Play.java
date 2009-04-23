@@ -1,7 +1,6 @@
 package raceclient;
 
 import solo.MyDriver;
-import wox.serial.Easy;
 
 /**
  * Created by IntelliJ IDEA.

@@ -154,6 +154,7 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 	 * Compares the two x values and the then the two y values to see
 	 * if they are identical.
 	 */
+	@Override
 	public boolean equals(Object thatObject) {
 		if (thatObject instanceof Vector2D) {
 			Vector2D that = (Vector2D) thatObject;
@@ -162,6 +163,7 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 		else return false;
 	}
 
+	@Override
 	public int hashCode() { return (int) (x + y); }
 
 	/**
@@ -273,6 +275,7 @@ public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.S
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
+	@Override
 	public String toString()
 	{
 	    final String TAB = ",";

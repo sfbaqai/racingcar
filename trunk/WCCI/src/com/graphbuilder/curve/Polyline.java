@@ -11,6 +11,7 @@ public class Polyline extends Curve {
 		super(cp, gi);
 	}
 
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 

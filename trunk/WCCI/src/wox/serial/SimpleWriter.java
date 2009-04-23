@@ -1,10 +1,13 @@
 package wox.serial;
 
-import org.jdom.Element;
-import org.jdom.Comment;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Vector;
 
-import java.lang.reflect.*;
-import java.util.*;
+import org.jdom.Comment;
+import org.jdom.Element;
 
 
 // import crjaim.EncodeBase64;

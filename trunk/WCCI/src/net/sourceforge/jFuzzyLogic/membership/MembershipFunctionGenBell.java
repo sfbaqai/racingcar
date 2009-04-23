@@ -54,12 +54,13 @@ public class MembershipFunctionGenBell extends MembershipFunctionContinuous {
 		double delta = Math.pow(999, 1 / (2 * parameters[2])) * parameters[1];
 		universeMin = parameters[0] - delta;
 		universeMax = parameters[0] + delta;
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		/*double t = Math.abs((in - parameters[0]) / parameters[1]);
 		t = Math.pow(t, 2.0 * parameters[2]);
@@ -74,6 +75,7 @@ public class MembershipFunctionGenBell extends MembershipFunctionContinuous {
 		//*/
 	}
 
+	@Override
 	public final void preCalculate(){
 		double[] lookup=this.lookup;
 		double x=universeMin,a=this.parameters[0],b=this.parameters[1],c=this.parameters[2];
@@ -88,6 +90,7 @@ public class MembershipFunctionGenBell extends MembershipFunctionContinuous {
 		}
 	}
 
+	@Override
 	public final void setTime(double time,boolean isOutput) {
 		if (this.time==time) return;
 		this.time = time;
@@ -99,7 +102,7 @@ public class MembershipFunctionGenBell extends MembershipFunctionContinuous {
 			oldParams = DoubleArrays.copy(parameters);
 
 		for (int i=0;i<perturbations.length;++i){
-			ObjectArrayList<Perturbation> l = (ObjectArrayList<Perturbation>)(perturbations[i]);
+			ObjectArrayList<Perturbation> l = (perturbations[i]);
 			double mean=oldParams[i];
 			if (l!=null)
 			for (Perturbation p : l){
@@ -128,11 +131,13 @@ public class MembershipFunctionGenBell extends MembershipFunctionContinuous {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : " + " , " + parameters[0] + parameters[1] + " , " + parameters[2];
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "gbell " + parameters[0] + " " + parameters[1] + " " + parameters[2];
 	}

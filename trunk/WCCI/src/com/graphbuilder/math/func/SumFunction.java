@@ -26,6 +26,7 @@ public class SumFunction implements Function {
 		return numParam > 0;
 	}
 
+	@Override
 	public String toString() {
 		return "sum(x1, x2, ..., xn)";
 	}

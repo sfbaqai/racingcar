@@ -65,10 +65,11 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 		if( (!Double.isNaN(universeMin)) && (!Double.isNaN(universeMax)) ) return;
 		universeMin = x[0];
 		universeMax = x[x.length - 1];
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public double getParameter(int i) {
 		int j = i / 2;
 		if( (i % 2) == 0 ) return x[j];
@@ -77,6 +78,7 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public int getParametersLength() {
 		return (x != null ? 2 * x.length : 0);
 	}
@@ -89,6 +91,7 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 	 * 	
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		int i, len = x.length;
 		if( in <= x[0] ) return y[0];
@@ -101,6 +104,7 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public void setParameter(int i, double value) {
 		int j = i / 2;
 		if( (i % 2) == 0 ) x[j] = value;
@@ -110,6 +114,7 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		StringBuffer str = new StringBuffer(getName() + " : ");
 		for( int i = 0; i < x.length; i++ ) {
@@ -121,6 +126,7 @@ public class MembershipFunctionPieceWiseLinear extends MembershipFunctionContinu
 	}
 	
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		String str = " ";
 		for( int i = 0; i < x.length; i++ ) {
