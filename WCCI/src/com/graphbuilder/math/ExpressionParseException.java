@@ -33,6 +33,7 @@ public class ExpressionParseException extends RuntimeException {
 	/**
 	Returns a string formatted such as "(index) description".
 	*/
+	@Override
 	public String toString() {
 		return "(" + index + ") " + descrip;
 	}

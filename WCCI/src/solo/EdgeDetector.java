@@ -3,25 +3,20 @@
  */
 package solo;
 
-import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleArrays;
 import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
 import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
-import javax.swing.JFrame;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
@@ -29,7 +24,6 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import com.graphbuilder.curve.ControlPath;
-import com.graphbuilder.geom.Geom;
 
 /**
  * @author kokichi3000
@@ -351,9 +345,7 @@ public class EdgeDetector {
 		
 		
 		DoubleSortedSet ds = this.polar2Cartesian.keySet();
-
-		double[] thisX = this.x.toDoubleArray();
-		double[] thisY = this.y.toDoubleArray();
+		
 		AffineTransform at = new AffineTransform();
 		at.scale(scale, 1);
 		at.translate(ax, -distRaced);

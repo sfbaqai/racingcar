@@ -12,11 +12,13 @@ public class RuleImplicationMethodMin extends RuleImplicationMethod {
 		name = "min";
 	}
 
+	@Override
 	public double imply(double degreeOfSupport, double membership) {
 		return Math.min(degreeOfSupport, membership);
 	}
 
 	/** Printable FCL version */
+	@Override
 	public String toStringFCL() {
 		return "ACT : MIN;";
 	}

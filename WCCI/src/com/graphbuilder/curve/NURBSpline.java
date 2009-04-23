@@ -29,6 +29,7 @@ public class NURBSpline extends BSpline {
 		super(cp, gi);
 	}
 
+	@Override
 	protected void eval(double[] p) {
 		int dim = p.length - 1;
 		double t = p[dim];
@@ -103,6 +104,7 @@ public class NURBSpline extends BSpline {
 
 	@see com.graphbuilder.curve.BSpline#appendTo(MultiPath)
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 		int numPts = gi.getGroupSize();
@@ -128,6 +130,7 @@ public class NURBSpline extends BSpline {
 		super.appendTo(mp);
 	}
 
+	@Override
 	public void resetMemory() {
 		super.resetMemory();
 		if (nw.length > 0) {

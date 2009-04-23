@@ -38,16 +38,18 @@ public class MembershipFunctionSigmoidal extends MembershipFunctionContinuous {
 		if( (!Double.isNaN(universeMin)) && (!Double.isNaN(universeMax)) ) return;
 		universeMin = parameters[1] - 9.0 / Math.abs(parameters[0]);
 		universeMax = parameters[1] + 9.0 / Math.abs(parameters[0]);
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {		
 		return (1.0 / (1.0 + Math.exp(-this.parameters[0] * (in - this.parameters[1]))));
 	}
 	
+	@Override
 	public final void preCalculate(){
 		if (lookup==null) lookup = new double[numberOfPoints+1];
 		double[] lookup=this.lookup;		
@@ -63,11 +65,13 @@ public class MembershipFunctionSigmoidal extends MembershipFunctionContinuous {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : " + parameters[0] + " , " + parameters[1];
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "sigm " + parameters[0] + " " + parameters[1];
 	}

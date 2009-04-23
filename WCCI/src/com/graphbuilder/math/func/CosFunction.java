@@ -23,6 +23,7 @@ public class CosFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "cos(x)";
 	}

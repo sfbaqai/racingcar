@@ -107,6 +107,7 @@ public abstract class Perturbation extends MembershipFunctionContinuous {
 	 * @param title : Title to show (if null => show membership function name)
 	 * @param showIt : If true, plot is displayed
 	 */
+	@Override
 	public JFreeChart chart(String title, boolean showIt) {
 		if( title == null ) title = getName();
 

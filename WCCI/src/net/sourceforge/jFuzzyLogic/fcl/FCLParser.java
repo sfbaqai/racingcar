@@ -65,7 +65,7 @@ public FCLParser(ParserSharedInputState state) {
 				_cnt49++;
 			} while (true);
 			}
-			fcl_AST = (AST)currentAST.root;
+			fcl_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -124,7 +124,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_FUNCTION_BLOCK);
-			function_block_AST = (AST)currentAST.root;
+			function_block_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -145,35 +145,35 @@ public FCLParser(ParserSharedInputState state) {
 			{
 				var_input();
 				astFactory.addASTChild(currentAST, returnAST);
-				declaration_AST = (AST)currentAST.root;
+				declaration_AST = currentAST.root;
 				break;
 			}
 			case VAR_OUTPUT:
 			{
 				var_output();
 				astFactory.addASTChild(currentAST, returnAST);
-				declaration_AST = (AST)currentAST.root;
+				declaration_AST = currentAST.root;
 				break;
 			}
 			case FUZZIFY:
 			{
 				fuzzify_block();
 				astFactory.addASTChild(currentAST, returnAST);
-				declaration_AST = (AST)currentAST.root;
+				declaration_AST = currentAST.root;
 				break;
 			}
 			case DEFUZZIFY:
 			{
 				defuzzify_block();
 				astFactory.addASTChild(currentAST, returnAST);
-				declaration_AST = (AST)currentAST.root;
+				declaration_AST = currentAST.root;
 				break;
 			}
 			case RULEBLOCK:
 			{
 				rule_block();
 				astFactory.addASTChild(currentAST, returnAST);
-				declaration_AST = (AST)currentAST.root;
+				declaration_AST = currentAST.root;
 				break;
 			}
 			default:
@@ -214,7 +214,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_VAR);
-			var_input_AST = (AST)currentAST.root;
+			var_input_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -250,7 +250,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_VAR);
-			var_output_AST = (AST)currentAST.root;
+			var_output_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -298,7 +298,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_FUZZIFY);
-			fuzzify_block_AST = (AST)currentAST.root;
+			fuzzify_block_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -336,7 +336,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_DEFUZZIFY);
-			defuzzify_block_AST = (AST)currentAST.root;
+			defuzzify_block_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -374,7 +374,7 @@ public FCLParser(ParserSharedInputState state) {
 			} while (true);
 			}
 			match(END_RULEBLOCK);
-			rule_block_AST = (AST)currentAST.root;
+			rule_block_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -398,7 +398,7 @@ public FCLParser(ParserSharedInputState state) {
 			data_type();
 			astFactory.addASTChild(currentAST, returnAST);
 			match(SEMICOLON);
-			var_def_AST = (AST)currentAST.root;
+			var_def_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -418,7 +418,7 @@ public FCLParser(ParserSharedInputState state) {
 			tmp20_AST = astFactory.create(LT(1));
 			astFactory.addASTChild(currentAST, tmp20_AST);
 			match(TYPE_REAL);
-			data_type_AST = (AST)currentAST.root;
+			data_type_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -446,7 +446,7 @@ public FCLParser(ParserSharedInputState state) {
 			membership_function();
 			astFactory.addASTChild(currentAST, returnAST);
 			match(SEMICOLON);
-			linguistic_term_AST = (AST)currentAST.root;
+			linguistic_term_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);
@@ -475,7 +475,7 @@ public FCLParser(ParserSharedInputState state) {
 			astFactory.addASTChild(currentAST, returnAST);
 			match(RIGHT_PARENTHESIS);
 			match(SEMICOLON);
-			range_AST = (AST)currentAST.root;
+			range_AST = currentAST.root;
 		}
 		catch (RecognitionException ex) {
 			reportError(ex);

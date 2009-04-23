@@ -26,6 +26,7 @@ public class LogFunction implements Function {
 		return numParam == 1 || numParam == 2;
 	}
 
+	@Override
 	public String toString() {
 		return "log(x):log(x, y)";
 	}

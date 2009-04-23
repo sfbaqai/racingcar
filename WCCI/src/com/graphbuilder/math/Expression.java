@@ -112,6 +112,7 @@ public abstract class Expression {
 	/**
 	Returns a string that represents the expression tree rooted at this node.
 	*/
+	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		toString(this, sb);

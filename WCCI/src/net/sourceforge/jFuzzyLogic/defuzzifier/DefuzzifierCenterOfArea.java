@@ -13,6 +13,7 @@ public class DefuzzifierCenterOfArea extends DefuzzifierContinuous {
 	}
 
 	/** Deffuzification function */
+	@Override
 	public double defuzzify() {
 		double sumLow = 0, sumHigh = 0;
 		int low, hi;
@@ -36,6 +37,7 @@ public class DefuzzifierCenterOfArea extends DefuzzifierContinuous {
 		return min + stepSize * low;
 	}
 
+	@Override
 	public String toStringFCL() {
 		return "METHOD : COA;";
 	}

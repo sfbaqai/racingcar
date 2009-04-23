@@ -29,6 +29,7 @@ public abstract class RuleAggregationMethod {
 		this.name = name;
 	}
 
+	@Override
 	public String toString() {
 		return getName();
 	}

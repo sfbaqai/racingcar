@@ -66,6 +66,7 @@ public class FuncNode extends TermNode {
 	the double array and returns a result.  If negate is true, the result is negated.  The result
 	is then returned.  The numParam passed to the function is the number of children of this FuncNode.
 	*/
+	@Override
 	public double eval(VarMap v, FuncMap f) {
 		int numParam = bag.size();
 

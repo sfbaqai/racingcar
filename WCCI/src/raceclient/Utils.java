@@ -1,7 +1,7 @@
 package raceclient;
 
-import java.net.DatagramSocket;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 /**
@@ -25,7 +25,7 @@ public class Utils {
     public static Controller load(String name) {
         Controller controller;
         try {
-            controller = (Controller) (Object) Class.forName(name).newInstance();
+            controller = (Controller) Class.forName(name).newInstance();
         }
         catch (ClassNotFoundException e) {
             System.out.println(name + " is not a class name; trying to load a wox definition with that name.");

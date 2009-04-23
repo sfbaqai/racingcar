@@ -65,10 +65,12 @@ public class NewTestDriver extends BaseDriver {
 		return cc.toString();
 	}
 
+	@Override
 	public void onShutdown(){
 		num = 0;		
 	};
 	
+	@Override
 	public void onRestart(){
 		num = 0;
 	};

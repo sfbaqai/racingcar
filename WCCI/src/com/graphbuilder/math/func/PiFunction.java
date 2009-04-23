@@ -23,6 +23,7 @@ public class PiFunction implements Function {
 		return numParam == 0;
 	}
 
+	@Override
 	public String toString() {
 		return "pi()";
 	}

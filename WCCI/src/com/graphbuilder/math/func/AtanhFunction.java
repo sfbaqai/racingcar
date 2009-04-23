@@ -21,6 +21,7 @@ public class AtanhFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "atanh(x)";
 	}

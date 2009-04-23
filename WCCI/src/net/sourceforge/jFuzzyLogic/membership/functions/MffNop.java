@@ -27,6 +27,7 @@ public class MffNop extends MffFunction {
 		return Double.NaN;
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "( " + terms[0].toString() + " )";

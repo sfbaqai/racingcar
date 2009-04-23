@@ -56,12 +56,13 @@ public class MembershipFunctionTrapetzoidal extends MembershipFunctionContinuous
 		if( (!Double.isNaN(universeMin)) && (!Double.isNaN(universeMax)) ) return;
 		universeMin = parameters[0];
 		universeMax = parameters[3];
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 	}
 
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		double a=parameters[0],b=parameters[1],c=parameters[2],d=parameters[3];
 		/*if( (in <= a) || (in >= d) ) return 0;
@@ -73,6 +74,7 @@ public class MembershipFunctionTrapetzoidal extends MembershipFunctionContinuous
 			( in < b ) ? ((in - a) / (b - a)) : 1 - ((in - c) / (d - c));
 	}
 	
+	@Override
 	public final void preCalculate(){		
 		if (lookup==null) lookup = new double[numberOfPoints+1];
 		double[] lookup=this.lookup;
@@ -89,11 +91,13 @@ public class MembershipFunctionTrapetzoidal extends MembershipFunctionContinuous
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return getName() + " : " + parameters[0] + " , " + parameters[1] + " , " + parameters[2] + " , " + parameters[3];
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		return "trape " + parameters[0] + " " + parameters[1] + " " + parameters[2] + " " + parameters[3];
 	}

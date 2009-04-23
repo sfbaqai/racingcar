@@ -3,13 +3,13 @@
  */
 package solo;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 
 /**
  * @author kokichi3000

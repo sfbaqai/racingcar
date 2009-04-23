@@ -45,6 +45,7 @@ public class LinguisticTerm {
 		this.termName = termName;
 	}
 
+	@Override
 	public String toString() {
 		return "\tTerm: " + termName + "\t" + membershipFunction.toString();
 	}

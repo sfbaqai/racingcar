@@ -15,10 +15,12 @@ public class RuleConnectionMethodAndBoundedDif extends RuleConnectionMethod {
 		name = "and";
 	}
 
+	@Override
 	public double connect(double antecedent1, double antecedent2) {
 		return Math.max(0, antecedent1 * antecedent2 - 1);
 	}
 	
+	@Override
 	public String toStringFCL() {
 		return "AND : BDIFF;";
 	}

@@ -1,7 +1,6 @@
 package wox.serial;
 
 import java.util.ArrayList;
-import java.io.Externalizable;
 
 /**
  * User: sml

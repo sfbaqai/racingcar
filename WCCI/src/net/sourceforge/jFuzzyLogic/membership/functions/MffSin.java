@@ -21,6 +21,7 @@ public class MffSin extends MffFunction {
 		return Math.sin(values[0]);
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "sin( " + terms[0].toString() + " )";

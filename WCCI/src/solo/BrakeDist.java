@@ -3,10 +3,10 @@
  */
 package solo;
 
-import com.graphbuilder.geom.Geom;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import com.graphbuilder.geom.Geom;
 
 /**
  * @author kokichi3000
@@ -277,6 +277,7 @@ public final class BrakeDist extends BaseStateDriver<NewCarState,CarControl> {
 		return (maxSpeed>=320 || state.state.distRaced>6000);
 	}
 	
+	@Override
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
 		return (stopCondition(state) && maxSpeed>=300);
 	}

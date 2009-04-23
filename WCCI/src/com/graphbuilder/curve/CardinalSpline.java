@@ -23,6 +23,7 @@ public class CardinalSpline extends ParametricCurve {
 		super(cp, gi);
 	}
 
+	@Override
 	protected void eval(double[] p) {
 		double t = p[p.length - 1];
 		double t2 = t * t;
@@ -58,6 +59,7 @@ public class CardinalSpline extends ParametricCurve {
 	/**
 	Returns a value of 1.
 	*/
+	@Override
 	public int getSampleLimit() {
 		return 1;
 	}
@@ -66,6 +68,7 @@ public class CardinalSpline extends ParametricCurve {
 	The requirements for this curve are the group-iterator must be in-range and have a group size of at least 4.
 	If these requirements are not met then this method returns quietly.
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 		if (gi.getGroupSize() < 4) return;

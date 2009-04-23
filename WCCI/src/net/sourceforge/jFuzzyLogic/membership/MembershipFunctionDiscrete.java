@@ -35,6 +35,7 @@ public abstract class MembershipFunctionDiscrete extends MembershipFunction {
 	 * @param title : Title to show (if null => show membership function name)
 	 * @param showIt : If true, plot is displayed
 	 */
+	@Override
 	public JFreeChart chart(String title, boolean showIt) {
 		int numberOfPoints = size();
 		if( title == null ) title = getName();

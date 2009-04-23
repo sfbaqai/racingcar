@@ -63,6 +63,7 @@ public class BSpline extends ParametricCurve {
 		super(cp, gi);
 	}
 
+	@Override
 	protected void eval(double[] p) {
 		int dim = p.length - 1;
 		double t = p[dim];
@@ -117,6 +118,7 @@ public class BSpline extends ParametricCurve {
 		return t_max;
 	}
 
+	@Override
 	public int getSampleLimit() {
 		return sampleLimit;
 	}
@@ -240,6 +242,7 @@ public class BSpline extends ParametricCurve {
 
 	If any of these requirements are not met, then this method returns quietly.
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 
@@ -442,6 +445,7 @@ public class BSpline extends ParametricCurve {
 		return a * n1 + b * n2;
 	}*/
 
+	@Override
 	public void resetMemory() {
 		if (a.length > 0) {
 			a = new int[0];

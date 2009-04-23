@@ -28,6 +28,7 @@ public class CombinFunction implements Function {
 		return numParam == 2;
 	}
 
+	@Override
 	public String toString() {
 		return "combin(n, r)";
 	}

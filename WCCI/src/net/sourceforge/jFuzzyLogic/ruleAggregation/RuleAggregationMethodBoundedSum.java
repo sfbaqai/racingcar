@@ -14,6 +14,7 @@ public class RuleAggregationMethodBoundedSum extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#aggregate(double, double)
 	 */
+	@Override
 	public double aggregate(double defuzzifierValue, double valueToAggregate) {
 		return Math.min(1.0, defuzzifierValue + valueToAggregate);
 	}
@@ -21,6 +22,7 @@ public class RuleAggregationMethodBoundedSum extends RuleAggregationMethod {
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.ruleAggregation.RuleAggregationMethod#toStringFCL()
 	 */
+	@Override
 	public String toStringFCL() {
 		return "ACCU : BSUM;";
 	}

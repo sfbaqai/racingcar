@@ -301,7 +301,7 @@ public class Variable implements Comparable,TObjectProcedure<LinguisticTerm> {
 		if( Double.isNaN(universeMax) ) universeMax = umax;
 		linguisticTerms.forEachValue(new LTProc(umin,umax));
 
-		step = (umax - umin) / ((double) numberOfPoints);
+		step = (umax - umin) / (numberOfPoints);
 		if (defuzzifier!=null && !defuzzifier.isDiscrete()){
 			DefuzzifierContinuous dfc = (DefuzzifierContinuous)defuzzifier;
 			dfc.init(umin, umax);
@@ -423,7 +423,7 @@ public class Variable implements Comparable,TObjectProcedure<LinguisticTerm> {
 		this.universeMax = universeMax;
 		linguisticTerms.forEachValue(new LTProc(universeMin,universeMax));
 
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 		if (defuzzifier!=null && !defuzzifier.isDiscrete()){
 			DefuzzifierContinuous dfc = (DefuzzifierContinuous)defuzzifier;
 			dfc.init(universeMin, universeMax);
@@ -434,7 +434,7 @@ public class Variable implements Comparable,TObjectProcedure<LinguisticTerm> {
 		this.universeMin = universeMin;
 		linguisticTerms.forEachValue(new LTProc(universeMin,universeMax));
 
-		step = (universeMax - universeMin) / ((double) numberOfPoints);
+		step = (universeMax - universeMin) / (numberOfPoints);
 		if (defuzzifier!=null && !defuzzifier.isDiscrete()){
 			DefuzzifierContinuous dfc = (DefuzzifierContinuous)defuzzifier;
 			dfc.init(universeMin, universeMax);
@@ -481,6 +481,7 @@ public class Variable implements Comparable,TObjectProcedure<LinguisticTerm> {
 	 * Printable string
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		String str = name + " : \n";
 

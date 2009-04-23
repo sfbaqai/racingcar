@@ -61,7 +61,7 @@ public class ES implements Constants {
         fitness[which] = 0;
         for (int i = 0; i < evaluationRepetitions; i++) {
             ((Controller)population[which]).reset ();
-            fitness[which] += evaluator.evaluate((Controller)population[which]);                    
+            fitness[which] += evaluator.evaluate(population[which]);                    
         }
         fitness[which] = fitness[which] / evaluationRepetitions;
     }

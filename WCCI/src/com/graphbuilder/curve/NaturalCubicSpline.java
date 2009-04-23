@@ -44,6 +44,7 @@ d[11] = d // only used for closed cubic curves
 		return data;
 	}
 
+	@Override
 	protected void eval(double[] p) {
 		int n = p.length - 1; // dimension		
 		double t = p[n];
@@ -170,6 +171,7 @@ d[11] = d // only used for closed cubic curves
 	/**
 	Returns a value of 1.
 	*/
+	@Override
 	public int getSampleLimit() {
 		return 1;
 	}
@@ -178,6 +180,7 @@ d[11] = d // only used for closed cubic curves
 	The requirements for this curve are the group-iterator must be in-range and have a group size of at least 2.
 	If these requirements are not met then this method returns quietly.
 	*/
+	@Override
 	public void appendTo(MultiPath mp) {
 		if (!gi.isInRange(0, cp.numPoints())) return;
 
@@ -238,6 +241,7 @@ d[11] = d // only used for closed cubic curves
 		
 	}
 
+	@Override
 	public void resetMemory() {
 		if (pt.length > 0)
 			pt = new double[0][];

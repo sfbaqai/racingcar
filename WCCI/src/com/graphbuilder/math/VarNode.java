@@ -12,6 +12,7 @@ public class VarNode extends TermNode {
 	/**
 	Returns the value associated with the variable name in the VarMap.
 	*/
+	@Override
 	public double eval(VarMap v, FuncMap f) {
 		double val = v.getValue(name);
 

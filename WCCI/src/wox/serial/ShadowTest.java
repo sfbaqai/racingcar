@@ -1,9 +1,9 @@
 package wox.serial;
 
+import java.io.IOException;
+
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.

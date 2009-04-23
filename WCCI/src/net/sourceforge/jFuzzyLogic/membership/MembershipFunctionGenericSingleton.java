@@ -66,6 +66,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public double getParameter(int i) {
 		int j = i / 2;
 		if( (i % 2) == 0 ) return x[j];
@@ -74,6 +75,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public int getParametersLength() {
 		return (x != null ? 2 * x.length : 0);
 	}
@@ -81,6 +83,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#iterator()
 	 */
+	@Override
 	public Iterator<Double> iterator() {
 		return new Iterator<Double>() {
 
@@ -101,6 +104,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunction#membership(double)
 	 */
+	@Override
 	public double membership(double in) {
 		int i, len = x.length;
 		if( in <= x[0] ) return y[0];
@@ -113,12 +117,14 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	/**
 	 * @see net.sourceforge.jFuzzyLogic.membership.MembershipFunctionDiscrete#membership(int)
 	 */
+	@Override
 	public double membership(int index) {
 		if( (index < 0) || (index > x.length) ) return 0;
 		return y[index];
 	}
 
 	/** Need to override this method (we store parameters differently in this function) */
+	@Override
 	public void setParameter(int i, double value) {
 		int j = i / 2;
 		if( (i % 2) == 0 ) x[j] = value;
@@ -128,6 +134,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	/**
 	 * Number of points in this discrete function (i.e. number of 'singletons')
 	 */
+	@Override
 	public int size() {
 		return x.length;
 	}
@@ -135,6 +142,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		StringBuffer str = new StringBuffer(getName() + " : ");
 		for( int i = 0; i < x.length; i++ ) {
@@ -146,6 +154,7 @@ public class MembershipFunctionGenericSingleton extends MembershipFunctionDiscre
 	}
 
 	/** FCL representation */
+	@Override
 	public String toStringFCL() {
 		String str = "singletons ";
 		for( int i = 0; i < x.length; i++ ) {

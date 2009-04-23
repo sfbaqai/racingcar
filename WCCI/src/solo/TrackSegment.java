@@ -1,5 +1,8 @@
 package solo;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
@@ -12,11 +15,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-
-import antlr.collections.impl.Vector;
 
 import com.graphbuilder.geom.Geom;
 
@@ -827,6 +825,7 @@ public class TrackSegment {
 		double length = Math.abs(arc*r);
 		int num = (int)(length*2);
 		if (num<1) num=1;
+		arc = -arc;
 		double step = arc/num;		
 		double angle = 0.0d;		
 		Vector2D point = null;
@@ -1223,6 +1222,7 @@ public class TrackSegment {
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
+	@Override
 	public String toString()
 	{
 		final String TAB = "    ";

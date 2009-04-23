@@ -59,6 +59,7 @@ public class GaussianPerturbation extends Perturbation {
 		return scale*random.nextGaussian();
 	}
 
+	@Override
 	public final double get(double time){
 		double ind = (time-startTime)/step -1;
 		int i = (int)ind;
@@ -68,6 +69,7 @@ public class GaussianPerturbation extends Perturbation {
 	/**
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return new StringBuffer(getName()).append(" : ").append(parameters[0]).append(" , ").append(parameters[1]).toString();
 	}

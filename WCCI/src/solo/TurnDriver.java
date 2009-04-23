@@ -5,8 +5,6 @@ package solo;
 
 import com.graphbuilder.geom.Geom;
 
-import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
-
 /**
  * @author kokichi3000
  *
@@ -94,10 +92,12 @@ public class TurnDriver extends BaseDriver {
 		return cc.toString();
 	}
 
+	@Override
 	public void onShutdown(){
 		num = 0;		
 	};
 	
+	@Override
 	public void onRestart(){
 		num = 0;
 	};

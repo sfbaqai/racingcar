@@ -23,6 +23,7 @@ public class CeilFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "ceil(x)";
 	}

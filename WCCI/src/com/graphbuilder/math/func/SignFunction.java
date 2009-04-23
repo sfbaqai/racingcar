@@ -23,6 +23,7 @@ public class SignFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "sign(x)";
 	}

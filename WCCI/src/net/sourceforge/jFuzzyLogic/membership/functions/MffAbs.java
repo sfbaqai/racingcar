@@ -21,6 +21,7 @@ public class MffAbs extends MffFunction {
 		return Math.abs(values[0]);
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "abs( " + terms[0].toString() + " )";

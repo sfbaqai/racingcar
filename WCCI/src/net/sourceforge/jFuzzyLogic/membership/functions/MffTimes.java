@@ -25,6 +25,7 @@ public class MffTimes extends MffFunction {
 		return calc;
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		String out = "";

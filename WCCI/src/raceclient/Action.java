@@ -14,7 +14,8 @@ public class Action {
     public double steering = 0;  // -1..1
     public boolean restartRace = false;
 
-    public String toString () {
+    @Override
+	public String toString () {
         return "(accel " + (accelerate ? 1 : 0) + ") " +
                "(brake " + (brake ? 1 : 0) + ") " +
                "(gear " + gear + ") " +

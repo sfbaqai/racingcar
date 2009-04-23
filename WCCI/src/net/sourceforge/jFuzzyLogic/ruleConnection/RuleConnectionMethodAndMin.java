@@ -15,10 +15,12 @@ public class RuleConnectionMethodAndMin extends RuleConnectionMethod {
 		name = "and";
 	}
 
+	@Override
 	public double connect(double antecedent1, double antecedent2) {
 		return Math.min(antecedent1, antecedent2);
 	}
 	
+	@Override
 	public String toStringFCL() {
 		return "AND : MIN;";
 	}

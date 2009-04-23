@@ -21,6 +21,7 @@ public class MffTan extends MffFunction {
 		return Math.tan(values[0]);
 	}
 
+	@Override
 	public String toString() {
 		if( terms == null ) return "";
 		return "tan( " + terms[0].toString() + " )";

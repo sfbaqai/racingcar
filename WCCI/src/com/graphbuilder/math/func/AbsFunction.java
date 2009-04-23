@@ -23,6 +23,7 @@ public class AbsFunction implements Function {
 		return numParam == 1;
 	}
 
+	@Override
 	public String toString() {
 		return "abs(x)";
 	}

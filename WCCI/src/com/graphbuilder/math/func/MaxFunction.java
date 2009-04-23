@@ -28,6 +28,7 @@ public class MaxFunction implements Function {
 		return numParam >= 0;
 	}
 
+	@Override
 	public String toString() {
 		return "max(x1, x2, ..., xn)";
 	}

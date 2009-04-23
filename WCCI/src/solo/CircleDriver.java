@@ -3,10 +3,10 @@
  */
 package solo;
 
-import com.graphbuilder.geom.Geom;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import com.graphbuilder.geom.Geom;
 
 /**
  * @author kokichi3000
@@ -414,6 +414,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 		return (count>20);
 	}
 	
+	@Override
 	public boolean shutdownCondition(State<NewCarState, CarControl> state){
 		return (targetRadius>=300);
 	}

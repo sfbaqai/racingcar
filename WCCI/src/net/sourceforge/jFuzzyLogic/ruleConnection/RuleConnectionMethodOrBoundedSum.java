@@ -15,10 +15,12 @@ public class RuleConnectionMethodOrBoundedSum extends RuleConnectionMethod {
 		name = "or";
 	}
 
+	@Override
 	public double connect(double antecedent1, double antecedent2) {
 		return Math.min(1, antecedent1 + antecedent2);
 	}
 	
+	@Override
 	public String toStringFCL() {
 		return "OR: BSUM;";
 	}
