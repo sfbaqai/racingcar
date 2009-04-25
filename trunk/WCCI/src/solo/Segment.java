@@ -36,6 +36,7 @@ import com.graphbuilder.geom.Geom;
 public final class Segment {
 	final static int LIM = 6;
 	final static int UNKNOWN = -2;
+	final static double MARGIN =3;
 	TrackSegment seg = null;
 	double dist = -1;
 	Vector2D center = null;
@@ -96,16 +97,31 @@ public final class Segment {
 		if (map==null) map = new Double2IntRBTreeMap();
 		map.put(radius, 1);
 	}
+	
+	public static Double2IntMap joinMap(Double2IntMap m1,Double2IntMap m2){
+		if (m1==null) return m2;
+		if (m2==null) return m1;
+		Double2IntMap m = new Double2IntRBTreeMap(m1);
+		
+		for (double d:m2.keySet()){
+			int n1 = m1.get(d);
+			int n2 = m2.get(d);
+			if (n1==m1.defaultReturnValue()) n1=0;
+			if (n2==m2.defaultReturnValue()) n2=0;
+			m.put(d, n1+n2);
+		}
+		return m;
+	}
 
 	public final ObjectList<Segment> combine(Segment s){
+		if (s.dist<dist) return s.combine(this);
 		double e = Math.max(dist+length, s.dist+s.length);		
 		double ss = Math.min(dist, s.dist);
-		double l = Math.min(dist+length, s.dist+s.length)-Math.max(dist, s.dist);
+//		double l = Math.min(dist+length, s.dist+s.length)-Math.max(dist, s.dist);
 		ObjectList<Segment> ol = new ObjectArrayList<Segment>();
 		if (s.type==type && s.radius==radius){
-			int nr = map.get(radius);
-			nr++;
-			map.put(radius, nr);
+			int nr = map.get(radius);			
+			map.put(radius, Math.max(nr,s.map.get(radius))+1);
 			length = e-ss;
 			if (s.dist+s.length>dist+length)
 				end = s.end;
@@ -119,9 +135,8 @@ public final class Segment {
 		if (s.type==type){			
 			int nr = map.get(s.radius);
 			if (nr==map.defaultReturnValue()) nr = 0;
-			nr++;
-			map.put(s.radius, nr);
-			if (Math.abs(s.radius-radius)<3){//probably the same radius
+			map.put(s.radius, ++nr);
+			if (Math.abs(s.radius-radius)<MARGIN){//probably the same radius
 				dist = ss;
 				if (nr>map.get(radius))
 					radius = s.radius;													
@@ -131,16 +146,30 @@ public final class Segment {
 				return ol;
 			} else if (s.dist+s.length>dist+length){
 				Segment t = new Segment();
-				t.copy(s);
-				t.length = t.dist + t.length - dist - length;
-				t.dist = dist+length; 
+				t.copy(s);				
+				t.length = s.dist+s.length -dist-length;
+				t.dist = dist+length;				
 				if (t.type!=0) t.arc = t.type * t.length / t.radius;
+				this.map = joinMap(this.map, s.map);
+				int max =-1;
+				double dmax = 0;
+				for (double d:this.map.keySet()){
+					int n = this.map.get(d);
+					if (max<n){
+						max = n;
+						dmax = d;
+					}
+				}
+				if (dmax!=radius){
+					radius = dmax;
+					arc = type*length/radius;
+				}
 				ol.add(this);
+				
 				ol.add(t);
 				return ol;
-			} else if (s.dist<dist) return s.combine(this); 
-		} else  {
-			if (s.dist<dist) return s.combine(this);
+			}  
+		} else  {		
 			double em = Math.min(dist+length, s.dist+s.length);
 			length = s.dist-ss;
 			dist = ss;
@@ -148,24 +177,30 @@ public final class Segment {
 			ol.add(this);
 			Segment ns = new Segment();
 			ns.copy(this);
+			ns.dist = s.dist;
 			ns.length = em - s.dist;
 			if (ns.type!=0) ns.arc = ns.type * ns.length / ns.radius;
-			int nr = (s.type!=0) ? ns.map.get(-s.radius) : ns.map.get(s.radius);
-			if (nr==ns.map.defaultReturnValue()) nr = 0;
-			nr++;
-			if (s.type!=0) 
-				ns.map.put(-s.radius, nr);
-			else ns.map.put(s.radius, nr);
-			if (nr>ns.map.get(ns.radius)){
-				ns.type = s.type;
-				ns.radius = s.radius;
-				Double2IntMap m = new Double2IntRBTreeMap();
-				for (double d:ns.map.keySet()){
-					m.put(-d, ns.map.get(d));
+			
+			if (s.type!=0) {
+				for (double d:s.map.keySet())
+					ns.map.put(-d, s.map.get(d));
+			} else ns.map = joinMap(ns.map, s.map);
+		
+			int max =-1;
+			double dmax = 0;
+			for (double d:ns.map.keySet()){
+				int n = ns.map.get(d);
+				if (max<n){
+					max = n;
+					dmax = d;
 				}
-				ns.map = null;
-				ns.map = m;				
 			}
+			if (dmax!=radius){
+				ns.radius = (dmax<0) ? -dmax : dmax;
+				if (dmax<0 || Double.isInfinite(dmax)) ns.type = s.type;
+				ns.arc = ns.type*ns.length/ns.radius;
+			}
+			
 			ol.add(ns);
 			return ol;
 		}
