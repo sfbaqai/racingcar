@@ -145,6 +145,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	ObjectArrayList<TrackSegment> trackData = null;
 	ObjectArrayList<TrackSegment> trackE = null;
 	ObjectArrayList<Segment> track = null;
+	ObjectArrayList<Segment> tr = null;
 	Segment curSeg = null;
 	Segment nextSeg = null;
 	Segment nextNextSeg = null;
@@ -1006,10 +1007,15 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //			System.out.println("rmid  "+s);
 		}
 		
-		if (time>=21.88){
-			Segment.drawTrack(rm, "Test ");
+		if (time>=2.49)
+			System.out.println();
+		if (time>=0){			
+			System.out.println("-----------");
+			storeTrack(edgeDetector,cs,lm);
 			storeTrack(edgeDetector,cs,rm);
-			
+			for (Segment ts : tr)
+				System.out.println("Track  "+ts);
+						
 		}
 		
 		if (inTurn && l!=null && r!=null){
@@ -1328,17 +1334,15 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	}
 	
 	public final static void analyze(ObjectList<Segment> track,double toMiddle,int from){
-		for (int i=from;i<track.size()-1;++i){
+		for (int i=from;i<track.size();++i){
 			Segment s = track.get(i);			
-			Segment t = track.get(i+1);
-			while (s.type!=t.type || Math.abs(s.radius-t.radius)>=3){				
-				if (s.type==t.type && Math.abs(s.radius-t.radius)<3) {
-					track.remove(i+1);
-					ObjectList<Segment> ol = s.combine(t);
-					if (ol!=null) s.copy(ol.get(0));		
-				}
+			Segment t = (i<track.size()-1) ?track.get(i+1) : null;
+			while (t!=null && (s.type!=t.type || Math.abs(s.radius-t.radius)>=Segment.MARGIN)){								
+				track.remove(i+1);
+				ObjectList<Segment> ol = s.combine(t);
+				if (ol!=null) s.copy(ol.get(0));
 				if (i==track.size()-1) return;
-				t = track.get(i+1);
+				t = track.get(i+1);								
 			}					
 		}
 	}
@@ -1346,28 +1350,42 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	public void storeTrack(EdgeDetector ed,CarState cs,ObjectList<Segment> ol){
 		double dist = cs.getDistRaced();
 		int j = 0;
-		if (track==null || track.size()==0){
-			if (track==null) 
-				track = new ObjectArrayList<Segment>(ol);
-			else track.addAll(ol);
+		if (tr==null || tr.size()==0){
+			if (tr==null) 
+				tr = new ObjectArrayList<Segment>(ol);
+			else tr.addAll(ol);
 			
-			for (int i=0;i<track.size()-1;++i){
-				Segment s = track.get(i);
+			for (int i=0;i<tr.size();++i){
+				Segment s = tr.get(i);
 				if (i==0){
 					double sign = (s.start.y<0) ? -1 : 1;
 					double d = (s.type!=0) ? sign*Segment.distance(new Vector2D(toMiddle,0), s.start, s.center, s.radius) : s.start.y;
 					s.dist = dist+d;
+				} else if (i<tr.size()-1){
+					Segment t = tr.get(i+1);
+					Segment.estimateDist(s, t);
 				}
-				Segment t = track.get(i+1);
-				Segment.estimateDist(s, t);
 			}
-			analyze(track, dist, 0);
+			analyze(tr, dist, 0);
 			tIndex = 0;
 			return;
 		}
 		
-		for (int i=tIndex;i<track.size();++i){
-			Segment s = track.get(i);
+		for (int i=0;i<ol.size();++i){
+			Segment s = ol.get(i);
+			if (i==0){
+				double sign = (s.start.y<0) ? -1 : 1;
+				double d = (s.type!=0) ? sign*Segment.distance(new Vector2D(toMiddle,0), s.start, s.center, s.radius) : s.start.y;
+				s.dist = dist+d;
+			} else if (i<ol.size()-1){
+				Segment t = ol.get(i+1);
+				Segment.estimateDist(s, t);
+			}
+		}
+//		analyze(ol, dist, 0);
+		
+		for (int i=tIndex;i<tr.size();++i){
+			Segment s = tr.get(i);
 			if (s.dist+s.length<=dist){
 				tIndex++;
 				continue;
@@ -1394,11 +1412,8 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					}
 				}
 				
-				if (t.type!=s.type){
-					if (s.dist+s.length>=t.dist && i==0) tIndex++;
-					break;
-				} else if (s.type==t.type && s.type!=0){
-					if (Math.abs(s.radius-t.radius)<3 && t.end.y>=0){
+				if (s.type==t.type && s.type!=0){
+					if (Math.abs(s.radius-t.radius)<Segment.MARGIN){
 						int nr = s.map.get(t.radius);
 						if (nr==s.map.defaultReturnValue()) nr = 0;
 						s.map.put(t.radius, ++nr);
@@ -1413,19 +1428,25 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 							s.arc = s.type*s.length/s.radius;
 							s.end = t.end;
 						} 
-					} else if (t.end.y>=0){												
+					} else {												
 						ObjectList<Segment> l = s.combine(t);
-						if (l==null)							
-							break;
-						track.remove(i);
-						track.addAll(i, l);
+						if (l!=null){														
+							tr.remove(i);
+							tr.addAll(i, l);
+						} else break;
 						
 					}
+				} else {
+					ObjectList<Segment> l = s.combine(t);
+					if (l!=null){														
+						tr.remove(i);
+						tr.addAll(i, l);
+					} else break;
 				}
 				j++;
 			}//end of while
 		}
-		
+//		analyze(tr, dist, 0);
 	};
 
 	boolean k = false;
