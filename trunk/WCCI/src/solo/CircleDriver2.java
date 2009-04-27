@@ -3,9 +3,12 @@
  */
 package solo;
 
+import it.unimi.dsi.fastutil.doubles.Double2IntRBTreeMap;
+import it.unimi.dsi.fastutil.doubles.Double2IntSortedMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
 import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
+import it.unimi.dsi.fastutil.doubles.DoubleRBTreeSet;
 import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -1007,12 +1010,16 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //			System.out.println("rmid  "+s);
 		}
 		
-		if (time>=2.49)
+		if (time>=14.172){
+			draw = true;
+			display();
+			draw = false;
 			System.out.println();
+		}
+		
 		if (time>=0){			
 			System.out.println("-----------");
-			storeTrack(edgeDetector,cs,lm);
-			storeTrack(edgeDetector,cs,rm);
+			storeTrack(edgeDetector,cs,lm,rm);			
 			for (Segment ts : tr)
 				System.out.println("Track  "+ts);
 						
@@ -1337,39 +1344,35 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		for (int i=from;i<track.size();++i){
 			Segment s = track.get(i);			
 			Segment t = (i<track.size()-1) ?track.get(i+1) : null;
-			while (t!=null && (s.type!=t.type || Math.abs(s.radius-t.radius)>=Segment.MARGIN)){								
+			while (t!=null && (s.type==t.type && Math.abs(s.radius-t.radius)<1)){								
 				track.remove(i+1);
-				ObjectList<Segment> ol = s.combine(t);
-				if (ol!=null) s.copy(ol.get(0));
+				s.dist = Math.min(s.dist, t.dist);
+				s.length = Math.max(s.dist+s.length, t.dist+t.length) - s.dist;
+				s.arc = s.type*s.length/s.radius;
+				double dmax = -1;
+				int maxn = -1;
+				for (double r:t.map.keySet()){
+					int nr = s.map.get(r);
+					nr = Math.max(t.map.get(r),nr);
+					s.map.put(r,nr);
+					if (nr>maxn){
+						dmax = r;
+						maxn = nr;
+					}
+				}
+				if (dmax!=s.radius){							
+					s.radius = dmax;
+					s.arc = s.type*s.length/s.radius;
+					if (Double.isInfinite(dmax)) s.type=0;
+				}				
 				if (i==track.size()-1) return;
 				t = track.get(i+1);								
 			}					
 		}
 	}
 	
-	public void storeTrack(EdgeDetector ed,CarState cs,ObjectList<Segment> ol){
-		double dist = cs.getDistRaced();
-		int j = 0;
-		if (tr==null || tr.size()==0){
-			if (tr==null) 
-				tr = new ObjectArrayList<Segment>(ol);
-			else tr.addAll(ol);
-			
-			for (int i=0;i<tr.size();++i){
-				Segment s = tr.get(i);
-				if (i==0){
-					double sign = (s.start.y<0) ? -1 : 1;
-					double d = (s.type!=0) ? sign*Segment.distance(new Vector2D(toMiddle,0), s.start, s.center, s.radius) : s.start.y;
-					s.dist = dist+d;
-				} else if (i<tr.size()-1){
-					Segment t = tr.get(i+1);
-					Segment.estimateDist(s, t);
-				}
-			}
-			analyze(tr, dist, 0);
-			tIndex = 0;
-			return;
-		}
+	public void storeTrack(EdgeDetector ed,CarState cs,ObjectList<Segment> ol,ObjectList<Segment> or){
+		double dist = cs.getDistRaced();				
 		
 		for (int i=0;i<ol.size();++i){
 			Segment s = ol.get(i);
@@ -1377,76 +1380,215 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 				double sign = (s.start.y<0) ? -1 : 1;
 				double d = (s.type!=0) ? sign*Segment.distance(new Vector2D(toMiddle,0), s.start, s.center, s.radius) : s.start.y;
 				s.dist = dist+d;
-			} else if (i<ol.size()-1){
+			} 
+			if (i<ol.size()-1){
 				Segment t = ol.get(i+1);
 				Segment.estimateDist(s, t);
 			}
 		}
-//		analyze(ol, dist, 0);
-		
-		for (int i=tIndex;i<tr.size();++i){
-			Segment s = tr.get(i);
-			if (s.dist+s.length<=dist){
-				tIndex++;
-				continue;
+		for (int i=0;i<or.size();++i){
+			Segment s = or.get(i);
+			if (i==0){
+				double sign = (s.start.y<0) ? -1 : 1;
+				double d = (s.type!=0) ? sign*Segment.distance(new Vector2D(toMiddle,0), s.start, s.center, s.radius) : s.start.y;
+				s.dist = dist+d;
+			} 
+			if (i<or.size()-1){
+				Segment t = or.get(i+1);
+				Segment.estimateDist(s, t);
 			}
-			boolean ok = false;
+		}
+		DoubleSortedSet ds = new DoubleRBTreeSet();
+		tIndex = 0;
+		for (Segment s:ol){
+			if (s.dist+s.length<=dist) continue;
+			ds.add(s.dist);
+			ds.add(s.dist+s.length);
+		}
+		
+		for (Segment s:or){
+			if (s.dist+s.length<=dist) continue;
+			ds.add(s.dist);
+			ds.add(s.dist+s.length);
+		}
+		double[] ar = new double[ds.size()];
+		ds.toArray(ar);		
+		int k=tIndex;
+		int j=0;
+		int ri =0;
+		
+		ObjectList<Segment> l =new ObjectArrayList<Segment>();
+		ObjectList<Segment> tE = new ObjectArrayList<Segment>();
+		for (int i=0;i<ar.length-1;++i){
+			double d = ar[i];
+			double e = ar[i+1];
+			Segment s = null;
+			Segment tmp = null;			
+			
 			while (j<ol.size()){
-				Segment t = ol.get(j);
-				if (i==tIndex){					
-					if (!ok) {
-						estimateStartEnd(s,dist,toMiddle);
-						ok = true;
-					}
+				s = ol.get(j);
+				if (s.dist<=d && s.dist+s.length>=e){
+					if (tmp==null) {
+						tmp = new Segment();
+						tmp.copy(s);
+						tmp.dist = d;
+						tmp.length = e-d;
+						tmp.arc = tmp.type*tmp.length/tmp.radius;
+					}										
 					
-					if (t.type==s.type && s.type==0){
-						if (Math.abs(t.end.x-t.start.x)<=TrackSegment.EPSILON){
-							s.start.x = (s.start.x+t.start.x)*0.5;
-							s.end.x = s.start.x;
-							double m = Math.max(s.end.y, t.end.y);
-							s.length += m-s.end.y;
-							s.end.y = m;
-							j++;
-							break;
-						}
+				}
+				if (s.dist+s.length>=e) break;
+				if (s.dist+s.length<=e) j++;
+			}//end of while
+			
+			
+			while (ri<or.size()){
+				s = or.get(ri);
+				if (s.dist<=d && s.dist+s.length>=e){
+					if (tmp==null){
+						tmp = new Segment();
+						tmp.copy(s);
+						tmp.dist = d;
+						tmp.length = e-d;
+						tmp.arc = tmp.type*tmp.length/tmp.radius;
+					} else {
+						double dmax = tmp.radius;
+						int maxn = tmp.map.get(tmp.radius);
+						if (tmp.type==s.type || s.type==0 || tmp.type==0){
+							for (double r:s.map.keySet()){
+								int nr = s.map.get(r);
+								nr += tmp.map.get(r);
+								tmp.map.put(r,nr);
+								if (nr>maxn){
+									dmax = r;
+									maxn = nr;
+								}
+							}
+							if (dmax!=tmp.radius){							
+								tmp.radius = dmax;
+								tmp.arc = tmp.type*tmp.length/tmp.radius;
+								if (Double.isInfinite(dmax)) 
+									tmp.type=0;
+								else tmp.type = s.type;
+							}
+						} else {
+							for (double r:s.map.keySet()){
+								int nr = s.map.get(r);
+								if (Double.isInfinite(r))
+									nr += tmp.map.get(r);
+								else nr += tmp.map.get(-r);
+								tmp.map.put(-r,nr);
+								if (nr>maxn){
+									dmax = (Double.isInfinite(r)) ? r : -r;
+									maxn = nr;
+								}
+							}
+							if (dmax!=tmp.radius){							
+								tmp.radius = Math.abs(dmax);
+								tmp.arc = tmp.type*tmp.length/tmp.radius;
+								if (dmax<0){
+									tmp.type = -tmp.type;
+									Double2IntSortedMap nmap = new Double2IntRBTreeMap();
+									for (double r:tmp.map.keySet())
+										nmap.put(-r, tmp.map.get(r));
+									tmp.map = null;
+									tmp.map = nmap;
+								}
+							}
+						}//end of if						
+				
 					}
 				}
-				
-				if (s.type==t.type && s.type!=0){
-					if (Math.abs(s.radius-t.radius)<Segment.MARGIN){
-						int nr = s.map.get(t.radius);
-						if (nr==s.map.defaultReturnValue()) nr = 0;
-						s.map.put(t.radius, ++nr);
-						if (Math.abs(s.radius-t.radius)>=1 && nr>s.map.get(s.radius)) {
-							s.radius = t.radius;
-							if (i==tIndex) 
-								estimateStartEnd(s, dist, toMiddle);							
+				if (s.dist+s.length>=e) break;
+				if (s.dist+s.length<=e) ri++;
+			}//end of while
+						
+			
+			if (tr!=null && tr.size()>0 && tmp!=null){
+				while (k<tr.size()){
+					s = tr.get(k);
+					double dd = Math.max(d,s.dist);
+					double ee = Math.min(e,s.dist+s.length);
+					double ll = ee-dd;
+					if ((s.dist<=d && s.dist+s.length>=e) || (ll>0 && ll/(e-d)>0.8)){
+						if (tmp==null){
+							tmp = new Segment();
+							tmp.copy(s);
+							tmp.dist = d;
+							tmp.length = e-d;
+							tmp.arc = tmp.type*tmp.length/tmp.radius;
+						} else {
+							double dmax = tmp.radius;
+							int maxn = tmp.map.get(tmp.radius);
+							if (tmp.type==s.type || s.type==0 || tmp.type==0){
+								for (double r:s.map.keySet()){
+									int nr = s.map.get(r);
+									nr += tmp.map.get(r);
+									tmp.map.put(r,nr);
+									if (nr>=maxn){
+										dmax = r;
+										maxn = nr;
+									}
+								}
+								if (dmax!=tmp.radius){							
+									tmp.radius = dmax;
+									tmp.arc = tmp.type*tmp.length/tmp.radius;
+									if (Double.isInfinite(dmax)) 
+										tmp.type=0;
+									else tmp.type = s.type;
+								}
+							} else {
+								for (double r:s.map.keySet()){
+									int nr = s.map.get(r);
+									if (Double.isInfinite(r))
+										nr += tmp.map.get(r);
+									else nr += tmp.map.get(-r);
+									tmp.map.put(-r,nr);
+									if (nr>=maxn){
+										dmax = (Double.isInfinite(r)) ? r : -r;
+										maxn = nr;
+									}
+								}
+								if (dmax!=tmp.radius){							
+									tmp.radius = Math.abs(dmax);
+									tmp.arc = tmp.type*tmp.length/tmp.radius;
+									if (dmax<0){
+										tmp.type = -tmp.type;
+										Double2IntSortedMap nmap = new Double2IntRBTreeMap();
+										for (double r:tmp.map.keySet())
+											nmap.put(-r, tmp.map.get(r));
+										tmp.map = null;
+										tmp.map = nmap;
+									}
+								}
+							}//end of if												
 						}
-						double ds = Segment.distance(new Vector2D(toMiddle,0), t.end, s.center, s.radius);
-						if (s.dist+s.length<dist+ds){								
-							s.length = dist+ds - s.dist;
-							s.arc = s.type*s.length/s.radius;
-							s.end = t.end;
-						} 
-					} else {												
-						ObjectList<Segment> l = s.combine(t);
-						if (l!=null){														
-							tr.remove(i);
-							tr.addAll(i, l);
-						} else break;
 						
 					}
-				} else {
-					ObjectList<Segment> l = s.combine(t);
-					if (l!=null){														
-						tr.remove(i);
-						tr.addAll(i, l);
-					} else break;
-				}
-				j++;
-			}//end of while
-		}
-//		analyze(tr, dist, 0);
+					if (tmp !=null && i==ar.length-2 && s.dist+s.length>e){
+						Segment tmp1 = new Segment();
+						tmp1.copy(s);
+						tmp1.dist = e;
+						tmp1.length = s.dist+s.length-e;
+						tmp1.arc = tmp1.type*tmp1.length/tmp1.radius;
+						tE.add(tmp1);
+					}
+
+					if (s.dist+s.length>=e) break;
+					if (s.dist+s.length<=e) k++;
+				}//end of while
+				if (tmp!=null) l.add(tmp);
+			} else {//end of if
+				if (tmp!=null) l.add(tmp);
+			}
+			
+		}//end of for
+		if (tE!=null && tE.size()>0) l.addAll(tE);		
+		if (tr!=null && tr.size()>0) {
+			tr.removeElements(tIndex, k);
+			tr.addAll(tIndex,l);			
+		} else tr = new ObjectArrayList<Segment>(l);
+		analyze(tr, toMiddle, tIndex);
 	};
 
 	boolean k = false;
