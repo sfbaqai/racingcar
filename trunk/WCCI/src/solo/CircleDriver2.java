@@ -854,25 +854,29 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			at = edgeDetector.combine(prevEdge, nraced);
 			left = edgeDetector.left;
 			right = edgeDetector.right;
-			if (at!=null && (sx!=-1 || sy!=-1)) {
-				Vector2D p = new Vector2D();
-				at.transform(new Vector2D(sx,sy), p);
-				sx = p.x;
-				sy = p.y;
-			}			
+//			if (at!=null && (sx!=-1 || sy!=-1)) {
+//				Vector2D p = new Vector2D();
+//				at.transform(new Vector2D(sx,sy), p);
+//				sx = p.x;
+//				sy = p.y;
+//			}			
 			edge = (edgeDetector.turn==TURNLEFT) ? edgeDetector.right : (edgeDetector.turn==TURNRIGHT) ? edgeDetector.left : null;
-			if (l==null || l.size()==0)
-				l = Segment.segmentize(left.allPoints, tW);
-			else {
-				for (Vector2D v:left.allPoints) allL.put(v.y, v);
-				check(at, l, allL);
+			if (left!=null){
+				if (l==null || l.size()==0)
+					l = Segment.segmentize(left.allPoints, tW);
+				else {
+					for (Vector2D v:left.allPoints) allL.put(v.y, v);
+					check(at, l, allL);
+				}
 			}
 			
-			if (r==null || r.size()==0)
-				r = Segment.segmentize(right.allPoints, tW);
-			else {
-				for (Vector2D v:right.allPoints) allR.put(v.y, v);
-				check(at, r, allR);
+			if (right!=null){
+				if (r==null || r.size()==0)
+					r = Segment.segmentize(right.allPoints, tW);
+				else {
+					for (Vector2D v:right.allPoints) allR.put(v.y, v);
+					check(at, r, allR);
+				}
 			}
 			inTurn = false;
 		}
@@ -933,11 +937,11 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			rm.add(s);
 		}
 		
-		if (time>=19.402){			
+		if (time>=5.88){			
 			System.out.println();
 		}
 		
-		if (time>=0){			
+		if (time>=0 && (lm.size()>0 || rm.size()>0)){			
 			System.out.println("-----------");
 			storeTrack(edgeDetector,cs,lm,rm);
 			int i=0;
@@ -1367,7 +1371,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		for (int i=from;i<track.size();++i){
 			Segment s = track.get(i);			
 			Segment t = (i<track.size()-1) ?track.get(i+1) : null;
-			while (t!=null && (s.type==t.type && Math.abs(s.radius-t.radius)<1)){								
+			while (t!=null && (s.type==t.type && Math.abs(s.radius-t.radius)<2)){								
 				track.remove(i+1);
 				s.dist = Math.min(s.dist, t.dist);
 				s.length = Math.max(s.dist+s.length, t.dist+t.length) - s.dist;
