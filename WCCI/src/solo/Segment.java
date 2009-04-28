@@ -420,8 +420,10 @@ public final class Segment {
 				Vector2D n = new Vector2D(dx,dy).orthogonal();
 				Vector2D point = null;
 				double[] r = new double[3];
-				if (Math.abs(dx)<=TrackSegment.EPSILON)					
-					Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
+				if (Math.abs(dx)<=TrackSegment.EPSILON)
+					if (dy==0){
+						Geom.getLineLineIntersection(start.x, start.y, end.x, start.y+1, p.x, p.y, p.x-1, p.y, r);
+					} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
 				else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
 				
 				if (r!=null && r.length>2) point = new Vector2D(r[0],r[1]);
@@ -443,7 +445,9 @@ public final class Segment {
 				Vector2D point = null;
 				double[] r = new double[3];
 				if (Math.abs(dx)<=TrackSegment.EPSILON)					
-					Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
+					if (dy==0){
+						Geom.getLineLineIntersection(start.x, start.y, end.x, start.y+1, p.x, p.y, p.x-1, p.y, r);
+					} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
 				else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
 				
 				if (r!=null && r.length>2) point = new Vector2D(r[0],r[1]);
@@ -878,7 +882,18 @@ public final class Segment {
 					return rs;
 				}
 
-				radius = r+tW;									
+				radius = r+tW;	
+				if (radius*radius<d){
+					Segment last = (rs.size()>0) ? rs.get(rs.size()-1) :null;
+					Segment s = (last!=null && last.type==Segment.UNKNOWN) ? last :  new Segment();
+					if (last!=null &&  last.type==Segment.UNKNOWN) rs.remove(rs.size()-1);
+					s.addPoint(v[i]);
+					rs.add(s);							
+					i++;
+					xx = v[i].x;
+					yy = v[i].y;	
+					continue;
+				}
 				Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
 				double ox = p.x;
 				double oy = p.y;
