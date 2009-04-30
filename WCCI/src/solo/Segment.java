@@ -587,7 +587,7 @@ public final class Segment {
 				t.dist = d + distance(p1,t.start,t.center,t.radius);
 			} else {
 				Vector2D p2 = new Vector2D(r[2],r[3]);
-				Vector2D p = (p1.y<s.start.y) ? p2 : (p2.y<s.start.y) ? p1 : (p1.y>p2.y) ? p2 : p1;
+				Vector2D p = (p1.y<s.start.y && p2.y>s.start.y) ? p2 : (p2.y<s.start.y && p1.y>s.start.y) ? p1 : (Math.abs(p1.y)>Math.abs(p2.y)) ? p2 : p1;
 				double d = s.dist + distance(p,s.start,s.center,s.radius);
 				t.dist = d + distance(p,t.start,t.center,t.radius);
 			}
@@ -665,14 +665,14 @@ public final class Segment {
 		if (end!=null) at.transform(end, end);
 		if (type!=0 &&type!= UNKNOWN && center!=null)
 			at.transform(center, center);
-		if (points!=null){
-			DoubleSortedSet keys = points.keySet();
-			for (double key:keys){
-				Vector2D v = new Vector2D(points.get(key));
-				at.transform(v, v);
-				points.remove(key);
-				points.put(v.y, v);
+		if (points!=null){			
+			Double2ObjectSortedMap<Vector2D> map = new Double2ObjectRBTreeMap<Vector2D>();			
+			for (Vector2D v : points.values()){				 
+				at.transform(v, v);				
+				map.put(v.y, v);
 			}
+			points = null;
+			points = map;
 		}
 	}
 
