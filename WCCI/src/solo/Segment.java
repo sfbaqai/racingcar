@@ -17,6 +17,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -86,6 +87,7 @@ public final class Segment {
 
 	public final void copy(TrackSegment ts){
 		seg = ts;
+		if (ts==null) return;
 		dist = ts.distanceFromLocalOrigin;
 		center = new Vector2D(ts.centerx,ts.centery);
 		start = new Vector2D(ts.startX,ts.startY);
@@ -336,27 +338,38 @@ public final class Segment {
 			points.remove(p.y);
 			if (type==0) 
 				num--;
-			else num = points.size();
-			if (points.size()==0) return;
+			else num = points.size();		
+			
 			if (num<3){
 				type = -2;
 				length = -1;
 				arc = 0;
 				radius = 0;
 				seg = null;
-				return;
 			}
 			boolean changed = false;
 			if (type!=0){
 				if (p.distance(end)<0.1) {
-					end = new Vector2D(points.get(points.lastDoubleKey()));
+					end = (points==null || points.size()==0) ? null : new Vector2D(points.get(points.lastDoubleKey()));
 					changed = true;
 				}
 				if (p.distance(start)<0.1) {
-					start = new Vector2D(points.get(points.firstDoubleKey()));
+					start = (points==null || points.size()==0) ? null :new Vector2D(points.get(points.firstDoubleKey()));
 					changed = true;
 				}
 			} else if (p.distance(end)<0.1 || p.distance(start)<0.1){
+				if (points==null || points.size()==0){
+					if (start!=null && end!=null && start.distance(end)==0){
+						start = null;
+						end = null;
+					} 
+					if (start!=null && p.distance(start)<0.1){
+						start = (end==null) ? null : new Vector2D(end);
+					}
+					if (end!=null && p.distance(end)<0.1)
+						end = (start==null) ? null : new Vector2D(start);					
+					return;
+				}
 				changed = true;
 				double de = p.distance(end);
 				double dy = end.y-start.y;
@@ -454,9 +467,11 @@ public final class Segment {
 				if (point!=null) end = new Vector2D(point);
 			}
 		}
-		
-		if (changed)
-			reCalLength();		
+				
+		if (changed){
+			if (type==0) points.put(p.y, p); 
+			reCalLength();
+		}
 		if (type==0) 
 			num++;
 		else num = points.size();
@@ -500,6 +515,10 @@ public final class Segment {
 		
 		if (type==0){			
 //			if (isCirle && Math.sqrt(r[2])<TrackSegment.MAXRADIUS) return false;
+			double dx = end.x - start.x;
+			if (Math.abs(dx)<=TrackSegment.EPSILON)
+				if (point.y<=end.y && point.y>=start.y) return true;
+			
 			double d = Geom.ptLineDistSq(start.x, start.y, end.x, end.y, point.x, point.y, null); 
 			if (d>=TrackSegment.EPSILON*TrackSegment.EPSILON) return false;
 		} else {
@@ -555,9 +574,74 @@ public final class Segment {
 	}
 	
 	
+	public final static void adjust(List<Segment> l){
+		if (l==null || l.size()==0) return;
+		for (int i=0;i<l.size();++i){
+			Segment s = l.get(i);
+			Segment t = (i<l.size()-1) ? l.get(i+1) : null;
+			while (t!=null && (s.type!=Segment.UNKNOWN && s.type==t.type && Math.abs(s.radius-t.radius)<1)){
+				if (s.type==0 && s.end!=null && t.end!=null){
+					double dx = s.end.x - s.start.x;
+					double ddx = t.end.x - t.start.x;
+					if (Math.abs(dx)<=TrackSegment.EPSILON && Math.abs(ddx)>TrackSegment.EPSILON) break;
+					if (Math.abs(dx)>TrackSegment.EPSILON && Math.abs(ddx)<=TrackSegment.EPSILON) break;
+					if (Math.abs(dx)>TrackSegment.EPSILON && Math.abs(ddx)>TrackSegment.EPSILON){
+						double dy = s.end.y - s.start.y;
+						double ddy = t.end.y - t.start.y;
+						if (Math.abs(Math.atan2(dy, dx)-Math.atan2(ddy, ddx))>0.1) break;
+					}
+				}
+				l.remove(i+1);
+				if (s.points==null) {
+					s.points = new Double2ObjectRBTreeMap<Vector2D>();
+				} else {
+					if (t.points!=null) s.points.putAll(t.points);
+				}
+				s.num = s.points.size();
+		
+				if (s.type!=0){
+					s.start = new Vector2D(s.points.get(s.points.firstDoubleKey()));
+					s.end = new Vector2D(s.points.get(s.points.lastDoubleKey()));
+					s.reCalLength();
+					s.arc = s.type*s.length/s.radius;
+				} else {
+					double dy = s.end.y-s.start.y;
+					double dx = s.end.x-s.start.x;					
+			
+					s.start = new Vector2D(s.points.get(s.points.firstDoubleKey()));
+					s.end = new Vector2D(s.points.get(s.points.lastDoubleKey()));
+					if (Math.abs(dx)<=TrackSegment.EPSILON){
+						s.start.x = (s.start.x+s.end.x)*0.5;
+						s.end.x = s.start.x;
+					} else {
+						double tmp = dy/dx;
+						Vector2D[] v = new Vector2D[s.points.size()];
+						s.points.values().toArray(v);
+						LineFitter lf = new LineFitter(new double[]{tmp,s.start.y-tmp*s.start.x},v);
+						lf.fit();
+						double a = lf.getA();
+						double b = lf.getB();
+						s.start.y = a*s.start.x+b;
+						s.end.y = a*s.end.x+b;												
+					}
+					s.reCalLength();
+				}
+				
+				if (i==l.size()-1) return;
+				t = l.get(i+1);								
+			}					
+		}
+	}
+	
 	public final static void estimateDist(Segment s,Segment t){
 		if (s.type==0 && t.type==0){
 			double[] r = new double[3];
+			double dx = s.end.x - s.start.x;
+			double ddx = t.end.x - t.start.x;
+			if (Math.abs(dx)<TrackSegment.EPSILON && Math.abs(ddx)<TrackSegment.EPSILON){
+				t.dist = s.dist + t.start.y - s.start.y;
+				return;
+			}
 			Geom.getLineLineIntersection(s.start.x, s.start.y, s.end.x, s.end.y, t.start.x, t.start.y, t.end.x, t.end.y, r);
 			Vector2D p = new Vector2D(r[0],r[1]);
 			t.dist = s.dist+s.length + p.distance(s.end)+p.distance(t.start);			
@@ -870,19 +954,8 @@ public final class Segment {
 				Vector2D q = new Vector2D(result[0],result[1]);
 				double d = t.distanceSq(v[i]);
 				if (i>len-3) return rs;
-				if (i==len-3){
-					radius = r+tW;
-					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
-					ts = TrackSegment.createTurnSeg(0, p.x, p.y, radius, x1, y1, x3, y3,x2,y2);
-					Segment s = new Segment(ts);
-					s.addPoints(v, i, len);
-					rs.add(s);
-					checkRs(rs,rs.size()-1,tW);
-					lastCheck(rs,tW);
-					return rs;
-				}
+				radius = r+tW;
 
-				radius = r+tW;	
 				if (radius*radius<d){
 					Segment last = (rs.size()>0) ? rs.get(rs.size()-1) :null;
 					Segment s = (last!=null && last.type==Segment.UNKNOWN) ? last :  new Segment();
@@ -894,6 +967,18 @@ public final class Segment {
 					yy = v[i].y;	
 					continue;
 				}
+	
+				if (i==len-3){					
+					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
+					ts = TrackSegment.createTurnSeg(0, p.x, p.y, radius, x1, y1, x3, y3,x2,y2);
+					Segment s = new Segment(ts);
+					s.addPoints(v, i, len);
+					rs.add(s);
+					checkRs(rs,rs.size()-1,tW);
+					lastCheck(rs,tW);
+					return rs;
+				}
+
 				Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
 				double ox = p.x;
 				double oy = p.y;
