@@ -132,6 +132,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 	int turn;
 	boolean isTurning = false;
 	Vector2D optimalPoint = null;
+	Vector2D mustPassPoint = null;
 	Segment seg = null;
 	Edge edge = null;
 	Edge other = null;
@@ -418,12 +419,14 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			Vector2D t = null;
 			if (curSeg.type==0){
 				t = (turn==TURNRIGHT) ? new Vector2D(SIN_PI_4,-SIN_PI_4) : new Vector2D(-SIN_PI_4,-SIN_PI_4);
+				mustPassPoint = center.minus(t.times(radiusSmall));
 				centerOfTurn = center.plus(t.times(radiusOfTurn-radiusSmall));		
 			} else {
 				double d = distRaced - curSeg.dist;
 				double arc = Math.PI/4-d/curSeg.radius;
 				double sign = (center.x<0) ? 1 : -1;
 				t = new Vector2D(sign,0).rotated(-turn*arc).normalised();
+				mustPassPoint = center.plus(t.times(radiusSmall));
 				centerOfTurn = center.minus(t.times(radiusOfTurn-radiusSmall));
 			}
 			t = t.rotated(-turn*Math.PI*0.25);
@@ -433,6 +436,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		if (edge==null || center==null) return;		
 		Vector2D t = (turn==TURNRIGHT) ? new Vector2D(SIN_PI_4,-SIN_PI_4) : new Vector2D(-SIN_PI_4,-SIN_PI_4);					
 		centerOfTurn = center.plus(t.times(radiusOfTurn-radiusSmall));
+		mustPassPoint = center.minus(t.times(radiusSmall));
 		optimalPoint = centerOfTurn.plus(new Vector2D(0,1).times(radiusOfTurn));
 	}
 
@@ -457,8 +461,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			if (isTurning){
 				Vector2D[] p = Geom.ptTangentLine(0, 0, center.x,center.y, radiusSmall);
 				Vector2D point = (p==null) ? null : (p.length>1 && p[1].y>p[0].y) ? p[1] : p[0];
+				if (mustPassPoint.y<6) mustPassPoint = point;
 				double[] r = new double[3];
-				if (point!=null && Geom.getCircle2(point, optimalPoint, new Vector2D(0,0), carDirection, r)!=null){
+				if (point!=null && Geom.getCircle2(mustPassPoint, optimalPoint, new Vector2D(0,0), carDirection, r)!=null){
 					rr = Math.sqrt(r[2]);
 					cntr = new Vector2D(r[0],r[1]);
 				}
@@ -484,7 +489,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //			}
 		}
 
-		if (time>=8.8){
+		if (time>=100.5 && detected){
 			draw=true;
 			if (draw) store();
 			TrackSegment ts = (isTurning) ? TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, 0, 0, optimalPoint.x, optimalPoint.y) : TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, cntr.x-turn*rr, cntr.y, optimalPoint.x, optimalPoint.y);
@@ -502,7 +507,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			if (draw) display();
 			draw=false;
 		}//*/
-
+		System.out.println("mustP : "+mustPassPoint+"   Highest  "+edgeDetector.highestPoint+"   optimalP "+optimalPoint);
 	}
 
 	public void display(){
@@ -757,7 +762,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //		
 						
 		
-		if (time>=9.3){			
+		if (time>=17){			
 			System.out.println();
 		}
 		
@@ -1051,9 +1056,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			if (lhps==null) 
 				lhps = new ObjectArrayList<Vector2D>();
 			Vector2D point = edgeDetector.highestPoint.minus(edgeDetector.currentPointAhead);
-			if (lhps.size()==0 || point.distance(lhps.get(lhps.size()-1))>1) lhps.add(point);
+			if (lhps.size()==0 || point.distance(lhps.get(lhps.size()-1))>0.5) lhps.add(point);
 			System.out.println("Here  "+edgeDetector.highestPoint.minus(edgeDetector.currentPointAhead));
-			if (lhps.size()>6){
+			if (lhps.size()>10){
 				Vector2D[] v = new Vector2D[lhps.size()];
 				lhps.toArray(v);
 				CircleFitter cf = new CircleFitter(new double[]{0,0,1},v);
@@ -1080,10 +1085,10 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		
 		Segment last = (tr.size()>0) ? tr.get(tr.size()-1) : null;
 		if (last!=null){
-			if (last.type!=0){
+			if (last.type!=0 && last.center!=null){
 				double d = last.center.distance(hh);
-				if (time>=7 && !last.isPointBelongToSeg(hh)){						
-					detected = false;
+				if (Math.abs(Math.abs(d-last.radius)-trackWidth/2)>0.1){						
+					detected = true;
 				}
 			}
 		}
@@ -1171,29 +1176,29 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		return -83508.7895089672+887.064242540164*speedkmh-3.14306813772447*speedkmh*speedkmh+0.00372277142586774*speedkmh*speedkmh*speedkmh;
 	}
 
-	public double speedAtRadius(double x){
-	if (x>=500) return Double.MAX_VALUE;
-	if (x>=170)
-	return 85.5247084519036+2.01905340962707*x-0.00646416884272083*x*x+7.29293433335612e-06*x*x*x;
-	if (x>=100)
-	return -139.760581424782+6.04756169365199*x-0.0303044500612258*x*x+5.3961109358751e-05*x*x*x;
-	if (x>=60)
-	return 202.745158728743-4.48739317463141*x+0.0755898471248578*x*x-0.00029146122705404*x*x*x;
-	if (x>=20)
-	return 26.7657503764833+2.55982229567786*x-0.0171415320257696*x*x+0.000108671654261182*x*x*x;		
-	return -0.00728601622351035+7.7247995418915*x+-0.360701254346654*x*x+0.00788103445639814*x*x*x;		
-	}
-
 //	public double speedAtRadius(double x){
-//		double x2 = x*x;
-//		double x3 = x2*x;
-//		double x4 = x3*x;
-//		double x5 = x4*x;
-//
-//		if (x>150)
-//			return -115431.216892959+834.957333227655*x-3.71025373015644*x2+0.00999768673957289*x3-1.50103486982362e-05*x4+9.64495639130066e-09*x5+9519812.76010439/x-414947104.101293/x2+6808805657.1795/x3;		
-//		return 5.2604417632244+2.93221790821321*x-0.0308952361016195*x2+0.00027900914172188*x3-1.30914988151668e-06*x4+2.81513214824391e-09*x5+358.981440260822/x-3125.65260706368/x2+7536.84482849135/x3;		
+//	if (x>=500) return Double.MAX_VALUE;
+//	if (x>=170)
+//	return 85.5247084519036+2.01905340962707*x-0.00646416884272083*x*x+7.29293433335612e-06*x*x*x;
+//	if (x>=100)
+//	return -139.760581424782+6.04756169365199*x-0.0303044500612258*x*x+5.3961109358751e-05*x*x*x;
+//	if (x>=60)
+//	return 202.745158728743-4.48739317463141*x+0.0755898471248578*x*x-0.00029146122705404*x*x*x;
+//	if (x>=20)
+//	return 26.7657503764833+2.55982229567786*x-0.0171415320257696*x*x+0.000108671654261182*x*x*x;		
+//	return -0.00728601622351035+7.7247995418915*x+-0.360701254346654*x*x+0.00788103445639814*x*x*x;		
 //	}
+
+	public double speedAtRadius(double x){
+		double x2 = x*x;
+		double x3 = x2*x;
+		double x4 = x3*x;
+		double x5 = x4*x;
+
+		if (x>150)
+			return -115431.216892959+834.957333227655*x-3.71025373015644*x2+0.00999768673957289*x3-1.50103486982362e-05*x4+9.64495639130066e-09*x5+9519812.76010439/x-414947104.101293/x2+6808805657.1795/x3;		
+		return 5.2604417632244+2.93221790821321*x-0.0308952361016195*x2+0.00027900914172188*x3-1.30914988151668e-06*x4+2.81513214824391e-09*x5+358.981440260822/x-3125.65260706368/x2+7536.84482849135/x3;		
+	}
 
 
 	/**
@@ -1940,7 +1945,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			steer = (centerOfTurn!=null) ? steerAtRadius(cs, centerOfTurn.x, centerOfTurn.y, radiusOfTurn-W) : gotoPoint(cs, trackDirection);						
 		} else {
 //			if (nextRadius<=edgeRadius+trackWidth/2)
-			targetRadius = rr;
+			targetRadius = Math.min(rr,radiusOfTurn);
 //			else targetRadius = nextRadius;//Math.min(rr,edgeRadius+trackWidth/2);
 //			if (nextRadius>=rr)
 //				targetRadius = Math.max(nextRadius, rr)-trackWidth/4;
