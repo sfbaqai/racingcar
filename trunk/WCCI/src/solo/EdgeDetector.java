@@ -132,8 +132,8 @@ public class EdgeDetector {
 		polar2Cartesian = new Double2ObjectRBTreeMap<Vector2D>();
 
 		leftStraight=-1;
-		rightStraight=-1;	
-		numpoint = 19;
+		rightStraight=-1;			
+		int j = 0;
 
 		for (int i=0;i<19;++i){
 			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;
@@ -148,37 +148,43 @@ public class EdgeDetector {
 			if (i==9){
 				currentPointAhead = new Vector2D(xx,yy);
 			}
-
-			polar2Cartesian.put(angle, new Vector2D(xx,yy));
-			x[i] = xx;
-			y[i] = yy;
-			rx[18-i] = xx;
-			ry[18-i] = yy;
+			
 
 			if (maxDistance<tracks[i])
 				maxDistance = tracks[i];
 
 			if (maxY<yy && tracks[i]<=99.95){
 				maxY = yy;
-				firstIndexMax =i;
-				lastIndexMax =i;				
+				firstIndexMax =j;
+				lastIndexMax =j;				
 			} else if (maxY==yy && lastIndexMax>=0 && tracks[lastIndexMax]<=99.95){
-				lastIndexMax =i;
-			} else if (tracks[i]>99.95){
-				maxY = Math.max(maxY,yy);
-				if (firstIndexMax>=0 && tracks[firstIndexMax]<=99.95){
-					firstIndexMax =i;
-					lastIndexMax =i;
+				lastIndexMax =j;
+			} else if (tracks[i]>99.95){				
+				if (maxY<yy && firstIndexMax>=0 && tracks[firstIndexMax]<=99.95){
+					maxY = yy;
+					firstIndexMax =j;
+					lastIndexMax =j;
+				} else if (maxY==yy && lastIndexMax>=0){
+					lastIndexMax = j;
 				} else {
-					lastIndexMax = i;
+					continue;
 				}
 			}
+			polar2Cartesian.put(angle, new Vector2D(xx,yy));
+			x[j] = xx;
+			y[j] = yy;			
+			j++;
 		}
-		this.x = DoubleArrayList.wrap(x, 19);
-		this.y = DoubleArrayList.wrap(y, 19);
+		for (int i=0;i<j;++i){
+			rx[i] = x[j-1-i];
+			ry[i] = y[j-1-i];
+		}
+		numpoint = j;	
+		this.x = DoubleArrayList.wrap(x, j);
+		this.y = DoubleArrayList.wrap(y, j);
 		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(x[firstIndexMax],y[firstIndexMax]) : null;
-		left = (firstIndexMax>0 && firstIndexMax<19) ? new Edge(x,y,firstIndexMax) : null;
-		right = (lastIndexMax<18 && lastIndexMax>=0) ? new Edge(rx,ry,18-lastIndexMax) : null;
+		left = (firstIndexMax>0 && firstIndexMax<j) ? new Edge(x,y,firstIndexMax) : null;
+		right = (lastIndexMax<j-1 && lastIndexMax>=0) ? new Edge(rx,ry,j-1-lastIndexMax) : null;
 		int turnL = (left==null) ? MyDriver.UNKNOWN : left.turn();
 		int turnR = (right==null) ? MyDriver.UNKNOWN : right.turn();
 		double d = turnL * turnR;
