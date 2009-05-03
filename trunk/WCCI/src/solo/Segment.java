@@ -433,14 +433,18 @@ public final class Segment {
 				Vector2D n = new Vector2D(dx,dy).orthogonal();
 				Vector2D point = null;
 				double[] r = new double[3];
-				if (Math.abs(dx)<=TrackSegment.EPSILON)
+				if (Math.abs(dx)<=TrackSegment.EPSILON){					
 					if (dy==0){
 						Geom.getLineLineIntersection(start.x, start.y, end.x, start.y+1, p.x, p.y, p.x-1, p.y, r);
 					} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
-				else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
+				} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
 				
 				if (r!=null && r.length>2) point = new Vector2D(r[0],r[1]);
-				if (point!=null) start = new Vector2D(point);
+				if (point!=null) {
+					start = new Vector2D(point);
+					if (Math.abs(dx)<=TrackSegment.EPSILON)
+						end.x = start.x;									
+				}
 			}
 			
 		}
@@ -457,14 +461,20 @@ public final class Segment {
 				Vector2D n = new Vector2D(dx,dy).orthogonal();
 				Vector2D point = null;
 				double[] r = new double[3];
-				if (Math.abs(dx)<=TrackSegment.EPSILON)					
+				if (Math.abs(dx)<=TrackSegment.EPSILON)	{
+					start.x = (start.x+end.x)/2;
+					end.x = start.x;
 					if (dy==0){
 						Geom.getLineLineIntersection(start.x, start.y, end.x, start.y+1, p.x, p.y, p.x-1, p.y, r);
 					} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x-1, p.y, r);					
-				else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
+				} else Geom.getLineLineIntersection(start.x, start.y, end.x, end.y, p.x, p.y, p.x+n.x, p.y+n.y, r);					
 				
 				if (r!=null && r.length>2) point = new Vector2D(r[0],r[1]);
-				if (point!=null) end = new Vector2D(point);
+				if (point!=null){
+					if (Math.abs(dx)<=TrackSegment.EPSILON)
+						start.x = end.x;
+					end = new Vector2D(point);
+				}
 			}
 		}
 				
