@@ -30,6 +30,7 @@ import com.graphbuilder.curve.ControlPath;
 import com.graphbuilder.curve.Curve;
 import com.graphbuilder.curve.GroupIterator;
 import com.graphbuilder.curve.MultiPath;
+import com.graphbuilder.curve.MyBezierCurve;
 import com.graphbuilder.curve.ParametricCurve;
 import com.graphbuilder.curve.Point;
 import com.graphbuilder.curve.ShapeMultiPath;
@@ -506,32 +507,57 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //			}
 		}
 
-		if (detected){
+		if (time>=11.29 && time<=12.3){
 			ControlPath cp=new ControlPath();
 			cp.addPoint(PointFactory.createPoint(0, 0));
-//			cp.addPoint(PointFactory.createPoint(edgeDetector.currentPointAhead.x, edgeDetector.currentPointAhead.y));
-			cp.addPoint(PointFactory.createPoint(1,0));
+			cp.addPoint(PointFactory.createPoint(edgeDetector.currentPointAhead.x, edgeDetector.currentPointAhead.y));
+			
+//			cp.addPoint(PointFactory.createPoint(1,0));
 			cp.addPoint(PointFactory.createPoint(edgeDetector.highestPoint.x, edgeDetector.highestPoint.y));
 			GroupIterator gi = new GroupIterator("0:n-1", cp.numPoints());
-			ParametricCurve bs = new BezierCurve(cp,gi);
-			MultiPath mp = new ShapeMultiPath();	
-//			BinaryCurveApproximationAlgorithm.genPts(bs, 0, 1,mp);
-			bs.appendTo(mp);
+			MyBezierCurve bs = new MyBezierCurve(cp,gi);
+//			MultiPath mp = new ShapeMultiPath();	
+//			bs.appendTo(mp);			
+			double[] pp= new double[3];
+			pp[2] = 0;
+			bs.eval(pp);
+			double x = pp[0];
+			double y = pp[1]; 
+			System.out.println("Value : "+"("+pp[0]+","+pp[1]+")");
+			pp[0] = 0;
+			pp[1] = 0;
+			bs.firstDerivative(pp);			
+			System.out.println("First Derivative : "+"("+pp[0]+","+pp[1]+")");
+			double dx = pp[0];
+			double dy = pp[1];
+			pp[0] = 0;
+			pp[1] = 0;
+			bs.secondDerivative(pp);			
+			System.out.println("Second Derivative : "+"("+pp[0]+","+pp[1]+")");
+			double ddx = pp[0];
+			double ddy = pp[1];
+			System.out.println("Radius : "+bs.radius(pp[2]));
+			rr = bs.radius(pp[2]);
+			double d = dx*dx+dy*dy;
+			double g = (dx*ddy-ddx*dy);
+			cntr = new Vector2D(x-d*dy/g,y+d*dx/g);
 			double oldx = 0;
 			double oldy = 0;
-			for (int i = 0;i<mp.getNumPoints();++i){
-				double[] p = mp.get(i);
-				TrackSegment ts = TrackSegment.createStraightSeg(0, p[0], p[1], oldx, oldy);
-				trackData.add(ts);
-				oldx = p[0];
-				oldy = p[1];
-			}
+//			for (int i = 0;i<mp.getNumPoints();++i){
+//				double[] p = mp.get(i);
+//				TrackSegment ts = TrackSegment.createStraightSeg(0, p[0], p[1], oldx, oldy);
+//				trackData.add(ts);
+//				oldx = p[0];
+//				oldy = p[1];
+//			}
 			draw=true;
+//			draw = false;
 			if (draw) store();
 //			TrackSegment ts = (isTurning) ? TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, 0, 0, optimalPoint.x, optimalPoint.y) : TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, cntr.x-turn*rr, cntr.y, optimalPoint.x, optimalPoint.y);
-//			trackData.add(ts);
+			TrackSegment ts = TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, cntr.x+rr, cntr.y, cntr.x-rr, cntr.y); 
+			trackData.add(ts);
 						
-			TrackSegment ts = TrackSegment.createStraightSeg(0,0, 0, carDirection.x*20, carDirection.y*20);
+			ts = TrackSegment.createStraightSeg(0,0, 0, carDirection.x*20, carDirection.y*20);
 			trackData.add(ts);
 //			ts = TrackSegment.createTurnSeg(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, centerOfTurn.x-turn*radiusOfTurn, centerOfTurn.y, optimalPoint.x, optimalPoint.y);
 //			trackData.add(ts);			
@@ -800,7 +826,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 //		
 						
 		
-		if (time>=10.926){			
+		if (time>=12.926){			
 			System.out.println();
 		}
 		
@@ -1120,8 +1146,8 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		if (last!=null && inTurn){
 			if (last.type!=0 && last.center!=null){
 				double d = last.center.distance(hh);
-				if (time>=9 && Math.abs(Math.abs(d-last.radius)-trackWidth/2)>0.1){						
-					detected = true;
+				if (time>=4 && Math.abs(Math.abs(d-last.radius)-trackWidth/2)>0.05){						
+					detected = false;
 				}
 			}
 		}
@@ -2010,10 +2036,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		if (turn!=UNKNOWN) 			
 			maxSpeed = speedAtRadius(targetRadius);			
 		else maxSpeed = speed;	
-//		maxSpeed =Math.min(150,maxSpeed);
-		if (detected) steer = 0;
+//		maxSpeed =Math.min(150,maxSpeed);		
 		System.out.println("Turn radius "+edgeRadius+"  MSpeed "+maxSpeed+" Next Radius "+nextRadius+" TRadius "+rr+"  EdgeRadius "+edgeRadius+" speed "+speed);
-		System.out.println(edgeDetector.center+"    "+radiusOfTurn);
+		System.out.println("Steer    "+steer);
 		if (Double.isNaN(steer)){			
 			followedPath = false;
 			recording = false;			
