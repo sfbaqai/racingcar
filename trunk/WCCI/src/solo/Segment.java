@@ -48,7 +48,7 @@ public final class Segment {
 	int type=-2;
 	double radius = 0;
 	int num = 0;	
-	Double2ObjectSortedMap<Vector2D> points;
+	Double2ObjectSortedMap<Vector2D> points = null;
 	Double2IntMap map = null;
 	/**
 	 * @param args
@@ -71,6 +71,20 @@ public final class Segment {
 		map.put(radius, 1);		
 	}
 	
+	public Segment(Segment s){
+		seg = s.seg;
+		dist = s.dist;
+		center = (s.center==null) ? null :new Vector2D(s.center);
+		start = (s.start==null) ? null :new Vector2D(s.start);
+		end = (s.end==null) ? null :new Vector2D(s.end);
+		length = s.length;
+		type = s.type;
+		arc = s.arc;
+		radius = s.radius;
+		map = (s.map==null) ? null : new Double2IntRBTreeMap(s.map);		
+	}
+
+	
 	public final void copy(Segment s){
 		seg = s.seg;
 		dist = s.dist;
@@ -81,7 +95,7 @@ public final class Segment {
 		type = s.type;
 		arc = s.arc;
 		radius = s.radius;
-		map = (s.map==null) ? null :new Double2IntRBTreeMap(s.map);		
+		map = (s.map==null) ? null : new Double2IntRBTreeMap(s.map);		
 	}
 
 
@@ -537,7 +551,7 @@ public final class Segment {
 //			if (!isCirle) return false;
 //			if (Math.abs(Math.sqrt(r[2])-radius)>1) return false;			
 			double d = Math.abs(point.distance(center)-radius);
-			if (d>=TrackSegment.EPSILON) return false;
+			if (d>=4*TrackSegment.EPSILON) return false;
 		}
 		return true;
 	}
@@ -545,12 +559,15 @@ public final class Segment {
 	public final static Segment toMiddleSegment(Segment seg,int which,double tW){
 		if (seg.type==Segment.UNKNOWN) return null;
 		double t = (seg.type==0) ? -tW*which : tW*which*seg.type;
-		Segment s = new Segment(seg.seg);
+		Segment s = (seg.seg!=null) ? new Segment(seg.seg) : new Segment();
+		if (seg.seg==null) s.copy(seg);
 		if (seg.type==0){									
 			s.start.x += t;
 			s.end.x += t;			
 		} else {
 			TrackSegment ts = seg.seg;
+			if (ts==null)
+				ts = TrackSegment.createTurnSeg(seg.center.x, seg.center.y, seg.radius, seg.start.x, seg.start.y, seg.end.x, seg.end.y);
 			double rad = ts.radius + t;
 			s.start = s.center.plus(s.start.minus(s.center).normalised().times(rad));
 			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
