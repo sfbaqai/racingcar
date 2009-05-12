@@ -40,6 +40,7 @@ public class EdgeDetector {
 	public final static double DELTATIME = 0.002;
 	public final static double MAXSTEERSPEED = Math.PI*2/3;
 	public final static double ANGLEACCURACY =100.0d; 
+	public final static double MINDIST = 1;
 	Vector2D currentPointAhead = null;
 	ControlPath cp=null;
 	double[] tracks;
@@ -64,7 +65,7 @@ public class EdgeDetector {
 	public double rightStraight = -1;
 	public double straightDist =-1;
 	Vector2D highestPoint = null;
-	Double2ObjectSortedMap<Vector2D> polar2Cartesian = null;
+	Double2ObjectSortedMap<Vector2D> polar2Cartesian = new Double2ObjectRBTreeMap<Vector2D>();
 	int turn;
 	Vector2D center = null;
 	double radiusL = -1;
@@ -128,8 +129,7 @@ public class EdgeDetector {
 		double[] x = new double[NUM_POINTS];//x is axis along track axis
 		double[] y = new double[NUM_POINTS];
 		double[] rx = new double[NUM_POINTS];//x is axis along track axis
-		double[] ry = new double[NUM_POINTS];
-		polar2Cartesian = new Double2ObjectRBTreeMap<Vector2D>();
+		double[] ry = new double[NUM_POINTS];		
 
 		leftStraight=-1;
 		rightStraight=-1;			
@@ -207,7 +207,7 @@ public class EdgeDetector {
 			else if (highestPoint.length()>=99.95)
 				turn = MyDriver.STRAIGHT;
 		} else//*/ 
-		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99.95)
+		if (turn==MyDriver.STRAIGHT && highestPoint!=null && highestPoint.length()<99.0)
 			turn = MyDriver.UNKNOWN;
 			//*/
 
@@ -327,6 +327,7 @@ public class EdgeDetector {
 	}
 
 	public AffineTransform combine(EdgeDetector ed,double distRaced){
+		long ti = System.currentTimeMillis();
 		if (distRaced>ed.straightDist)
 			return null;
 		if (trackWidth<=0) {
@@ -371,27 +372,24 @@ public class EdgeDetector {
 			angle=Math.round(angle*PRECISION)/PRECISION;
 			if ( ds.contains(angle)) continue;			
 			if (i>0 && i<len-1){				
-				DoubleBidirectionalIterator iter = ds.iterator(angle);
-				
+				DoubleBidirectionalIterator iter = ds.iterator(angle);								
 				if (iter.hasPrevious()){
 					key = iter.previousDouble();
 					p = polar2Cartesian.get(key);
-					if (Math.hypot(p.x-x,p.y-y)<0.5) continue;
+					if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;
 					iter.next();
 				}
 				
 				if (iter.hasNext()){
 					key = iter.nextDouble();
 					p = polar2Cartesian.get(key);
-					if (Math.hypot(p.x-x,p.y-y)<0.5) continue;					
+					if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;					
 				}
 			}
-					
-			
-			
+								
 			this.polar2Cartesian.put(angle, new Vector2D(x,y));					
 		}
-
+		System.out.println("I : "+(System.currentTimeMillis()-ti));
 
 		firstIndexMax = -1;
 		lastIndexMax = -1;
@@ -417,8 +415,7 @@ public class EdgeDetector {
 		int i = 0;
 		ds = this.polar2Cartesian.keySet();
 
-		for (double angle:ds){
-			Vector2D v = polar2Cartesian.get(angle);
+		for (Vector2D v:polar2Cartesian.values()){
 			if (v==null) continue;			
 			xx[i] = v.x;
 			yy[i] = v.y;
