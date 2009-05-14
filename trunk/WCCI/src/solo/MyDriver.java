@@ -352,7 +352,7 @@ public class MyDriver extends SimpleDriver {
 //	}
 
 	public void record(){
-		if (!recording) return;
+		/*if (!recording) return;
 		centerOfTurn = null;		
 		long time = System.currentTimeMillis();
 		nraced = distRaced - raced;
@@ -529,6 +529,7 @@ public class MyDriver extends SimpleDriver {
 		prevEdge = edgeDetector;				
 		raced = distRaced;		
 		System.out.println(System.currentTimeMillis()-time);	
+		//*/
 	}
 
 	public double radiusAtAngle(double angle){
