@@ -3,11 +3,8 @@
  */
 package solo;
 
-import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
+
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
-import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -24,13 +21,17 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import cern.colt.Sorting;
+import cern.colt.Swapper;
+
+
 import com.graphbuilder.curve.ControlPath;
 
 /**
  * @author kokichi3000
  *
  */
-public class EdgeDetector {
+public final class EdgeDetector {
 
 
 	public final static double DELTA = 0.001;
@@ -42,6 +43,18 @@ public class EdgeDetector {
 	public final static double MAXSTEERSPEED = Math.PI*2/3;
 	public final static double ANGLEACCURACY =100.0d; 
 	public final static double MINDIST = 1;
+	public final static Swapper swapper = new Swapper(){
+		@Override
+		public void swap(int i, int j) {
+			// TODO Auto-generated method stub
+			double tmp = angles[i];
+			angles[i] = angles[j];
+			angles[j] = tmp;
+			Vector2D v = backP[i];
+			backP[i] = backP[j];
+			backP[j] = v;
+		}
+	};
 	Vector2D currentPointAhead = null;
 	ControlPath cp=null;
 	double[] tracks;
@@ -60,7 +73,7 @@ public class EdgeDetector {
 	private static Vector2D[] backR = new Vector2D[NUM_POINTS];//x is axis along track axis
 	public static ObjectArrayList<Vector2D> allPoints = null;
 	public static ObjectArrayList<Vector2D> allPointsR = null;
-	private static Double2ObjectSortedMap<Vector2D> map = new Double2ObjectRBTreeMap<Vector2D>();
+	private static double[] angles = new double[NUM_POINTS];
 	DoubleArrayList x = null;
 	DoubleArrayList y = null;
 	int numpoint = 0;
@@ -133,9 +146,7 @@ public class EdgeDetector {
 		leftStraight=-1;
 		rightStraight=-1;			
 		int j = 0;
-//		allPoints.size(19);//clear allPoint list
-//		allPointsR.size(19);//clear allPointR list
-		map.clear();
+		
 		for (int i=0;i<19;++i){
 			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;
 			//			double xx = tracks[i]* Math.cos(angle);
@@ -176,13 +187,10 @@ public class EdgeDetector {
 			tmpY[j] = yy;
 			Vector2D v = new Vector2D(xx,yy);
 			backP[j] = v;
-			map.put(angle, v);
+			angles[j] = angle;
 			j++;
 		}
 		for (int i=0;i<j;++i){
-//			tmpRx[i] = tmpX[j-1-i];
-//			tmpRy[i] = tmpY[j-1-i];
-//			allPointsR.add(new Vector2D(tmpRx[i],tmpRy[i]));
 			backR[i] = backP[j-1-i];
 		}
 		numpoint = j;	
@@ -215,111 +223,9 @@ public class EdgeDetector {
 		double dR = getStraightDist(right);
 		straightDist = Math.max(dL, dR);
 
-	}
-
-	public final void init(CarState cs){
-		tracks = cs.getTrack();
-		curPos = -Math.round(cs.getTrackPos()*PRECISION)/PRECISION;
-		//		curPos = -cs.getTrackPos();
-		curAngle = Math.round(cs.getAngle()*PRECISION)/PRECISION;
-		maxDistance=-1;
-		firstIndexMax = -1;
-		lastIndexMax = -1;		
-		maxY = -1;
-		distRaced = Math.round(cs.distRaced*PRECISION)/PRECISION;			
-		trackWidth =-1;
-
-		if (Math.abs(curAngle)<0.01)
-			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(cs.angle));						
-
-		leftStraight=-1;
-		rightStraight=-1;			
-		int j = 0;
-		allPoints.size(19);//clear allPoint list
-		allPointsR.size(19);//clear allPointR list
-		map.clear();
-		for (int i=0;i<19;++i){
-			double  angle = Math.PI-SimpleDriver.ANGLE_LK[i]-cs.angle;
-			//			double xx = tracks[i]* Math.cos(angle);
-			//			double yy = tracks[i]* Math.sin(angle);
-			double xx =Math.round(tracks[i]* Math.cos(angle)*PRECISION)/PRECISION;
-			double yy =Math.round(tracks[i]* Math.sin(angle)*PRECISION)/PRECISION;
-			if (yy<0) continue;
-			//			angle=Math.round((Math.PI-angle)*ANGLEACCURACY)/ANGLEACCURACY;
-			//			angle = Math.PI - angle;			
-			angle = (xx==0) ? PI_2 : (yy>=0) ? Math.PI-Math.atan2(yy,xx) : Math.PI - angle;
-			angle = Math.round(angle*PRECISION)/PRECISION;
-			if (i==9){
-				currentPointAhead = new Vector2D(xx,yy);
-			}
-
-
-			if (maxDistance<tracks[i])
-				maxDistance = tracks[i];
-
-			if (maxY<yy && tracks[i]<=99.95){
-				maxY = yy;
-				firstIndexMax =j;
-				lastIndexMax =j;				
-			} else if (maxY==yy && lastIndexMax>=0 && tracks[lastIndexMax]<=99.95){
-				lastIndexMax =j;
-			} else if (tracks[i]>99.95){				
-				if (maxY<yy && firstIndexMax>=0 && tracks[firstIndexMax]<=99.95){
-					maxY = yy;
-					firstIndexMax =j;
-					lastIndexMax =j;
-				} else if (maxY==yy && lastIndexMax>=0){
-					lastIndexMax = j;
-				} else {
-					continue;
-				}
-			}			
-			tmpX[j] = xx;
-			tmpY[j] = yy;
-			Vector2D v = new Vector2D(xx,yy);
-			backP[j] = v;
-			map.put(angle, v);
-			j++;
-		}
-		for (int i=0;i<j;++i){
-//			tmpRx[i] = tmpX[j-1-i];
-//			tmpRy[i] = tmpY[j-1-i];
-//			allPointsR.add(new Vector2D(tmpRx[i],tmpRy[i]));
-			backR[i] = backP[j-1-i];
-		}
-		numpoint = j;	
-		allPoints.size(j);
-		allPointsR.size(j);
-		this.x = DoubleArrayList.wrap(tmpX, j);
-		this.y = DoubleArrayList.wrap(tmpY, j);
-
-
-		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(tmpX[firstIndexMax],tmpY[firstIndexMax]) : null;		
-		left = (firstIndexMax>0 && firstIndexMax<numpoint) ? ObjectArrayList.wrap(allPoints.elements(),firstIndexMax)  : null;
-		right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(allPointsR.elements(),numpoint-1-lastIndexMax) : null;
-		
-		double l0 = (left!=null && left.size()>0) ? left.get(0).x : -10000;
-		double l1 = (left!=null && left.size()>0) ? left.get(left.size()-1).x : -10000;
-		double r0 = (right!=null && right.size()>0) ? right.get(0).x : -10000;
-		double r1 = (right!=null && right.size()>0) ? right.get(right.size()-1).x : -10000;
-		boolean straight = (highestPoint!=null && highestPoint.length()>=99.95);
-		boolean nlS = Math.abs(l1-l0)>TrackSegment.EPSILON;
-		boolean nrS = Math.abs(r1-r0)>TrackSegment.EPSILON;
-		if (straight && (Math.abs(l1-l0)<=TrackSegment.EPSILON || Math.abs(r1-r0)<=TrackSegment.EPSILON)) 
-			turn = MyDriver.STRAIGHT;
-		else if ((nlS && l1>l0) || (nrS && r1>r0))
-			turn = 1;
-		else if ((nlS && l1<l0) || (nrS && r1<r0))
-			turn = -1;
-		else turn = 2;
-		
-		double dL = getStraightDist(left);
-		double dR = getStraightDist(right);
-		straightDist = Math.max(dL, dR);
-	}
-
+	}	
 	
-	public double getStraightDist(ObjectArrayList<Vector2D> left){
+	public final double getStraightDist(ObjectArrayList<Vector2D> left){
 		double val = 0;
 		if (left!=null && left.size()>0){
 			double l0 = -10000;
@@ -340,117 +246,6 @@ public class EdgeDetector {
 		return val;
 	}
 
-	//	public void estimateCurve(int h){
-	//		if (left.center==null && right.center==null) return;
-	//		if (h==-1 && left!=null && left.center!=null){
-	//			center = left.center;
-	//			radiusL = left.radius;				
-	//			radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) 
-	//					: (turn==MyDriver.TURNRIGHT) ? radiusL - trackWidth : radiusL+trackWidth;
-	//			return;
-	//		}
-	//
-	//		if (h==1 && right!=null && right.center!=null){						
-	//			center = right.center;
-	//			radiusR = right.radius;				
-	//			radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) 
-	//					: (turn==MyDriver.TURNRIGHT) ? radiusR + trackWidth : radiusR - trackWidth;
-	//			return;
-	//		}		
-	//		
-	//		if (left!=null && left.center==null && right!=null){
-	//			center = right.center;
-	//			radiusR = right.radius;				
-	//			radiusL =  radiusR + trackWidth;
-	//			return;
-	//		}
-	//		
-	//		if (right!=null && right.center==null && left!=null){
-	//			center = left.center;
-	//			radiusL = left.radius;				
-	//			radiusR = radiusL+trackWidth;
-	//			return;
-	//		}
-	//		
-	//		if (turn==MyDriver.TURNRIGHT){			
-	//			if (left!=null && left.center!=null){
-	//				center = left.center;
-	//				radiusL = left.radius;				
-	//				radiusR = (trackWidth<0) ? (right==null) ? -1 : right.getHighestPoint().distance(center) : radiusL - trackWidth;
-	//			}
-	//		} else if (turn==MyDriver.TURNLEFT){			
-	//			if (right!=null && right.center!=null){
-	//				center = right.center;
-	//				radiusR = right.radius;				
-	//				radiusL = (trackWidth<0) ? (left==null) ? -1 : left.getHighestPoint().distance(center) : radiusR - trackWidth;				
-	//			}			
-	//		}
-	//		if (trackWidth<0 && radiusL>0 && radiusR>0)
-	//		trackWidth = Math.abs(radiusL-radiusR);
-//}
-
-//-1: Left,1:Right,0:UNKNOWN
-//int guessPointOnEdge(Vector2D p){
-//	if (p==null) return 0;		
-//	if (left==null && right==null) return 0;
-//	if (left==null) return 1;
-//	if (right==null) return -1;
-//	if (turn==MyDriver.UNKNOWN || turn==MyDriver.STRAIGHT)
-//		return 0;
-//	if (left.center==null || right.center==null || left.radius<0 || right.radius<0)
-//		return -turn;
-//
-//	int lsz = left.size-1;
-//	int rsz = right.size-1;
-//	double aL = 0;
-//	double aR = 0;
-//	if (p.distance(left.allPoints.get(lsz)) < trackWidth-1) return -1;
-//	if (p.distance(right.allPoints.get(rsz)) < trackWidth-1) return 1;
-//	if (lsz>1){
-//		Vector2D s = left.allPoints.get(lsz-1);
-//		Vector2D s1 = left.allPoints.get(lsz);
-//		aL = s1.minus(s).angle(p.minus(s1));			
-//	}
-//	if (rsz>1){
-//		Vector2D s = right.allPoints.get(rsz-1);
-//		Vector2D s1 = right.allPoints.get(rsz);
-//		aR = s1.minus(s).angle(p.minus(s1));
-//
-//	}
-//
-//	System.out.println(aL+"  "+aR);
-//
-//	if (turn==MyDriver.TURNLEFT){
-//		if (left.center.x>0) return 1;
-//		if (right.center.x>0) return -1;
-//		if (aL<0) return 1;
-//		if (aR<0) return -1;
-//
-//	}
-//
-//	if (turn==MyDriver.TURNRIGHT){
-//		if (left.center.x<0) return 1;
-//		if (right.center.x<0) return -1;
-//		if (aR>0) return -1;
-//		if (aL>0) return 1;						
-//	}
-//
-//	double radiusL = left.radius;
-//	double radiusR = right.radius;
-//	double dL = p.distance(left.center)-radiusL;		
-//	double dR = p.distance(right.center)-radiusR;		
-//
-//	if (dL*dR>=0)
-//		return (Math.abs(dL)<Math.abs(dR)) ? -1 : (Math.abs(dL)>Math.abs(dR)) ? 1 : -turn;
-//	if (dL<=-trackWidth || Math.abs(dL)>Math.abs(dR))
-//		return 1;
-//
-//	if (dR<=-trackWidth || Math.abs(dL)<Math.abs(dR))
-//		return -1;
-//
-//	return -turn;
-//}
-
 public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	long ti = System.currentTimeMillis();
 	if (distRaced>ed.straightDist)
@@ -468,46 +263,58 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 
 	double scale = tW/prevTW;		
 	double[] xx = ed.x.elements();
-	double[] yy = ed.y.elements();		
-
-
-	DoubleSortedSet ds = this.map.keySet();
-
+	double[] yy = ed.y.elements();
+	
 	AffineTransform at = new AffineTransform();
 	at.scale(scale, 1);
 	at.translate(ax, -distRaced);
 	Vector2D p = null;
-	double key = -1;
+	int sz = (numpoint+ed.numpoint<NUM_POINTS) ? NUM_POINTS : (numpoint+ed.numpoint)*2;
+	if (tmpX.length<sz){
+		tmpX = new double[sz];
+		tmpY = new double[sz];		
+		backR = new Vector2D[sz];
+		System.arraycopy(backP, 0, backR, 0, numpoint);
+		backP = new Vector2D[sz];
+		System.arraycopy(backR, 0, backP, 0, numpoint);
+		System.arraycopy(angles, 0, tmpX, 0, numpoint);
+		angles = new double[sz];
+		System.arraycopy(tmpX, 0, angles, 0, numpoint);
+		left = null;
+		right = null;
+	} 	
+	boolean sorted = true;
 	for (int i=0;i<len;++i){			
 		double x = xx[i]*scale;
 		double y = yy[i];
 		if (Math.sqrt(x*x+y*y)>99.0) continue;			
 		x += ax;
 		y -= distRaced;			
-		//			x = Math.round(x*10000.0d)/10000.0d;
-		//			y = Math.round(y*10000.0d)/10000.0d;
 		if (y<0 || y<straightDist) continue;
 		double  angle = (x==0) ? PI_2 : Math.PI-Math.atan2(y,x);
 		if (angle<0 || angle>Math.PI) continue;
 		angle=Math.round(angle*PRECISION)/PRECISION;			
-		if (i>0 && i<len-1){				
-			DoubleBidirectionalIterator iter = ds.iterator(angle);								
-			if (iter.hasPrevious()){
-				key = iter.previousDouble();
-				p = map.get(key);
-				if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;
-				iter.next();
-			}
-
-			if (iter.hasNext()){
-				key = iter.nextDouble();
-				p = map.get(key);
-				if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;					
-			}
+					
+		int index = Sorting.binarySearchFromTo(angles, angle, 0, numpoint-1);
+		if (index>=0) continue;
+		index = -index-1;
+		if (index>0){				
+			p = backP[index-1];
+			if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;				
 		}
 
-		this.map.put(angle, new Vector2D(x,y));				
+		if (index<numpoint){				
+			p = backP[index];
+			if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;					
+		}
+		
+
+		if (index!=numpoint) sorted = false;
+		angles[numpoint] = angle;
+		backP[numpoint++] = new Vector2D(x,y);				
 	}
+		
+	if (!sorted) solo.Arrays.quicksort(angles,0,numpoint-1, swapper);
 	System.out.println("I : "+(System.currentTimeMillis()-ti));
 
 	firstIndexMax = -1;
@@ -515,27 +322,15 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	leftStraight=-1;
 	rightStraight=-1;
 	maxY = -1;
-	maxDistance = -1;
-	numpoint = map.size();
-
-	int sz = (numpoint<NUM_POINTS) ? NUM_POINTS : numpoint*2;
-	if (tmpX.length<sz){
-		tmpX = new double[sz];
-		tmpY = new double[sz];
-		backP = new Vector2D[sz];
-		backR = new Vector2D[sz];
-		left = null;
-		right = null;
-	} 
-	
+	maxDistance = -1;			
 		
-	int i = 0;	
+	
 
-	for (Vector2D v:map.values()){
+	for (int i=0;i<numpoint;++i){
+		Vector2D v = backP[i];
 		if (v==null) continue;			
 		tmpX[i] = v.x;
 		tmpY[i] = v.y;
-		backP[i] = v;
 		backR[numpoint-1-i] = v;
 
 		double dist = v.length();
@@ -558,20 +353,20 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 				lastIndexMax = i;
 			}
 		}
-		i++;
 	}
+	System.out.println("J : "+(System.currentTimeMillis()-ti));
 	this.x = DoubleArrayList.wrap(tmpX, numpoint);
 	this.y = DoubleArrayList.wrap(tmpY, numpoint);
 	allPoints = ObjectArrayList.wrap(backP,numpoint);
 	allPointsR = ObjectArrayList.wrap(backR,numpoint);
-	System.out.println("J : "+(System.currentTimeMillis()-ti));
-	highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(xx[firstIndexMax],yy[firstIndexMax]) : null;
+	
+	highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(tmpX[firstIndexMax],tmpY[firstIndexMax]) : null;
 	left = (firstIndexMax>0 && firstIndexMax<numpoint) ? ObjectArrayList.wrap(backP,firstIndexMax)  : null;
-	right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(backR,numpoint-1-lastIndexMax) : null;
-	System.out.println("K : "+(System.currentTimeMillis()-ti));
+	right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(backR,numpoint-1-lastIndexMax) : null;	
 	double dL = getStraightDist(left);
 	double dR = getStraightDist(right);
 	straightDist = Math.max(dL, dR);
+	System.out.println("K : "+(System.currentTimeMillis()-ti));
 	return at;
 }
 
