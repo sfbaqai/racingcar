@@ -197,7 +197,7 @@ public final class Edge {
 		return -1;
 	}
 	
-	public void calculateRadiusWhileInTurn(Segment seg,double tW,double toMiddle,double dist){
+	/*public void calculateRadiusWhileInTurn(Segment seg,double tW,double toMiddle,double dist){
 		double r = seg.radius;
 		double rad = 0;
 		int i=0;
@@ -368,7 +368,7 @@ public final class Edge {
 			else return new Segment(ts);
 		}
 		return seg;
-	}
+	}//*/
 	
 	
 	public double reCalculateRadius(){		
