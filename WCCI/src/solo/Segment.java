@@ -43,6 +43,7 @@ public final class Segment {
 	final static int UNKNOWN = -2;
 	final static double MARGIN =3;
 	final static int INIT_SIZE = 20;
+	final static int MAX_RADIUS =1000;
 	TrackSegment seg = null;
 	double dist = -1;
 	Vector2D center = null;
@@ -55,7 +56,7 @@ public final class Segment {
 	int num = 0;	
 	ObjectArrayList<Vector2D> points = null;
 	boolean sorted = true;
-	Double2IntMap map = null;
+	int[] map = new int[MAX_RADIUS];
 	
 	public static Comparator<Vector2D> comp = new Comparator<Vector2D>(){
 		public int compare(Vector2D o1, Vector2D o2) {
@@ -65,6 +66,10 @@ public final class Segment {
 	/**
 	 * @param args
 	 */
+	
+	public final static int double2int(double r){
+		return (int)(Math.round(r));
+	}
 
 	public Segment(){		
 	}
@@ -79,7 +84,7 @@ public final class Segment {
 		type = ts.type;
 		arc = ts.arc;
 		radius = ts.radius;
-		map = new Double2IntOpenHashMap(new double[]{radius},new int[]{1});
+		map[double2int(radius)] = 1;
 	}
 	
 	public Segment(Segment s){
@@ -92,7 +97,7 @@ public final class Segment {
 		type = s.type;
 		arc = s.arc;
 		radius = s.radius;
-		map = (s.map==null) ? null : new Double2IntOpenHashMap(s.map);			
+		System.arraycopy(s.map, 0, map, 0, MAX_RADIUS);		
 	}
 
 	
@@ -106,7 +111,7 @@ public final class Segment {
 		type = s.type;
 		arc = s.arc;
 		radius = s.radius;
-		map = (s.map==null) ? null : new Double2IntOpenHashMap(s.map);		
+		System.arraycopy(s.map, 0, map, 0, MAX_RADIUS);		
 	}
 
 
@@ -121,7 +126,7 @@ public final class Segment {
 		type = ts.type;
 		arc = ts.arc;
 		radius = ts.radius;
-		map = new Double2IntOpenHashMap(new double[]{radius},new int[]{1});		
+		map[double2int(radius)] = 1;		
 	}
 	
 	public static Double2IntMap joinMap(Double2IntMap m1,Double2IntMap m2){
@@ -138,7 +143,7 @@ public final class Segment {
 		}
 		return m;
 	}
-	
+		
 	
 	public void sortPoints(){
 		if (!sorted){
@@ -148,7 +153,7 @@ public final class Segment {
 	}
 	
 	public static void sortPoints(ObjectArrayList<Vector2D> points){		
-		Arrays.quicksort(points.elements(),0,points.size()-1,comp);		
+			Arrays.quicksort(points.elements(),0,points.size()-1,comp);		
 	}
 	
 	public int contains(Vector2D p){
@@ -612,16 +617,23 @@ public final class Segment {
 			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
 			s.radius = rad;
 			s.length = Math.abs(s.arc * rad);
-			Double2IntMap m = new Double2IntRBTreeMap();
-			if (s.map!=null && s.map.size()>0){
-				DoubleSet ds = s.map.keySet();
-				for (double d:ds){
-					int n = s.map.get(d);
-					m.put(d+t, n);
+			if (t>0){
+				for (int i = MAX_RADIUS-1;i>=0;--i){
+					int n = s.map[i]; 
+					if (n!=0) {
+						s.map[double2int(i+t)] = n;
+						s.map[i] = 0;
+					}
 				}
-			}
-			s.map = null;
-			s.map = m;
+			} else {
+				for (int i = 0;i<MAX_RADIUS;++i){
+					int n = s.map[i]; 
+					if (n!=0) {
+						s.map[double2int(i+t)] = n;
+						s.map[i] = 0;
+					}
+				}
+			}			
 		}
 		return s;
 	}
@@ -745,7 +757,7 @@ public final class Segment {
 	public final void reCalculate(double tW){
 		if (type==Segment.UNKNOWN)
 			return;
-//		if (!sorted) sortPoints();
+		if (!sorted) sortPoints();
 		Vector2D[] v = points.elements();		
 		if (type==0){
 			int len = points.size()+2;
