@@ -5,21 +5,13 @@ package solo;
 
 import it.unimi.dsi.fastutil.doubles.Double2IntMap;
 import it.unimi.dsi.fastutil.doubles.Double2IntOpenHashMap;
-import it.unimi.dsi.fastutil.doubles.Double2IntRBTreeMap;
-import it.unimi.dsi.fastutil.doubles.Double2IntSortedMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectSortedMap;
-import it.unimi.dsi.fastutil.doubles.DoubleBidirectionalIterator;
-import it.unimi.dsi.fastutil.doubles.DoubleRBTreeSet;
-import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -650,6 +642,22 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			e.printStackTrace();
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static int binarySearchFromTo(Object[] list, Object key, int from, int to, java.util.Comparator comparator) {
+		Object midVal;
+		while (from <= to) {
+			int mid =(from + to)/2;
+			midVal = list[mid];
+			int cmp = comparator.compare(midVal,key);
+
+			if (cmp < 0) from = mid + 1;
+			else if (cmp > 0) to = mid - 1;
+			else return mid; // key found
+		}
+		return -(from + 1);  // key not found.
+	}
+
 
 	public void check(AffineTransform at,ObjectList<Segment> l,ObjectArrayList<Vector2D> all){
 		if (at==null) return;
@@ -663,8 +671,9 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 				l.remove(k);
 				continue;
 			}
-			for (Vector2D v:ll.points){
-				int index = Sorting.binarySearchFromTo(all.elements(), v, 0, all.size()-1, Segment.comp);
+			for (int kk = 0;kk<ll.num;++kk){
+				Vector2D v = ll.points[kk];
+				int index = binarySearchFromTo(all.elements(), v, 0, all.size()-1, Segment.comp);
 				if (index<0){
 					index = -index -1;					
 					boolean ok = false;
@@ -672,12 +681,12 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					Vector2D p = null;
 					if (index>0){
 						p = all.get(index-1);
-						int pos = ll.contains(p);
+						int pos = binarySearchFromTo(ll.points, p, 0, ll.num-1, Segment.comp);
 						if (ll.points!=null && pos<0){							
 							if (Math.hypot(p.x-v.x, p.y-v.y)<EdgeDetector.MINDIST) {
 								ok=true;
-								if (ll.type!=Segment.UNKNOWN && ll.isPointBelongToSeg(p)){									
-									ll.points.add(-pos-1,p);
+								if (ll.type==Segment.UNKNOWN || ll.isPointBelongToSeg(p)){									
+									ll.points[kk] = p;
 									found = true;
 								}
 							}
@@ -686,12 +695,12 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					if (!ok){									
 						if (index<all.size()){
 							p = all.get(index);
-							int pos = ll.contains(p);
+							int pos = binarySearchFromTo(ll.points, p, 0, ll.num-1, Segment.comp);
 							if (ll.points!=null && pos<0){								
 								if (Math.hypot(p.x-v.x, p.y-v.y)<EdgeDetector.MINDIST){ 
 									ok = true;
-									if (ll.type!=Segment.UNKNOWN && ll.isPointBelongToSeg(p)){ 
-										ll.points.add(-pos-1, p);										
+									if (ll.type==Segment.UNKNOWN || ll.isPointBelongToSeg(p)){ 
+										ll.points[kk] = p;										
 										found = true;
 									}																								
 								}
@@ -701,12 +710,12 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 
 					if (!ok){
 						p = edgeDetector.highestPoint;
-						int pos = ll.contains(p);
+						int pos = binarySearchFromTo(ll.points, p, 0, ll.num-1, Segment.comp);
 						if (ll!=null && ll.points!=null && pos<0){
-							if (ll.type!=Segment.UNKNOWN && Math.hypot(p.x-v.x, p.y-v.y)<EdgeDetector.MINDIST){ 
+							if (Math.hypot(p.x-v.x, p.y-v.y)<EdgeDetector.MINDIST){ 
 								ok = true;
-								if (ll.isPointBelongToSeg(p)){									
-									ll.points.add(-pos-1,p);
+								if (ll.type==Segment.UNKNOWN || ll.isPointBelongToSeg(p)){									
+									ll.points[kk] = p;
 									found = true;
 								}																								
 							}
@@ -715,19 +724,18 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					//					if (!ok || !found) 
 					//						ll.removePoint(v);
 					//					else ll.points.remove(v.y);
-					if ((k>0 && found) || (k==0 && ll.type==0 && ll.points.size()>2)) ll.removePoint(v);
-					if (ll.start==null) {
-						l.remove(k);
-						--k;
-						break;
-					}
+//					if ((k>0 && found) || (k==0 && ll.type==0 && ll.num>2)) ll.removePoint(v);
+//					if (ll.start==null) {
+//						l.remove(k);
+//						--k;
+//						break;
+//					}
 					if (ok) {
 						if (found){
 							if (ll.type==0){ 
-								ll.num++;
+//								ll.num++;
 								ll.reCalLength();
-							} else if (ll.type!=Segment.UNKNOWN && ll.num<Segment.LIM){													
-								ll.num = ll.points.size();						
+							} else if (ll.type!=Segment.UNKNOWN && ll.num<Segment.LIM){																									
 								double oldr = ll.radius;
 								ll.reCalculate(tW);
 								if (k==1 && l.get(0).type==0 && (Double.isNaN(ll.radius) || Math.abs(oldr-ll.radius)>0.5)){
@@ -739,7 +747,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 										double[] rr = new double[3];
 										Geom.getCircle2(ll.start, ll.end, new Vector2D(x0,0), new Vector2D(x0,1), rr);					
 										rr[2] = Math.sqrt(rr[2]);
-										ll.radius = Math.round(rr[2]-trackWidth*0.5)+trackWidth*0.5;
+										ll.radius = (int)(Math.round(rr[2]-trackWidth*0.5)+trackWidth*0.5);
 										ll.center = new Vector2D(rr[0],rr[1]);
 										ll.seg = TrackSegment.createTurnSeg(ll.center.x, ll.center.y, ll.radius, ll.start.x, ll.start.y, ll.end.x, ll.end.y);										
 										ll.length = ll.seg.length;
@@ -750,8 +758,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 									Segment.checkRs(l, k, tW);
 									Segment.updateRs(l, k, tW);
 								}						
-							} else {
-								ll.num = ll.points.size();
+							} else {								
 								if (ll.type!=Segment.UNKNOWN){ 
 									ll.reCalLength();
 								} else {
@@ -765,7 +772,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			k++;			
 		}
 
-		for (Segment ll:l) map.addAll(ll.points);		
+		for (Segment ll:l) map.addAll(ObjectArrayList.wrap(ll.points,ll.num));		
 		Segment.sortPoints(map);
 
 		for (Vector2D v : all){		
@@ -815,7 +822,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 								double[] rr = new double[3];
 								Geom.getCircle2(ll.start, ll.end, new Vector2D(x0,0), new Vector2D(x0,1), rr);					
 								rr[2] = Math.sqrt(rr[2]);
-								ll.radius = Math.round(rr[2]-trackWidth*0.5)+trackWidth*0.5;
+								ll.radius = (int)(Math.round(rr[2]-trackWidth*0.5)+trackWidth*0.5);
 								ll.center = new Vector2D(rr[0],rr[1]);
 								ll.seg = TrackSegment.createTurnSeg(ll.center.x, ll.center.y, ll.radius, ll.start.x, ll.start.y, ll.end.x, ll.end.y);										
 								ll.length = ll.seg.length;
@@ -832,12 +839,11 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 				}
 				if (ll.type!=0 && ll.center!=null){								
 					if (ll.type!=Segment.UNKNOWN){
-						ll.points.add(v);
+						ll.addPoint(v);
 						ll.sorted = false;						
-						//						ll.sortPoints();						
-						Vector2D[] vv = ll.points.elements();
-						int len = ll.points.size();
-						CircleFitter cf = new CircleFitter(new double[]{ll.center.x,ll.center.y,ll.radius},vv,0,len-1);
+						Vector2D[] vv = ll.points;
+						int len = ll.num;
+						CircleFitter cf = new CircleFitter(new double[]{ll.center.x,ll.center.y,ll.radius},ll.points,0,ll.num-1);
 						cf.fit();
 						double r = Math.round(cf.getEstimatedRadius()-trackWidth*0.5)+trackWidth*0.5;
 						if (j==1){
@@ -860,23 +866,25 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 							if (r<=dd) r = ll.radius;
 							Vector2D center = p.plus(n.times(Math.sqrt(r*r-dd*dd)));
 							found = true;
-							for (Vector2D vvv:ll.points)
+							for (int ii = 0;ii<ll.num;++ii){
+								Vector2D vvv = ll.points[ii];
 								if (Math.abs(vvv.distance(center)-r)>4*TrackSegment.EPSILON) {
 									found = false;
 									break;
 								}
+							}
 
-							if (found) {
-								ll.num = ll.points.size();
+							if (found) {								
 								ll.center = center;
-								ll.radius = r;
-								ll.start = new Vector2D(ll.points.get(0));
-								ll.end = new Vector2D(ll.points.get(len-1));
+								ll.radius = (int)r;
+								ll.start = new Vector2D(ll.points[0]);
+								ll.end = new Vector2D(ll.points[len-1]);
+								ll.seg = TrackSegment.createTurnSeg(ll.center.x, ll.center.y, ll.radius, ll.start.x, ll.start.y, ll.end.x, ll.end.y);
 								ll.reCalLength();
 								break;						
 							}
 						}
-						ll.points.remove(v.y);
+						ll.removePoint(v);
 					} else if (isIn && ll.type!=Segment.UNKNOWN && ll.num>Segment.LIM){
 						found = true;
 						break;
@@ -889,23 +897,23 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					for (k=j;k>=0;k--){
 						Segment s = l.get(k);
 						if (s.type!=Segment.UNKNOWN && s.num>3) break;						
-						mp.addAll(s.points);
+						mp.addAll(ObjectArrayList.wrap(s.points,s.num));
 					}
 					if (k>=0 && v.y>l.get(k).end.y) 
 						k++;					
 
 					mp.add(v);
-					for (m=j;m<l.size();++m){
+					for (m=j+1;m<l.size();++m){
 						Segment s = l.get(m);
 						if (s.type!=Segment.UNKNOWN && s.num>3) break;
-						mp.addAll(s.points);
+						mp.addAll(ObjectArrayList.wrap(s.points,s.num));
 					}
 
 					if (k==m && isIn){
 						m++;
-						mp.addAll(ll.points);
+						mp.addAll(ObjectArrayList.wrap(ll.points,ll.num));
 					}
-					Segment.sortPoints(mp);
+					if (mp.size()>0) Segment.sortPoints(mp);
 					if (k>=0 && k<m) l.removeElements(k, m);
 
 					List<Segment> ol = Segment.segmentize(mp.elements(),0,mp.size(),tW);
@@ -927,7 +935,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		}//end of outer most for
 		Segment smt = l.get(l.size()-1);				
 		if (smt.type==Segment.UNKNOWN && smt.num>=3){			
-			List<Segment> ol = Segment.segmentize(smt.points.elements(),0,smt.points.size(), tW);
+			List<Segment> ol = Segment.segmentize(smt.points,0,smt.num, tW);
 			l.remove(l.size()-1);
 			l.addAll(ol);
 		}
@@ -942,14 +950,14 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 				boolean found = false;
 				for (int i=1;i<l.size();++i){
 					Segment s = l.get(i);
-					Vector2D[] ar = s.points.elements();
-					int len = s.points.size();
+					Vector2D[] ar = s.points;
+					int len = s.num;
 					for (int j=0;j<len;++j){
 						Vector2D v = ar[j];
 						if (v!=null && v.y<=sD){
 							s.removePoint(v);							
 							l0.addPoint(v);
-							if (s.points.size()==0) l.remove(i);
+							if (s.num==0) l.remove(i);
 						} else if (v!=null){
 							found = true;
 							break;
@@ -961,6 +969,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		}
 	}
 
+	@SuppressWarnings("static-access")
 	public void record(CarState cs){		
 		if (!recording) return;	
 		long ti = System.currentTimeMillis();			
@@ -980,7 +989,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 			return;
 		}
 
-		if (time>=52.22){			
+		if (time>=9.27){			
 			System.out.println();
 		}
 
@@ -1028,8 +1037,18 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		if (!inTurn && (prevEdge.straightDist<=0 || nraced<=0 || nraced<prevEdge.straightDist-0.5 || (prevEdge.center!=null && prevEdge.center.y>=nraced))) {				
 			AffineTransform at = edgeDetector.combine(prevEdge, nraced);
 			System.out.println("Here : "+(System.currentTimeMillis()-ti));
+			if (tr!=null)
+			for (Segment tt:tr)
+				tt.transform(at);
 			left = edgeDetector.left;
 			right = edgeDetector.right;
+			if (tr!=null){
+				@SuppressWarnings("unused")
+				ObjectList<Segment> oal = Segment.segmentize(left.elements(), 0, left.size(), -1, tW, tr, distRaced);
+				@SuppressWarnings("unused")
+				ObjectList<Segment> oal1 = Segment.segmentize(right.elements(), 0, right.size(), 1, tW, tr, distRaced);
+				System.out.println();
+			}
 			//			edge = (edgeDetector.turn==TURNLEFT) ? edgeDetector.right : (edgeDetector.turn==TURNRIGHT) ? edgeDetector.left : null;
 			if (left!=null && left.size()>0){
 				if (l==null || l.size()==0)
@@ -1075,19 +1094,20 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		lm = ObjectArrayList.wrap(segAr, 0);
 		rm = ObjectArrayList.wrap(segArr, 0);
 
-		if (l!=null)			
+		if (l!=null)	{		
 			for (Segment ts : l){
 				System.out.println("l  "+ts);
 				if (ts.type==Segment.UNKNOWN) continue;
 				Segment s = Segment.toMiddleSegment(ts, -1, tW);			
 				if (s==null) continue;
-				if (ts.type!=0){
-					s.start = ts.start;
-					s.end = ts.end;
-					s.center = ts.center;
-				}
+//				if (ts.type!=0){
+//					s.start = ts.start;
+//					s.end = ts.end;
+//					s.center = ts.center;
+//				}
 				lm.add(s);
-			}		
+			}				
+		}
 		System.out.println("-----------");
 		if (r!=null)
 			for (Segment ts : r){			
@@ -1149,7 +1169,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		rr=0;
 		Vector2D hh = edgeDetector.highestPoint;
 		turn = edgeDetector.turn;
-		guessTurn();
+		guessTurn();		
 		if (edgeDetector.center==null && hh.length()>99.9) turn = 0;
 		//		if (time>=5.3)
 		//			System.out.println();		
@@ -1270,13 +1290,21 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 						s.type = turn;
 						Vector2D p = s.start.plus(s.end).times(0.5);
 						Vector2D n = new Vector2D(rr[0]-p.x,rr[1]-p.y).normalised();
-						s.radius = edgeRadius-turn*which*trackWidth*0.5;
+						s.radius = (int)Math.round(edgeRadius-turn*which*trackWidth*0.5);
 						double d = s.radius*s.radius;
-						s.map[Segment.double2int(s.radius)] = 1;
+						if (s.map==null) s.map = new int[Segment.MAX_RADIUS]; 
+						int rad = Segment.double2int(s.radius); 
+						s.map[rad] = 1;
+						s.minR = rad;
+						s.maxR = rad;
 						p = p.plus(n.times(Math.sqrt(d-s.start.distanceSq(p))));
-						s.center = p;						
+						s.center = p;
+//						s.seg = TrackSegment.createTurnSeg(s.center.x, s.center.y, s.radius, s.start.x, s.start.y, s.end.x, s.end.y);						
 						Segment tmp = Segment.toMiddleSegment(s, which, tW);
-						tr.add(tmp);
+						if (which==-1) 
+							Segment.estimateDist(lm.get(lm.size()-1), tmp);
+						else if (which==1) Segment.estimateDist(rm.get(rm.size()-1), tmp);
+						tr.add(tmp);						
 					} else {
 						inTurn = false;
 						edgeRadius = Double.MAX_VALUE;
@@ -1574,7 +1602,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 
 				int dmax = Segment.double2int(s.radius);
 				int maxn = s.map[dmax];
-				for (int r = 0;r<Segment.MAX_RADIUS;++r){
+				for (int r = s.minR;r<s.maxR;++r){
 					if (t.map[r]==0) continue;
 					int nr = s.map[r];
 					nr = Math.max(t.map[r],nr);
@@ -1589,8 +1617,8 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 					s.end = t.end;
 					s.center = t.center;
 				}
-				if (dmax!=s.radius){
-					if (dmax<0 && !Double.isInfinite(dmax)){
+				if (dmax!=Segment.double2int(s.radius)){
+					if (dmax<0 && dmax<Segment.MAX_RADIUS){
 						dmax = -dmax;
 						Double2IntMap m = new Double2IntOpenHashMap();
 						for (int j=0;j<Segment.MAX_RADIUS;++j)
@@ -1691,14 +1719,14 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 				if (s.dist+s.length>=e) break;
 				if (s.dist+s.length<=e) j++;
 			}//end of while
-			System.out.println("Time Store "+i+" 0: "+(System.currentTimeMillis()-ti));
+//			System.out.println("Time Store "+i+" 0: "+(System.currentTimeMillis()-ti));
 
 			while (ri<or.size()){				
 				s = or.get(ri);
 				if (s.dist<=d && s.dist+s.length>=e){
 					if (tmp==null){
 						tmp = new Segment(s);
-						System.out.println("Time Store "+i+" 1 : "+(System.currentTimeMillis()-ti));
+//						System.out.println("Time Store "+i+" 1 : "+(System.currentTimeMillis()-ti));
 						tmp.dist = d;
 						tmp.length = e-d;
 						tmp.arc = tmp.type*tmp.length/tmp.radius;
@@ -1707,19 +1735,21 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 						int dmax = Segment.double2int(tmp.radius);
 						int maxn = tmp.map[dmax];
 						if (tmp.type==s.type || s.type==0 || tmp.type==0){
-							for (int r = 0;r<Segment.MAX_RADIUS;++r){
+							for (int r = s.minR;r<s.maxR;++r){
 								if (s.map[r]==0) continue;
 								int nr = s.map[r];
 								nr += tmp.map[r];
 								tmp.map[r] = nr;
+								if (r<tmp.minR) tmp.minR = r;
+								if (r>tmp.maxR) tmp.maxR = r;
 								if (nr>maxn){
 									dmax = r;
 									maxn = nr;
 								}
 							}
 
-							if (dmax!=tmp.radius){							
-								tmp.radius = dmax;
+							if (dmax!= Segment.double2int(tmp.radius)){							
+								tmp.radius = (int)Segment.int2double(dmax);
 								tmp.arc = tmp.type*tmp.length/tmp.radius;
 								if (tmp.type!=0 && tmp.type==s.type){									
 									double rr = tmp.radius - which*tmp.type*trackWidth/2;
@@ -1729,19 +1759,21 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 									if (n.dot(tmp.center.minus(p))<0) n = n.negated();
 									tmp.center = p.plus(n.times(Math.sqrt(rr*rr-d_2*d_2)));
 								} else tmp.center=null;
-								if (Double.isInfinite(dmax)) 
+								if (dmax==Segment.MAX_RADIUS) 
 									tmp.type=0;
 								else tmp.type = s.type;
 
 							}
 						} else {
-							for (int r = 0;r<Segment.MAX_RADIUS;++r){
+							for (int r = s.minR;r<s.maxR;++r){
 								if (s.map[r]==0) continue;
 								int nr = s.map[r];
 								if (r==Segment.MAX_RADIUS-1)
 									nr += tmp.map[r];
 								else nr -= tmp.map[r];
 								tmp.map[r] = -nr;
+								if (r<tmp.minR) tmp.minR = r;
+								if (r>tmp.maxR) tmp.maxR = r; 
 								if (Math.abs(nr)>Math.abs(maxn)){
 									dmax = (r==Segment.MAX_RADIUS-1) ? r : -r;
 									maxn = nr;
@@ -1766,125 +1798,128 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 									tmp.arc = tmp.type*tmp.length/tmp.radius;
 								}
 							}//end of if						
-
 						}
 					}
-					if (s.dist+s.length>=e) break;
-					if (s.dist+s.length<=e) ri++;
-				}//end of while
-				System.out.println("Time Store "+i+" 1b : "+(System.currentTimeMillis()-ti));
-
-
-				if (tr!=null && tr.size()>0 && tmp!=null){
-					while (k<tr.size()){
-						s = tr.get(k);
-						double dd = Math.max(d,s.dist);
-						double ee = Math.min(e,s.dist+s.length);
-						double ll = ee-dd;
-						if ((s.dist<=d && s.dist+s.length>=e) || (ll>0 && ll/(e-d)>0.8)){
-							if (tmp==null){
-								tmp = new Segment(s);				
-								tmp.dist = d;
-								tmp.length = e-d;
-								tmp.arc = tmp.type*tmp.length/tmp.radius;
-							} else {
-								int dmax = Segment.double2int(tmp.radius);
-								int maxn = tmp.map[dmax];
-								if (tmp.type==s.type || s.type==0 || tmp.type==0){
-									for (int r = 0;r<Segment.MAX_RADIUS;++r){
-										if (s.map[r]==0) continue;
-										int nr = s.map[r];
-										nr += tmp.map[r];
-										tmp.map[r] = nr;
-										if (nr>=maxn){
-											dmax = r;
-											maxn = nr;
-										}
-									}
-									if (dmax!=tmp.radius){							
-										tmp.radius = dmax;
-										tmp.arc = tmp.type*tmp.length/tmp.radius;
-										if (tmp.type!=0 && tmp.type==s.type){
-											double rr = tmp.radius - which*tmp.type*trackWidth/2;
-											double d_2 = tmp.start.distance(tmp.end)*0.5;
-											Vector2D p = tmp.start.plus(tmp.end).times(0.5);
-											Vector2D n = tmp.end.minus(tmp.start).orthogonal().normalised();
-											if (n.dot(tmp.center.minus(p))<0) n = n.negated();
-											tmp.center = p.plus(n.times(Math.sqrt(rr*rr-d_2*d_2)));
-										} else tmp.center = null;
-										if (Double.isInfinite(dmax)) 
-											tmp.type=0;
-										else tmp.type = s.type;
-
-									}
-								} else {
-									for (int r = 0;r<Segment.MAX_RADIUS;++r){
-										if (s.map[r]==0) continue;
-										int nr = s.map[r];
-										if (r==Segment.MAX_RADIUS-1)
-											nr += tmp.map[r];
-										else nr -= tmp.map[r];
-										tmp.map[r] = -nr;
-										if (nr>=maxn){
-											dmax = (Double.isInfinite(r)) ? r : -r;
-											maxn = nr;
-										}
-									}
-									if (dmax!=tmp.radius){							
-										tmp.radius = Math.abs(dmax);
-										tmp.arc = tmp.type*tmp.length/tmp.radius;
-										if (dmax<0){
-											tmp.type = -tmp.type;
-											Double2IntMap nmap = new Double2IntOpenHashMap();
-											for (int r = 0;r<Segment.MAX_RADIUS;++r){
-												if (tmp.map[r]==0) continue;
-												tmp.map[r] = -tmp.map[r];
-											}										
-										}
-										if (tmp.type!=0){
-											double rr = tmp.radius - which*tmp.type*trackWidth/2;
-											double d_2 = tmp.start.distance(tmp.end)*0.5;
-											Vector2D p = tmp.start.plus(tmp.end).times(0.5);
-											Vector2D n = tmp.end.minus(tmp.start).orthogonal().normalised();
-											if (n.dot(tmp.center.minus(p))<0) n = n.negated();
-											tmp.center = p.plus(n.times(Math.sqrt(rr*rr-d_2*d_2)));
-										}
-									}
-								}//end of if												
-							}
-
-						}
-						if (tmp !=null && i==ar.length-2 && s.dist+s.length>e){
-							Segment tmp1 = new Segment();
-							tmp1.copy(s);
-							tmp1.start = null;
-							tmp1.end = null;
-							tmp1.center = null;
-							tmp1.dist = e;
-							tmp1.length = s.dist+s.length-e;
-							tmp1.arc = tmp1.type*tmp1.length/tmp1.radius;
-							tE.add(tmp1);
-						}
-
-						if (s.dist+s.length>=e) break;
-						if (s.dist+s.length<=e) k++;
-					}//end of while
-					if (tmp!=null) lTmp.add(tmp);
-				} else {//end of if
-					if (tmp!=null) lTmp.add(tmp);
 				}
-				//			System.out.println("Time Store"+i+": "+(System.currentTimeMillis()-ti));
-			}//end of for
+				if (s.dist+s.length>=e) break;
+				if (s.dist+s.length<=e) ri++;
+			}//end of while
+//			System.out.println("Time Store "+i+" 1b : "+(System.currentTimeMillis()-ti));
 
-			if (tE!=null && tE.size()>0) lTmp.addAll(tE);		
-			if (tr!=null && tr.size()>0) {
-				tr.removeElements(tIndex, k);			
-				tr.addAll(tIndex,lTmp);						
-			} else tr = new ObjectArrayList<Segment>(lTmp);
-			analyze(tr, tIndex);
-			System.out.println("Time Store: "+(System.currentTimeMillis()-ti));
-		};
-	}
+
+			if (tr!=null && tr.size()>0 && tmp!=null){
+				while (k<tr.size()){
+					s = tr.get(k);
+					double dd = Math.max(d,s.dist);
+					double ee = Math.min(e,s.dist+s.length);
+					double ll = ee-dd;
+					if ((s.dist<=d && s.dist+s.length>=e) || (ll>0 && ll/(e-d)>0.8)){
+						if (tmp==null){
+							tmp = new Segment(s);				
+							tmp.dist = d;
+							tmp.length = e-d;
+							tmp.arc = tmp.type*tmp.length/tmp.radius;
+						} else {
+							int dmax = Segment.double2int(tmp.radius);
+							int maxn = tmp.map[dmax];
+							if (tmp.type==s.type || s.type==0 || tmp.type==0){
+								for (int r = s.minR;r<=s.maxR;++r){
+									if (s.map[r]==0) continue;
+									int nr = s.map[r];
+									nr += tmp.map[r];
+									tmp.map[r] = nr;
+									if (r<tmp.minR) tmp.minR = r;
+									if (r>tmp.maxR) tmp.maxR = r;
+									if (nr>=maxn){
+										dmax = r;
+										maxn = nr;
+									}
+								}
+								if (dmax!=Segment.double2int(tmp.radius)){							
+									tmp.radius = (int)Segment.int2double(dmax);
+									tmp.arc = tmp.type*tmp.length/tmp.radius;
+									if (tmp.type!=0 && tmp.type==s.type){
+										double rr = tmp.radius - which*tmp.type*trackWidth/2;
+										double d_2 = tmp.start.distance(tmp.end)*0.5;
+										Vector2D p = tmp.start.plus(tmp.end).times(0.5);
+										Vector2D n = tmp.end.minus(tmp.start).orthogonal().normalised();
+										if (n.dot(tmp.center.minus(p))<0) n = n.negated();
+										tmp.center = p.plus(n.times(Math.sqrt(rr*rr-d_2*d_2)));
+									} else tmp.center = null;
+									if (dmax==Segment.MAX_RADIUS) 
+										tmp.type=0;
+									else tmp.type = s.type;
+
+								}
+							} else {
+								for (int r = s.minR;r<=s.maxR;++r){
+									if (s.map[r]==0) continue;
+									int nr = s.map[r];
+									if (r==Segment.MAX_RADIUS-1)
+										nr += tmp.map[r];
+									else nr -= tmp.map[r];
+									tmp.map[r] = -nr;
+									if (r<tmp.minR) tmp.minR = r;
+									if (r>tmp.maxR) tmp.maxR = r;
+									if (nr>=maxn){
+										dmax = (Double.isInfinite(r)) ? r : -r;
+										maxn = nr;
+									}
+								}
+								if (dmax!=Segment.double2int(tmp.radius)){							
+									tmp.radius = (int)Segment.int2double(Math.abs(dmax));
+									tmp.arc = tmp.type*tmp.length/tmp.radius;
+									if (dmax<0){
+										tmp.type = -tmp.type;										
+										for (int r = tmp.minR;r<tmp.maxR;++r){
+											if (tmp.map[r]==0) continue;
+											tmp.map[r] = -tmp.map[r];
+										}										
+									}
+									if (tmp.type!=0){
+										double rr = tmp.radius - which*tmp.type*trackWidth/2;
+										double d_2 = tmp.start.distance(tmp.end)*0.5;
+										Vector2D p = tmp.start.plus(tmp.end).times(0.5);
+										Vector2D n = tmp.end.minus(tmp.start).orthogonal().normalised();
+										if (n.dot(tmp.center.minus(p))<0) n = n.negated();
+										tmp.center = p.plus(n.times(Math.sqrt(rr*rr-d_2*d_2)));
+									}
+								}
+							}//end of if												
+						}
+
+					}
+					if (tmp !=null && i==ar.length-2 && s.dist+s.length>e){
+						Segment tmp1 = new Segment();
+						tmp1.copy(s);
+						tmp1.start = null;
+						tmp1.end = null;
+						tmp1.center = null;
+						tmp1.dist = e;
+						tmp1.length = s.dist+s.length-e;
+						tmp1.arc = tmp1.type*tmp1.length/tmp1.radius;
+						tE.add(tmp1);
+					}
+
+					if (s.dist+s.length>=e) break;
+					if (s.dist+s.length<=e) k++;
+				}//end of while
+				if (tmp!=null) lTmp.add(tmp);
+			} else {//end of if
+				if (tmp!=null) lTmp.add(tmp);
+			}
+			//			System.out.println("Time Store"+i+": "+(System.currentTimeMillis()-ti));
+		}//end of for
+
+		if (tE!=null && tE.size()>0) lTmp.addAll(tE);		
+		if (tr!=null && tr.size()>0) {
+			tr.removeElements(tIndex, k);			
+			tr.addAll(tIndex,lTmp);						
+		} else tr = new ObjectArrayList<Segment>(lTmp);
+		analyze(tr, tIndex);
+		System.out.println("Time Store: "+(System.currentTimeMillis()-ti));
+	};
+
 
 	@Override	
 	public ObjectList<CarControl> drive(State<NewCarState,CarControl> state) {
@@ -2175,7 +2210,7 @@ public final class CircleDriver2 extends BaseStateDriver<NewCarState,CarControl>
 		}
 		if (turn==UNKNOWN){
 			//			if (maxSpeed<150) 
-				//			maxSpeed = Double.MAX_VALUE;
+			//			maxSpeed = Double.MAX_VALUE;
 			//			else maxSpeed = cs.speedX-1;
 			isTurning = false;	
 			inTurn = false;
