@@ -911,7 +911,8 @@ public class TrackSegment {
 			if (t.type==STRT){
 				line(t.startX, t.startY, t.endX, t.endY, series);
 			} else {
-				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);								
+				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
+				series.add(t.centerx,t.centery);
 			}
 		}
 
@@ -925,8 +926,8 @@ public class TrackSegment {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
-		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
-		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
+		chart.getXYPlot().getDomainAxis().setRange(-160.0,160.0);
+		chart.getXYPlot().getRangeAxis().setRange(-110.0,210.0);
 //		chart.getXYPlot().getDomainAxis().setRange(-5.0,5.0);
 //		chart.getXYPlot().getRangeAxis().setRange(-5.0,5.0);
 
