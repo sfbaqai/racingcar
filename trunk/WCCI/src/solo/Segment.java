@@ -49,7 +49,7 @@ public final class Segment {
 	double length = -1;
 	double arc = 0;
 	int type=-2;
-	int radius = 0;
+	double radius = 0;
 	int num = 0;
 	int size = 0;
 //	int[] keys = null;
@@ -68,7 +68,7 @@ public final class Segment {
 	 */
 	
 	public final static int double2int(double r){
-		return (r>=MAX_RADIUS) ? MAX_RADIUS-1 : (int)(Math.round(r));		
+		return (r>=MAX_RADIUS) ? MAX_RADIUS-1 : (r<=0) ? 0 : (int)(Math.round(r));		
 	}
 	
 	public final static double int2double(int r){
@@ -88,12 +88,13 @@ public final class Segment {
 		length = ts.length;
 		type = ts.type;
 		arc = ts.arc;
-		radius = (int)ts.radius;
+		radius = ts.radius;
 		map = new int[MAX_RADIUS];		
-		if (radius<MAX_RADIUS-1){ 
-			map[radius] = 1;
-			minR = radius;
-			maxR = radius;
+		if (radius<MAX_RADIUS-1){
+			int rr = double2int(radius);
+			map[rr] = 1;
+			minR = rr;
+			maxR = rr;
 		} else {
 			map[MAX_RADIUS-1] = 1;
 			minR = MAX_RADIUS-1;
@@ -152,9 +153,9 @@ public final class Segment {
 		length = ts.length;
 		type = ts.type;
 		arc = ts.arc;
-		radius = (int)ts.radius;
+		radius = ts.radius;
 		if (map==null) map = new int[MAX_RADIUS];
-		map[radius]++;		
+		map[double2int(radius)]++;		
 	}
 	
 	/*public static Double2IntMap joinMap(Double2IntMap m1,Double2IntMap m2){
@@ -664,7 +665,7 @@ public final class Segment {
 				for (int i = s.maxR;i>=s.minR;--i){
 					int n = s.map[i];					
 					if (i!=MAX_RADIUS-1 && n!=0) {
-						s.map[(int)(Math.round(i+t))] = n;
+						s.map[double2int(i+t)] = n;
 						s.map[i] = 0;
 					}
 				}
@@ -672,7 +673,7 @@ public final class Segment {
 				for (int i = s.minR	;i<=s.maxR;++i){
 					int n = s.map[i]; 
 					if (i!=MAX_RADIUS-1 &&n!=0) {
-						s.map[(int)(Math.round(i+t))] = n;
+						s.map[double2int(i+t)] = n;
 						s.map[i] = 0;
 					}
 				}
@@ -700,7 +701,7 @@ public final class Segment {
 			TrackSegment ts = seg.seg;
 			if (ts==null)
 				ts = TrackSegment.createTurnSeg(seg.center.x, seg.center.y, seg.radius+t, seg.start.x, seg.start.y, seg.end.x, seg.end.y);
-			int rad = (int)Math.round(seg.radius + t);
+			double rad = Math.round(seg.radius) + t;
 			s.start = s.center.plus(s.start.minus(s.center).normalised().times(rad));
 			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
 			s.radius = rad;
@@ -723,8 +724,8 @@ public final class Segment {
 					}
 				}
 			}			
-			s.minR = (int)(s.minR+t);
-			s.maxR = (int)(s.maxR+t);
+			s.minR = (int)Math.round(s.minR+t);
+			s.maxR = (int)Math.round(s.maxR+t);
 		}
 		return s;
 	}
@@ -1421,7 +1422,7 @@ public final class Segment {
 			double xx = prev.end.x;
 			Geom.getCircle2(tmp[0], tmp[size-1], new Vector2D(xx,0), new Vector2D(xx,1), temp);					
 			temp[2] = Math.sqrt(temp[2]);
-			double r = (int)(Math.round(temp[2]-tW)+tW);
+			double r = Math.round(temp[2]-tW)+tW;
 			for (int i=from;i<to;++i)
 				marks[i] = mark;
 			if (r<REJECT_VALUE) return null;
@@ -1431,6 +1432,9 @@ public final class Segment {
 				s = new Segment(ts);
 			} else{
 				Vector2D center = new Vector2D(temp[0],temp[1]);
+				Vector2D o = tmp[0].plus(tmp[size-1]).times(0.5);
+				double d = o.distance(tmp[0]);
+				center = o.plus(center.minus(o).normalised().times(Math.sqrt(r*r-d*d) ));
 				TrackSegment ts = TrackSegment.createTurnSeg(center.x, center.y, r, tmp[0].x, tmp[0].y, tmp[1].x, tmp[1].y);
 				s = new Segment(ts);
 			}
@@ -1450,19 +1454,22 @@ public final class Segment {
 				double xx = prev.end.x;
 				Geom.getCircle2(tmp[0], tmp[s.num-1], new Vector2D(xx,0), new Vector2D(xx,1), temp);					
 				temp[2] = Math.sqrt(temp[2]);
-				double r = (int)(Math.round(temp[2]-tW)+tW);				
+				double r = Math.round(temp[2]-tW)+tW;				
 				if (r<REJECT_VALUE) return null;
 				if (r>=MAX_RADIUS-1){
 					TrackSegment ts = TrackSegment.createStraightSeg(0, tmp[1].x, tmp[0].y, tmp[1].x, tmp[1].y);
 					s = new Segment(ts);
 				} else{
 					Vector2D center = new Vector2D(temp[0],temp[1]);
+					Vector2D o = tmp[0].plus(tmp[size-1]).times(0.5);
+					double d = o.distance(tmp[0]);
+					center = o.plus(center.minus(o).normalised().times(Math.sqrt(r*r-d*d) ));
 					TrackSegment ts = TrackSegment.createTurnSeg(center.x, center.y, r, tmp[0].x, tmp[0].y, tmp[1].x, tmp[1].y);
 					s = new Segment(ts);
 				}
-				if (s.minR>r) s.minR = (int)r;
-				if (s.maxR<r) s.maxR = (int)r;
-				s.map[(int)r]++;
+				if (s.minR>r) s.minR = (int)Math.round(r);
+				if (s.maxR<r) s.maxR = (int)Math.round(r);
+				s.map[(int)Math.round(r)]++;
 				rs.set(0, s);
 				
 				return rs;
@@ -1476,19 +1483,22 @@ public final class Segment {
 					double xx = prev.end.x;
 					Geom.getCircle2(tmp[0], tmp[s.num-1], new Vector2D(xx,0), new Vector2D(xx,1), temp);					
 					temp[2] = Math.sqrt(temp[2]);
-					double r = (int)(Math.round(temp[2]-tW)+tW);				
+					double r = Math.round(temp[2]-tW)+tW;				
 					if (r<REJECT_VALUE) continue;
 					if (r>=MAX_RADIUS-1){
 						TrackSegment ts = TrackSegment.createStraightSeg(0, tmp[0].x, tmp[0].y, tmp[1].x, tmp[1].y);
 						s = new Segment(ts);
 					} else{
 						Vector2D center = new Vector2D(temp[0],temp[1]);
+						Vector2D o = tmp[0].plus(tmp[size-1]).times(0.5);
+						double d = o.distance(tmp[0]);
+						center = o.plus(center.minus(o).normalised().times(Math.sqrt(r*r-d*d) ));
 						TrackSegment ts = TrackSegment.createTurnSeg(center.x, center.y, r, tmp[0].x, tmp[0].y, tmp[1].x, tmp[1].y);
 						s = new Segment(ts);
 					}
-					if (s.minR>r) s.minR = (int)r;
-					if (s.maxR<r) s.maxR = (int)r;
-					s.map[(int)r]++;
+					if (s.minR>r) s.minR = (int)Math.round(r);
+					if (s.maxR<r) s.maxR = (int)Math.round(r);
+					s.map[(int)Math.round(r)]++;
 					rs.set(0, s);
 				} else if (s.type!=Segment.UNKNOWN){					
 					int r = Segment.double2int(s.radius);					
@@ -1582,7 +1592,7 @@ public final class Segment {
 					}
 					if (v[k].y>s.end.y) break;
 				}
-				int count = 0;
+				int count = size;
 				if (size>=2 && s.type!=0){
 					Vector2D p = tmp[0];
 					Vector2D q = tmp[size-1];
@@ -1610,7 +1620,8 @@ public final class Segment {
 								marks[kk] = 0;
 							}						
 						}
-						rs.addAll(fillGap(v, prevLastIdx, prevLastIdx+size, tW, prev, marks, tmp, size));
+						ObjectList<Segment> li = fillGap(v, prevLastIdx, prevLastIdx+size, tW, prev, marks, tmp, size);
+						if (li!=null && li.size()>0) rs.addAll(li);
 					} else if ((size>=2 && mark==2) || size>=3) {
 						rs.add(s);
 						prev = s;
