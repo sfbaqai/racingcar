@@ -4,10 +4,14 @@ import java.awt.geom.Point2D;
 
 import com.graphbuilder.geom.Point2d;
 
-public class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.Serializable  {
+public final class Vector2D extends java.awt.geom.Point2D implements Point2d,java.io.Serializable  {
 	
-	double x;
-	double y;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4297697783012622105L;
+	public double x;
+	public double y;
 	
 	
 	/**
