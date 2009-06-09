@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Comparator;
 
 import javax.imageio.ImageIO;
 
@@ -21,9 +22,9 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import antlr.collections.impl.Vector;
 import cern.colt.Sorting;
 import cern.colt.Swapper;
-
 
 import com.graphbuilder.curve.ControlPath;
 
@@ -37,24 +38,54 @@ public final class EdgeDetector {
 	public final static double DELTA = 0.001;
 	final static double PRECISION = 1000000.0d;
 	public final static double PI_2 = Math.PI/2;
+	public int whichE = 0;//highest point belong to which edge,0 = unknown
 
 	public final static double UNKNOWN_ANGLE = -2;
 	public final static double DELTATIME = 0.002;
 	public final static double MAXSTEERSPEED = Math.PI*2/3;
 	public final static double ANGLEACCURACY =100.0d; 
 	public final static double MINDIST = 1;
-	public final static Swapper swapper = new Swapper(){
+	
+	public final static Comparator<Vector2D> Vector2DComparator = new Comparator<Vector2D>(){
+
+		@Override
+		public final int compare(Vector2D a, Vector2D b) {
+			// TODO Auto-generated method stub
+			return (a.y==b.y) ? 0 : (a.y>b.y) ? 1 : -1;
+		}};
+		
+	
+//	public final static Swapper swapper = new Swapper(){
+//		@Override
+//		public void swap(int i, int j) {
+//			// TODO Auto-generated method stub
+//			double tmp = angles[i];
+//			angles[i] = angles[j];
+//			angles[j] = tmp;
+//			Vector2D v = backP[i];
+//			backP[i] = backP[j];
+//			backP[j] = v;
+//		}
+//	};
+	
+	public static class Swap implements Swapper{
+		Object[] backP;
+		
+		public Swap(Object[] b) {
+			// TODO Auto-generated constructor stub
+			backP = b;
+		}
+		
 		@Override
 		public void swap(int i, int j) {
 			// TODO Auto-generated method stub
-			double tmp = angles[i];
-			angles[i] = angles[j];
-			angles[j] = tmp;
-			Vector2D v = backP[i];
+			Object v = backP[i];
 			backP[i] = backP[j];
 			backP[j] = v;
-		}
-	};
+			
+		}		
+	}
+	
 	Vector2D currentPointAhead = null;
 	ControlPath cp=null;
 	double[] tracks;
@@ -67,17 +98,17 @@ public final class EdgeDetector {
 	double curAngle;
 	double maxY;
 
-	public static ObjectArrayList<Vector2D> left = null;
-	public static ObjectArrayList<Vector2D> right = null;
+	public ObjectArrayList<Vector2D> left = null;
+	public ObjectArrayList<Vector2D> right = null;
 	private static Vector2D[] backP = new Vector2D[NUM_POINTS];//x is axis along track axis
 	private static Vector2D[] backR = new Vector2D[NUM_POINTS];//x is axis along track axis
-	public static ObjectArrayList<Vector2D> allPoints = null;
-	public static ObjectArrayList<Vector2D> allPointsR = null;
-	private static double[] angles = new double[NUM_POINTS];
-	DoubleArrayList x = null;
-	DoubleArrayList y = null;
+	public ObjectArrayList<Vector2D> allPoints = null;
+//	public static ObjectArrayList<Vector2D> allPointsR = null;
+//	private static double[] angles = new double[NUM_POINTS];
+//	DoubleArrayList x = null;
+//	DoubleArrayList y = null;
 	int numpoint = 0;
-	int firstIndexMax = -1,lastIndexMax = -1;
+//	int firstIndexMax = -1,lastIndexMax = -1;
 
 	double maxDistance=-1;
 	public double leftStraight = -1;
@@ -88,8 +119,8 @@ public final class EdgeDetector {
 	Vector2D center = null;
 	double radiusL = -1;
 	double radiusR = -1;
-	private static double[] tmpX = new double[NUM_POINTS];//x is axis along track axis
-	private static double[] tmpY = new double[NUM_POINTS];
+//	private static double[] tmpX = new double[NUM_POINTS];//x is axis along track axis
+//	private static double[] tmpY = new double[NUM_POINTS];
 //	private static double[] tmpRx = new double[NUM_POINTS];//x is axis along track axis
 //	private static double[] tmpRy = new double[NUM_POINTS];
 
@@ -106,20 +137,27 @@ public final class EdgeDetector {
 		this.distRaced = edgeDetector.distRaced;
 		this.curAngle = edgeDetector.curAngle;
 		this.maxY = edgeDetector.maxY;
+		this.center = (edgeDetector.center==null) ? null : new Vector2D(edgeDetector.center);
+		this.radiusL = edgeDetector.radiusL;
+		this.radiusR = edgeDetector.radiusR;		
 //		this.left = edgeDetector.left;
 //		this.right = edgeDetector.right;
-		this.firstIndexMax = edgeDetector.firstIndexMax;
-		this.lastIndexMax = edgeDetector.lastIndexMax;
+//		this.firstIndexMax = edgeDetector.firstIndexMax;
+//		this.lastIndexMax = edgeDetector.lastIndexMax;
 		this.maxDistance = edgeDetector.maxDistance;
 		this.leftStraight = edgeDetector.leftStraight;
 		this.rightStraight = edgeDetector.rightStraight;
 		this.straightDist = edgeDetector.straightDist;
 		this.highestPoint = edgeDetector.highestPoint;
-		this.x = new DoubleArrayList(edgeDetector.x);
-		this.y = new DoubleArrayList(edgeDetector.y);
+//		this.x = new DoubleArrayList(edgeDetector.x);
+//		this.y = new DoubleArrayList(edgeDetector.y);
 		this.numpoint = edgeDetector.numpoint;
 		this.turn = edgeDetector.turn;		
-		this.currentPointAhead = edgeDetector.currentPointAhead;
+		this.currentPointAhead = edgeDetector.currentPointAhead;		
+		this.whichE = edgeDetector.whichE;
+		this.left = (edgeDetector.left!=null)? new ObjectArrayList<Vector2D>(edgeDetector.left) : null;
+		this.right = (edgeDetector.right!=null)? new ObjectArrayList<Vector2D>(edgeDetector.right) : null;
+		this.allPoints = (edgeDetector.allPoints!=null)? new ObjectArrayList<Vector2D>(edgeDetector.allPoints) : null;
 	}
 
 
@@ -134,8 +172,8 @@ public final class EdgeDetector {
 		//		curPos = -cs.getTrackPos();
 		curAngle = Math.round(cs.getAngle()*PRECISION)/PRECISION;
 		maxDistance=-1;
-		firstIndexMax = -1;
-		lastIndexMax = -1;		
+		int firstIndexMax = -1;
+		int lastIndexMax = -1;		
 		maxY = -1;
 		distRaced = Math.round(cs.distRaced*PRECISION)/PRECISION;			
 		trackWidth =-1;
@@ -183,11 +221,11 @@ public final class EdgeDetector {
 					continue;
 				}
 			}			
-			tmpX[j] = xx;
-			tmpY[j] = yy;
+//			tmpX[j] = xx;
+//			tmpY[j] = yy;
 			Vector2D v = new Vector2D(xx,yy);
 			backP[j] = v;
-			angles[j] = angle;
+//			angles[j] = angle;
 			j++;
 		}
 		for (int i=0;i<j;++i){
@@ -195,14 +233,28 @@ public final class EdgeDetector {
 		}
 		numpoint = j;	
 		allPoints = ObjectArrayList.wrap(backP,j);
-		allPointsR = ObjectArrayList.wrap(backR,j);
-		this.x = DoubleArrayList.wrap(tmpX, j);
-		this.y = DoubleArrayList.wrap(tmpY, j);
+//		allPointsR = ObjectArrayList.wrap(backR,j);
+//		this.x = DoubleArrayList.wrap(tmpX, j);
+//		this.y = DoubleArrayList.wrap(tmpY, j);
 
 
-		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(tmpX[firstIndexMax],tmpY[firstIndexMax]) : null;		
+		highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? backP[firstIndexMax] : null;		
 		left = (firstIndexMax>0 && firstIndexMax<numpoint) ? ObjectArrayList.wrap(backP,firstIndexMax)  : null;
 		right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(backR,numpoint-1-lastIndexMax) : null;
+		if (firstIndexMax>0){
+			Vector2D v = backP[firstIndexMax-1];
+			if (highestPoint.length()<99.95 && highestPoint.distance(v)<trackWidth) {
+				whichE = -1; 
+				left = (firstIndexMax>0 && firstIndexMax<numpoint) ? ObjectArrayList.wrap(backP,firstIndexMax+1)  : null;
+			}
+		}
+		if (whichE==0 && lastIndexMax<numpoint-1){
+			Vector2D v = backP[lastIndexMax+1];
+			if (highestPoint!=null && highestPoint.length()<99.95 && highestPoint.distance(v)<trackWidth) {
+				whichE = 1;
+				right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(backR,numpoint-lastIndexMax) : null;
+			}
+		}
 		
 		double l0 = (left!=null && left.size()>0) ? left.get(0).x : -10000;
 		double l1 = (left!=null && left.size()>0) ? left.get(left.size()-1).x : -10000;
@@ -245,6 +297,36 @@ public final class EdgeDetector {
 		}
 		return val;
 	}
+	
+public final static void join(ObjectArrayList<Vector2D> edge,ObjectArrayList<Vector2D> oldEdge){
+	int len = oldEdge.size();
+	Vector2D p = null;
+	
+	for (int i=0;i<len;++i){
+		Vector2D v = oldEdge.get(i);
+		double x = v.x;
+		double y = v.y;
+		if (Math.sqrt(x*x+y*y)>99.0) continue;			
+					
+		if (edge!=null && edge.size()>0){
+			int index = Sorting.binarySearchFromTo(edge.elements(), v, 0, edge.size()-1,Vector2DComparator);		
+			if (index<0) index = -index-1;
+			if (index>0){				
+				p = edge.get(index-1);
+				if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;				
+			}
+	
+			if (index<edge.size()){				
+				p = edge.get(index);
+				if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;					
+			}
+			
+			edge.add(v);
+		}
+	}
+	if (edge!=null && edge.size()>0)
+	Arrays.quicksort(edge.elements(), 0,edge.size()-1,new Swap(edge.elements()), Vector2DComparator);
+}
 
 public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	long ti = System.currentTimeMillis();
@@ -253,7 +335,7 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	if (trackWidth<=0) {
 		trackWidth = ed.trackWidth;
 	}	
-	double straightDist = Math.max(ed.straightDist - distRaced,this.straightDist);
+	straightDist = Math.max(ed.straightDist - distRaced,this.straightDist);
 	double tW = Math.round(trackWidth)*0.5d;
 	double prevTW = Math.round(ed.trackWidth)*0.5d;
 	double toMiddle = -tW*curPos;
@@ -262,107 +344,93 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	int len=ed.numpoint;
 
 	double scale = tW/prevTW;		
-	double[] xx = ed.x.elements();
-	double[] yy = ed.y.elements();
+//	double[] xx = ed.x.elements();
+//	double[] yy = ed.y.elements();	
 	
 	AffineTransform at = new AffineTransform();
 	at.scale(scale, 1);
 	at.translate(ax, -distRaced);
-	Vector2D p = null;
 	int sz = (numpoint+ed.numpoint<NUM_POINTS) ? NUM_POINTS : (numpoint+ed.numpoint)*2;
-	if (tmpX.length<sz){
-		tmpX = new double[sz];
-		tmpY = new double[sz];		
+	if (backP.length<sz){
+//		tmpX = new double[sz];
+//		tmpY = new double[sz];		
 		backR = new Vector2D[sz];
 		System.arraycopy(backP, 0, backR, 0, numpoint);
 		backP = new Vector2D[sz];
 		System.arraycopy(backR, 0, backP, 0, numpoint);
-		System.arraycopy(angles, 0, tmpX, 0, numpoint);
-		angles = new double[sz];
-		System.arraycopy(tmpX, 0, angles, 0, numpoint);
+//		System.arraycopy(angles, 0, tmpX, 0, numpoint);
+//		angles = new double[sz];
+//		System.arraycopy(tmpX, 0, angles, 0, numpoint);
 		left = null;
 		right = null;
-	} 	
-	boolean sorted = true;
-	for (int i=0;i<len;++i){			
-		double x = xx[i]*scale;
-		double y = yy[i];
-		if (Math.sqrt(x*x+y*y)>99.0) continue;			
-		x += ax;
-		y -= distRaced;			
-		if (y<0 || y<straightDist) continue;
-		double  angle = (x==0) ? PI_2 : Math.PI-Math.atan2(y,x);
-		if (angle<0 || angle>Math.PI) continue;
-		angle=Math.round(angle*PRECISION)/PRECISION;			
-					
-		int index = Sorting.binarySearchFromTo(angles, angle, 0, numpoint-1);
-		if (index>=0) continue;
-		index = -index-1;
-		if (index>0){				
-			p = backP[index-1];
-			if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;				
-		}
-
-		if (index<numpoint){				
-			p = backP[index];
-			if (Math.hypot(p.x-x,p.y-y)<MINDIST) continue;					
-		}
-		
-
-		if (index!=numpoint) sorted = false;
-		angles[numpoint] = angle;
-		backP[numpoint++] = new Vector2D(x,y);				
+	} 		
+	Vector2D[] bF = new Vector2D[len];
+	Vector2D[] bB = new Vector2D[len];
+	if (ed.allPoints!=null)
+	for (int i=0;i<len;++i){
+		Vector2D v = ed.allPoints.get(i);
+		v.x *= scale;
+		v.x += ax;
+		v.y -= distRaced;		
+		bF[i] = v;
+		bB[len-1-i] = bF[i];
 	}
 		
-	if (!sorted) solo.Arrays.quicksort(angles,0,numpoint-1, swapper);
-	System.out.println("I : "+(System.currentTimeMillis()-ti));
-
-	firstIndexMax = -1;
-	lastIndexMax = -1;
-	leftStraight=-1;
-	rightStraight=-1;
-	maxY = -1;
-	maxDistance = -1;			
-		
-	
-
-	for (int i=0;i<numpoint;++i){
-		Vector2D v = backP[i];
-		if (v==null) continue;			
-		tmpX[i] = v.x;
-		tmpY[i] = v.y;
-		backR[numpoint-1-i] = v;
-
-		double dist = v.length();
-
-		if (maxDistance<dist)
-			maxDistance = dist;
-
-		if (maxY<v.y && dist<=99.95){
-			maxY = v.y;
-			firstIndexMax =i;
-			lastIndexMax =i;				
-		} else if (maxY==v.y && lastIndexMax>=0 && new Vector2D(xx[lastIndexMax],yy[lastIndexMax]).length()<=99.95){
-			lastIndexMax =i;
-		} else if (dist>99.95){
-			maxY = Math.max(maxY,v.y);
-			if (firstIndexMax>=0 && new Vector2D(xx[firstIndexMax],yy[firstIndexMax]).length()<=99.95){
-				firstIndexMax =i;
-				lastIndexMax =i;
-			} else {
-				lastIndexMax = i;
+	if (ed!=null && ed.left!=null && ed.left.size()>0) join(left,ObjectArrayList.wrap(bF, ed.left.size()));
+	if (ed!=null && ed.right!=null && ed.right.size()>0)join(right,ObjectArrayList.wrap(bB, ed.right.size()));
+	Vector2D lower = (highestPoint.y<ed.highestPoint.y) ? highestPoint : ed.highestPoint;
+	int whichL = (highestPoint.y<ed.highestPoint.y) ? whichE : ed.whichE;
+	Vector2D higher = (highestPoint.y<ed.highestPoint.y) ? ed.highestPoint : highestPoint;
+	int whichH = (highestPoint.y<ed.highestPoint.y) ? ed.whichE : whichE;
+	if (lower.distance(higher)>0){
+		double  angleH = (higher.x==0) ? PI_2 : Math.PI-Math.atan2(higher.y,higher.x);	
+		angleH=Math.round(angleH*PRECISION)/PRECISION;
+		double  angleL = (lower.x==0) ? PI_2 : Math.PI-Math.atan2(lower.y,lower.x);	
+		angleL=Math.round(angleL*PRECISION)/PRECISION;
+		if (whichL==0){
+			if (angleL<angleH && left!=null) {
+				int index = Sorting.binarySearchFromTo(left.elements(), lower, 0, left.size()-1, Vector2DComparator);
+				if (index<0) index = -index-1;
+				left.add(index,lower);
+			} else if (angleL>angleH && right!=null){
+				int index = Sorting.binarySearchFromTo(right.elements(), lower, 0, right.size()-1, Vector2DComparator);
+				if (index<0) index = -index-1;
+				right.add(index,lower);
 			}
 		}
 	}
-	System.out.println("J : "+(System.currentTimeMillis()-ti));
-	this.x = DoubleArrayList.wrap(tmpX, numpoint);
-	this.y = DoubleArrayList.wrap(tmpY, numpoint);
-	allPoints = ObjectArrayList.wrap(backP,numpoint);
-	allPointsR = ObjectArrayList.wrap(backR,numpoint);
+		
+	if (whichH==0){
+		Vector2D point = (left==null || left.size()==0) ? null : left.get(left.size()-1);
+		if (point!=null && point.distance(higher)<trackWidth){
+			left.add(higher);
+			whichH = -1;
+		} else {
+			point = (right==null || right.size()==0) ? null : right.get(right.size()-1);
+			if (point!=null && point.distance(higher)<trackWidth){
+				right.add(higher);
+				whichH = 1;
+			}	
+		}
+	}	
+	highestPoint = higher;
+	whichE = whichH;
+	System.out.println("I : "+(System.currentTimeMillis()-ti));
+
+	int lS = (left==null || left.size()==0) ? 0 : left.size();
+	int rS = (right==null || right.size()==0) ? 0 : right.size();
+	numpoint = (whichE==0) ? lS+rS+1 : lS+rS;
+	Vector2D[] newArr = new Vector2D[numpoint];
+	int j = left.size();
+	if (left!=null)
+		System.arraycopy(left.elements(), 0, newArr, 0, j);
+	if (whichE==0)
+		newArr[j++] = highestPoint;
 	
-	highestPoint = (firstIndexMax>0 && firstIndexMax<numpoint) ? new Vector2D(tmpX[firstIndexMax],tmpY[firstIndexMax]) : null;
-	left = (firstIndexMax>0 && firstIndexMax<numpoint) ? ObjectArrayList.wrap(backP,firstIndexMax)  : null;
-	right = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? ObjectArrayList.wrap(backR,numpoint-1-lastIndexMax) : null;	
+	if (right!=null)
+		System.arraycopy(right.elements(), 0, newArr, j, right.size());
+
+	allPoints = ObjectArrayList.wrap(newArr, numpoint);
 	double dL = getStraightDist(left);
 	double dR = getStraightDist(right);
 	straightDist = Math.max(dL, dR);
@@ -375,9 +443,11 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 public int estimateTurn(){						
 	boolean all=true;
 	double toRight = toRightEdge();
-	double[] x = this.x.elements();
+	int firstIndexMax = left.size();
+	int lastIndexMax = firstIndexMax;
 	for (int i=firstIndexMax;i<=lastIndexMax;++i){
-		double r = x[i]+toRight;
+		Vector2D v = allPoints.get(i); 
+		double r = v.x+toRight;
 		if (!(Math.abs(r)<=DELTA || Math.abs(r-trackWidth)<=DELTA)){
 			all = false;
 		} else if (r>0){
@@ -392,20 +462,22 @@ public int estimateTurn(){
 
 	double sum=0;		
 	for (int i=0;i<firstIndexMax;++i){
-		sum += x[i];
+		Vector2D v = allPoints.get(i);
+		sum += v.x;
 	}
 	double meanL = Math.round(sum/firstIndexMax*10000)/10000.0d;
 	sum=0;
-	int len = this.x.size();
+	int len = this.allPoints.size();
 	for (int i=lastIndexMax+1;i<len;++i){
-		sum+=x[i];
+		Vector2D v = allPoints.get(i);
+		sum += v.x;
 	}
 	double meanR = Math.round(sum/(len-1-lastIndexMax)*10000.0)/10000.0d;
 
 	if (firstIndexMax<=0 || lastIndexMax>=len-1)
 		return MyDriver.UNKNOWN;
-	double rl = x[firstIndexMax-1];
-	double rr = x[lastIndexMax+1];
+	double rl = allPoints.get(firstIndexMax-1).x;
+	double rr = allPoints.get(lastIndexMax+1).x;
 
 	if (Math.abs(rl-meanL)<=DELTA && Math.abs(rr-meanR)<=DELTA){
 		if (maxDistance>=99) {		
@@ -448,35 +520,6 @@ public double getTrackWidth() {
  */
 public void setTrackWidth(double trackWidth) {
 	this.trackWidth = trackWidth;
-}
-
-/**
- * @return the x
- */
-public double[] getX() {
-	return x.elements();
-}
-
-
-/**
- * @return the y
- */
-public double[] getY() {
-	return y.elements();
-}
-
-/**
- * @return the firstIndexMax
- */
-public int getFirstIndexMax() {
-	return firstIndexMax;
-}
-
-/**
- * @param firstIndexMax the firstIndexMax to set
- */
-public void setFirstIndexMax(int firstIndexMax) {
-	this.firstIndexMax = firstIndexMax;
 }
 
 /**
@@ -620,8 +663,9 @@ public static void drawEdge(Vector2D[] vs,final String title){
 public static void drawEdge(EdgeDetector ed,final String title){			
 	XYSeries series = new XYSeries("Curve");
 
-	for (int i=0;i<ed.numpoint;++i){			
-		series.add(ed.x.get(i),ed.y.get(i));
+	for (int i=0;i<ed.numpoint;++i){
+		Vector2D v = ed.allPoints.get(i);
+		series.add(v.x,v.y);
 	}
 
 	XYDataset xyDataset = new XYSeriesCollection(series);
@@ -702,7 +746,7 @@ double radius(double x1, double y1, double x2, double y2, double x3, double y3)
 
 
 public Vector2D[] getEdges(){
-	return Vector2D.toVector2D(x.elements(),y.elements());
+	return allPoints.elements();
 }
 
 public ObjectArrayList<Vector2D> getLeftEdge(){
