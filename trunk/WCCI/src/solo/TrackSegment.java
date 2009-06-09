@@ -67,7 +67,7 @@ public class TrackSegment {
 	}
 
 
-	public static TrackSegment createStraightSeg(double dist,double startX,double startY,double endX,double endY){
+	public final static TrackSegment createStraightSeg(double dist,double startX,double startY,double endX,double endY){
 		double radius = Double.MAX_VALUE;
 		double arc = -1;
 		double dx = endX-startX;
@@ -79,7 +79,7 @@ public class TrackSegment {
 		return new TrackSegment(type,centerx,centery,length,dist,radius,arc,startX,startY,endX,endY);
 	}
 
-	public static TrackSegment createTurnSeg(double dist,double centerx,double centery,double radius,double startX,double startY,double endX,double endY,double x2,double y2){		
+	public final static TrackSegment createTurnSeg(double dist,double centerx,double centery,double radius,double startX,double startY,double endX,double endY,double x2,double y2){		
 		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
 		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);
 		Vector2D v3 = new Vector2D(x2-centerx,y2-centery);
@@ -101,7 +101,7 @@ public class TrackSegment {
 		return new TrackSegment(type,centerx,centery,length,dist,radius,angle,startX,startY,endX,endY);
 	}
 	
-	public static TrackSegment createTurnSeg(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){		
+	public final static TrackSegment createTurnSeg(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){		
 		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
 		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);		
 		double angle = Vector2D.angle(v1, v2);	
@@ -116,7 +116,21 @@ public class TrackSegment {
 		return new TrackSegment(type,centerx,centery,length,0,radius,angle,startX,startY,endX,endY);
 	}
 	
-	public static double distance(double x1,double y1,double x2,double y2){
+	public final static int getTurn(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){		
+		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
+		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);		
+		double angle = Vector2D.angle(v1, v2);	
+//		angle = (-Math.PI*2+angle)%(Math.PI*2);
+		if (angle<-Math.PI) 
+			angle += 2*Math.PI;
+		else if (angle>Math.PI) 
+			angle -= 2*Math.PI;
+		
+		return (angle<0) ? LFT : RGT;				
+	}
+
+	
+	public final static double distance(double x1,double y1,double x2,double y2){
 		double dx = x1-x2;
 		double dy = y1-y2;
 		return Math.sqrt(dx*dx+dy*dy);
@@ -912,7 +926,7 @@ public class TrackSegment {
 				line(t.startX, t.startY, t.endX, t.endY, series);
 			} else {
 				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
-				series.add(t.centerx,t.centery);
+//				series.add(t.centerx,t.centery);
 			}
 		}
 
@@ -926,8 +940,8 @@ public class TrackSegment {
 
 		// Create plot and show it
 		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
-		chart.getXYPlot().getDomainAxis().setRange(-160.0,160.0);
-		chart.getXYPlot().getRangeAxis().setRange(-110.0,210.0);
+		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 //		chart.getXYPlot().getDomainAxis().setRange(-5.0,5.0);
 //		chart.getXYPlot().getRangeAxis().setRange(-5.0,5.0);
 
