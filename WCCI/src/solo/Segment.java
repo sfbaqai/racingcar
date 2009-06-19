@@ -577,16 +577,21 @@ public final class Segment {
 			points = tmp;			
 		}
 
+		Vector2D point = new Vector2D(p);
 		if (num>=LIM && p.y>=start.y && p.y<=end.y) return;
 		if (num>=LIM && p.y<start.y){
 			start = new Vector2D(p);
-			points[0] = p;
+			start.x = Math.round(start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			start.y = Math.round(start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			points[0] = point;
 			return;
 		}
 
 		if (num>=LIM && p.y>end.y){
 			end = new Vector2D(p);
-			points[num-1] = p;
+			end.x = Math.round(end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			end.y = Math.round(end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			points[num-1] = point;
 			return;
 		}
 
@@ -594,10 +599,10 @@ public final class Segment {
 		if (index>=0) return;
 		index = -index - 1;
 		if (index>=num) {
-			points[num] = p ;
+			points[num] = point ;
 		} else {
 			System.arraycopy(points, index, points, index+1, num-index);
-			points[index] = p;
+			points[index] = point;
 		}
 		num++;
 
@@ -610,8 +615,7 @@ public final class Segment {
 				start = new Vector2D(p);
 			else {
 				double dy = end.y-start.y;
-				double dx = end.x-start.x;				
-				Vector2D point = null;				
+				double dx = end.x-start.x;										
 				if (Math.abs(dx)<=TrackSegment.EPSILON){					
 					point = p;					
 				} else if (points!=null){
@@ -627,6 +631,8 @@ public final class Segment {
 
 				if (point!=null) {
 					start = new Vector2D(point);
+					start.x = Math.round(start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+					start.y = Math.round(start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 					if (Math.abs(dx)<=TrackSegment.EPSILON)
 						end.x = start.x;									
 				}
@@ -642,8 +648,7 @@ public final class Segment {
 				end = new Vector2D(p);
 			else {
 				double dy = end.y-start.y;
-				double dx = end.x-start.x;		
-				Vector2D point = null;				
+				double dx = end.x-start.x;						
 				if (Math.abs(dx)<=TrackSegment.EPSILON)	{					
 					end.x = start.x;
 					point = p;					
@@ -660,6 +665,8 @@ public final class Segment {
 				
 				if (point!=null){
 					end = new Vector2D(point);
+					end.x = Math.round(end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+					end.y = Math.round(end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 					if (Math.abs(dx)<=TrackSegment.EPSILON)
 						end.x = start.x;					
 				}
@@ -712,10 +719,17 @@ public final class Segment {
 		if (seg.type==0 && Math.abs(s.start.x-s.end.x)<=TrackSegment.EPSILON){									
 			s.start.x += t;
 			s.end.x += t;
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;			
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 			s.dist = seg.dist;
 			if (s.seg!=null){
-				s.seg.startX += t;
-				s.seg.endX += t;
+				s.seg.startX = s.start.x;
+				s.seg.endX = s.end.x;
+				s.seg.length = s.length;
 			}
 			//			if (s.points!=null){
 			//				for (int i = 0;i<s.num;++i){
@@ -727,24 +741,50 @@ public final class Segment {
 			Vector2D n = s.end.minus(s.start).orthogonal().normalised();
 			s.start = s.start.plus(n.times(-t));
 			s.end = s.end.plus(n.times(-t));
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 			if (s.seg!=null){
 				s.seg.startX = s.start.x;
 				s.seg.startY = s.start.y;
 				s.seg.endX = s.end.x;
 				s.seg.endY = s.end.y;
-
+				s.seg.length = s.length;
+				s.seg.centerx = s.center.x;
+				s.seg.centery = s.center.y;
 			}
 		} else{
 			TrackSegment ts = seg.seg;
 			if (ts==null)
 				ts = TrackSegment.createTurnSeg(seg.center.x, seg.center.y, seg.radius+t, seg.start.x, seg.start.y, seg.end.x, seg.end.y);
-			int rad = (int)Math.round(seg.radius + t);
-			s.start = s.center.plus(s.start.minus(s.center).normalised().times(rad));
-			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
+			int rad = (int)Math.round(seg.radius + t);		
+			Vector2D nS = s.start.minus(s.center).times(1.0/seg.radius);
+			Vector2D nE = s.end.minus(s.center).times(1.0/seg.radius);
+//			nS.x = Math.round(nS.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nS.y = Math.round(nS.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nE.x = Math.round(nE.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nE.y = Math.round(nE.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start = s.center.plus(nS.times(rad));
+			s.end = s.center.plus(nE.times(rad));	
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			
 			s.radius = rad;
 			s.arc = ts.arc;
 			s.length = Math.abs(s.arc * rad);
 			s.dist = seg.dist;
+			if (s.seg!=null){
+				s.seg.startX = s.start.x;
+				s.seg.startY = s.start.y;
+				s.seg.endX = s.end.x;
+				s.seg.endY = s.end.y;
+				s.seg.length = s.length;
+				s.seg.centerx = s.center.x;
+				s.seg.centery = s.center.y;
+			}
 			s.points = null;
 			//			if (s.points!=null){
 			//				for (int i = 0;i<s.num;++i){					
@@ -771,6 +811,7 @@ public final class Segment {
 			//			s.minR = (int)(s.minR+t);
 			//			s.maxR = (int)(s.maxR+t);
 		}
+		
 		return s;
 	}
 
@@ -783,10 +824,15 @@ public final class Segment {
 		if (seg.type==0  && Math.abs(s.start.x-s.end.x)<=TrackSegment.EPSILON){									
 			s.start.x += t;
 			s.end.x += t;
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 			s.dist = seg.dist;
 			if (seg.seg!=null){
-				seg.seg.startX += t;
-				seg.seg.endX += t;
+				seg.seg.startX = s.start.x;
+				seg.seg.endX = s.end.x;
+				seg.length = s.length;
 			}
 			s.points = null;
 			//			if (s.points!=null){
@@ -798,24 +844,49 @@ public final class Segment {
 			Vector2D n = s.end.minus(s.start).orthogonal().normalised();
 			s.start = s.start.plus(n.times(-t));
 			s.end = s.end.plus(n.times(-t));
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 			if (s.seg!=null){
 				s.seg.startX = s.start.x;
 				s.seg.startY = s.start.y;
 				s.seg.endX = s.end.x;
 				s.seg.endY = s.end.y;
-
+				s.seg.length = s.length;
+				s.seg.centerx = s.center.x;
+				s.seg.centery = s.center.y;
 			}
 		} else {
 			TrackSegment ts = seg.seg;
 			if (ts==null)
 				ts = TrackSegment.createTurnSeg(seg.center.x, seg.center.y, seg.radius+t, seg.start.x, seg.start.y, seg.end.x, seg.end.y);
 			double rad = Math.round(seg.radius) + t;
-			s.start = s.center.plus(s.start.minus(s.center).normalised().times(rad));
-			s.end = s.center.plus(s.end.minus(s.center).normalised().times(rad));
+			Vector2D nS = s.start.minus(s.center).times(1.0/seg.radius);
+			Vector2D nE = s.end.minus(s.center).times(1.0/seg.radius);
+//			nS.x = Math.round(nS.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nS.y = Math.round(nS.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nE.x = Math.round(nE.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+//			nE.y = Math.round(nE.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start = s.center.plus(nS.times(rad));
+			s.end = s.center.plus(nE.times(rad));		
+			s.start.x = Math.round(s.start.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.start.y = Math.round(s.start.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.x = Math.round(s.end.x*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+			s.end.y = Math.round(s.end.y*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 			s.radius = rad;
 			s.arc = ts.arc;
 			s.length = Math.abs(s.arc * rad);
 			s.dist = seg.dist;
+			if (s.seg!=null){
+				s.seg.startX = s.start.x;
+				s.seg.startY = s.start.y;
+				s.seg.endX = s.end.x;
+				s.seg.endY = s.end.y;
+				s.seg.length = s.length;
+				s.seg.centerx = s.center.x;
+				s.seg.centery = s.center.y;
+			}
 			s.points = null;
 			//			if (s.points!=null){
 			//				for (int i = 0;i<s.num;++i){					
@@ -1280,7 +1351,7 @@ public final class Segment {
 
 				if (i==to-3){					
 					Vector2D p = t.plus(q.minus(t).normalised().times(Math.sqrt(radius*radius-d)));
-					ts = TrackSegment.createTurnSeg(0, p.x, p.y, radius, x1, y1, x3, y3,x2,y2);
+					ts = TrackSegment.createTurnSeg(p.x, p.y, radius, x1, y1, x3, y3);					
 					Segment s = new Segment(ts,tW);
 					for (int jj=i;jj<to;++jj)
 						s.addPoint(v[jj]);
@@ -1507,12 +1578,14 @@ public final class Segment {
 		Vector2D last = null;
 		double r = -1;
 		boolean ok = true;
-		for (int i=0;i<size;++i){
-			if (tmp[i].certain) {
-				ok = false;
-				break;
+//		if (size==s.num && size>0){
+			for (int i=0;i<size;++i){
+				if (tmp[i].certain) {
+					ok = false;
+					break;
+				}
 			}
-		}
+//		} else ok = false;
 		if (!ok && size>1) {
 			
 			last = tmp[size-1];
@@ -1662,13 +1735,27 @@ public final class Segment {
 		int oldLastIdx = lastIndex;
 		if (ok){
 			firstIndex = expandBackward(v, from, to, tW, center, rad, prev, next, s, firstIndex, last, marks, n);
-			lastIndex = expandForward(v, from, to, tW, center, rad, prev, next, s, lastIndex, first,marks, n);
+			lastIndex = expandForward(v, from, to, tW, center, rad, prev, next, s, lastIndex, first,marks, n);				
 		}
 		if (firstIndex!=-1){
-			size = lastIndex-firstIndex+1;
-			s.num = size;
+			size = lastIndex-firstIndex+1;			
+			s.num = Math.max(s.num,size);
 			System.arraycopy(v, firstIndex, tmp, 0, size);
+			if (size<3 && size>0 && s.type!=0 && (prev==null || mark!=2 || prev.type!=0)){
+				boolean good = true;
+				for (int i=0;i<size;++i){
+					if (Math.abs(tmp[i].distance(s.center)-s.radius)>TrackSegment.EPSILON){
+						good = false;
+						break;
+					}
+				}
+				if (good){
+					int rd = (s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : double2int(s.radius-s.type*tW);
+					s.map[rd]++;
+				}
+			}
 		} else s.num += lastIndex-oldLastIdx;		
+		
 		return (firstIndex==-1) ? 0 : size;
 	}
 
@@ -2085,12 +2172,12 @@ public final class Segment {
 				size = 0;
 				int firstIndex = -1;
 				for (k=i;k<to;++k){
-					if (v[k].y>=s.start.y && v[k].y<=s.end.y){
+					if (v[k].y>=s.start.y-0.00001 && v[k].y<=s.end.y+0.00001){
 						marks[k] = mark;
 						tmp[size++] = v[k];
 						if (firstIndex==-1) firstIndex = k;
-					}
-					if (v[k].y>s.end.y) break;
+					} else if (v[k].y>=s.start.y-0.00001 && firstIndex==-1) firstIndex = k;
+					if (v[k].y>s.end.y+0.00001) break;
 				}
 				int count = size;
 				if (size>=2 && s.type!=0){
@@ -2100,9 +2187,9 @@ public final class Segment {
 					Vector2D n = q.minus(p).orthogonal().normalised();
 					double pq = p.distance(q) * 0.5;
 					if (n.dot(new Vector2D(s.type,0))<0) n = n.negated();
-					Vector2D center = m.plus(n.times(Math.sqrt(s.radius*s.radius-pq*pq)));
+					Vector2D center = m.plus(n.times(Math.sqrt(s.radius*s.radius-pq*pq)));					
 					count = getAllPoints(v, from, to, -which*tW, center, s.radius, prev,next, s, tmp, size,firstIndex, marks, mark);								
-				} else if (size>=1){
+				} else if (size>=0 && s.type!=0){
 					count = getAllPoints(v, from, to, -which*tW, s.center, s.radius, prev,next, s, tmp, size, firstIndex, marks, mark);
 				} 
 				if (s.type==Segment.UNKNOWN){
@@ -2320,7 +2407,7 @@ public final class Segment {
 								} else {
 									for (int kk = 0;kk<li.size();++kk){
 										Segment tt = li.get(kk);
-										if (tt.type!=Segment.UNKNOWN) ss.add(kkk+1,tt);
+										if (tt.type!=Segment.UNKNOWN) ss.add(kkk++,tt);
 									}
 									prev = ss.get(kkk-1);
 									j = kkk-1;
@@ -2391,7 +2478,7 @@ public final class Segment {
 						if (tt.start.y>tmp[size-1].y) break;
 					}
 					ObjectList<Segment> ol = (ss==null || ss.size()==0 || indx>ss.size()) ? null : ss.subList(indx, kkk);					
-					ObjectList<Segment> li = fillGap(v, prevLastIdx, prevLastIdx+size, -which*tW, prev, marks, tmp, size);
+					ObjectList<Segment> li = fillGap(v, prevLastIdx, prevLastIdx+size, -which*tW, prev, marks, tmp, size);				
 					if (ol!=null && ol.size()>0) {						
 						int ols = (ol==null) ? 0 : ol.size();
 						if (ols!=0) mix(ol,li,which,tW);															
@@ -2418,7 +2505,16 @@ public final class Segment {
 		
 		guess.clear();
 		for (i = 0;i<ss.size();++i){
-			guess.add(toMiddleSegment(ss.get(i), which, tW));
+			Segment s = ss.get(i);
+			Segment g = toMiddleSegment(s, which, tW);
+//			Segment t = toSideSegment(g, which, tW);
+//			if (!t.start.equals(s.start)) {
+//				System.out.println(s.start+"   "+t.start);
+//				g = toMiddleSegment(s, which, tW);
+//				t = toSideSegment(g, which, tW);
+//			}
+			guess.add(g);
+			
 		}
 		adjust(guess);
 		//		boolean ok = false;
