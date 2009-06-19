@@ -378,15 +378,18 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	int sL = ed.left.size();
 	if (ed.left!=null)	
 	for (int i=0;i<sL;++i){		
-		Vector2D v = ed.left.get(i);
-		v.certain = false;
+		Vector2D v = ed.left.get(i);		
 		if (v.y<straightDist) continue;
 		if (v.length()<=MAX_DISTANCE){
 			v.x *= scale;
 			v.x += ax;
 			v.y -= distRaced;
-		}
-		bF[j++] = v;		
+			v.certain = false;
+			v.x = Math.round(v.x*PRECISION)/PRECISION;
+			v.y = Math.round(v.y*PRECISION)/PRECISION;
+			bF[j++] = v;
+		}		
+				
 	}
 		
 	if (ed!=null && ed.left!=null && ed.left.size()>0) join(left,ObjectArrayList.wrap(bF, j));
@@ -400,8 +403,11 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 			v.x *= scale;
 			v.x += ax;
 			v.y -= distRaced;
-		}
-		bB[j++] = v;		
+			v.x = Math.round(v.x*PRECISION)/PRECISION;
+			v.y = Math.round(v.y*PRECISION)/PRECISION;
+			v.certain = false;
+			bB[j++] = v;
+		}				
 	}	
 	if (ed!=null && ed.right!=null && ed.right.size()>0)join(right,ObjectArrayList.wrap(bB, j));
 	System.out.println("Time now  is  "+(System.currentTimeMillis()-ti));
