@@ -24,6 +24,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	{
 	    this.x = vector2D.x;
 	    this.y = vector2D.y;
+	    this.certain = vector2D.certain;
 	    this.polar = vector2D.polar;
 	}
 	@Override	
@@ -80,6 +81,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	public void copy(Vector2D v){		
 		x = v.x;
 		y = v.y;
+		certain = v.certain;
 	}
 	
 	public Vector2D scale(double xs,double ys) {
