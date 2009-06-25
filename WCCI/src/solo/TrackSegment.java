@@ -69,6 +69,10 @@ public class TrackSegment {
 
 	public final static TrackSegment createStraightSeg(double dist,double startX,double startY,double endX,double endY){
 		double radius = Double.MAX_VALUE;
+		startX = Math.round(startX*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+		startY = Math.round(startY*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+		endX = Math.round(endX*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+		endY = Math.round(endY*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
 		double arc = -1;
 		double dx = endX-startX;
 		double dy = endY - startY;
