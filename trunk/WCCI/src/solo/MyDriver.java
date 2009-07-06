@@ -12,12 +12,7 @@ import java.util.Random;
 
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.membership.MembershipFunction;
-import net.sourceforge.jFuzzyLogic.rule.FuzzyRule;
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
-
-import org.jfree.data.xy.XYSeries;
-
-import com.graphbuilder.geom.Geom;
 
 
 
@@ -25,7 +20,7 @@ import com.graphbuilder.geom.Geom;
  * @author kokichi3000
  *
  */
-public class MyDriver extends SimpleDriver {
+public final class MyDriver extends SimpleDriver {
 	public final static int TURNLEFT = -1;
 	public final static int TURNRIGHT = 1;
 	public final static int STRAIGHT = 0;
@@ -230,7 +225,7 @@ public class MyDriver extends SimpleDriver {
 
 	@Override
 	public void init(){		
-		edgeDetector = new EdgeDetector(carState);
+		edgeDetector = new EdgeDetector(carState,trackWidth);
 //		edgeDetector.init(carState);
 		if (edgeDetector.trackWidth<=0 && prevEdge!=null)
 			edgeDetector.trackWidth = prevEdge.trackWidth;
@@ -651,13 +646,13 @@ public class MyDriver extends SimpleDriver {
 //		System.out.println(fuzzyRuleSet);
 //		if (slip>SLIP_LIMIT) System.out.println(fuzzyRuleSet);
 //
-		for (Object r : fuzzyRuleSet.getRules()) {
-			FuzzyRule rule = (FuzzyRule)r;
+//		for (Object r : fuzzyRuleSet.getRules()) {
+//			FuzzyRule rule = (FuzzyRule)r;
 //			if (rule.getDegreeOfSupport()>0) System.out.println(rule);
 //			System.out.println(dist);
 //			System.out.println(angle);
 //			System.out.println(pos);
-		}//
+//		}//
 //
 		double steer = sign*steering.getLatestDefuzzifiedValue();
 		if (Double.isNaN(steer)){
@@ -783,7 +778,7 @@ public class MyDriver extends SimpleDriver {
 
 		if (centerOfTurn==null || radiusOfTurn<0) return prevSteer;
 		
-		double sign = (turn==TURNRIGHT) ? -1 : 1;
+//		double sign = (turn==TURNRIGHT) ? -1 : 1;
 //		Vector2D t = new Vector2D(radiusOfTurn*sign,0);
 //		Vector2D point = null;		
 		
