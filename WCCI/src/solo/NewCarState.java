@@ -5,6 +5,10 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import java.io.Serializable;
 
 public class NewCarState extends CarState implements Serializable{	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2057264500803788862L;
 	double radius;
 	double radiusl;
 	double radiusr;
@@ -17,9 +21,10 @@ public class NewCarState extends CarState implements Serializable{
 	double length;
 	double cx;
 	double cy;
-	double cz;
+	double cz;	
 	Vector2D[] vertex;
 	public Vector2D[] center;
+	public double[] dist;
 	public double[] l;
 	public double[] arc;
 	public double[] type;
@@ -71,7 +76,7 @@ public class NewCarState extends CarState implements Serializable{
 		this.cx = newCarState.cx;
 		this.cy = newCarState.cy;
 		this.cz = newCarState.cz;
-		this.toMiddle = newCarState.toMiddle;
+		this.toMiddle = newCarState.toMiddle;		
 		this.vertex = newCarState.vertex.clone();
 	}
 	public double getRadius() {
@@ -336,6 +341,9 @@ public class NewCarState extends CarState implements Serializable{
 		
 		dal = (DoubleArrayList)(mp.getReading("allEYR"));
 		eYR = (dal==null)?null:dal.toDoubleArray();//*/
+		
+		dal = (DoubleArrayList)(mp.getReading("allDist"));
+		dist = (dal==null)?null:dal.toDoubleArray();//*/
 		
 		str = (String)(mp.getReading("posX"));
 		posX = (str==null)?0:Double.parseDouble(str);
