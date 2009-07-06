@@ -5,7 +5,6 @@ package solo;
 
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -13,7 +12,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Comparator;
-import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -24,7 +22,6 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-import antlr.collections.impl.Vector;
 import cern.colt.Sorting;
 import cern.colt.Swapper;
 
@@ -194,7 +191,7 @@ public final class EdgeDetector {
 			//			double yy = tracks[i]* Math.sin(angle);
 			double xx =Math.round(tracks[i]* Math.cos(angle)*PRECISION)/PRECISION;
 			double yy =Math.round(tracks[i]* Math.sin(angle)*PRECISION)/PRECISION;
-			if (yy<0) continue;
+//			if (yy<0) continue;
 			//			angle=Math.round((Math.PI-angle)*ANGLEACCURACY)/ANGLEACCURACY;
 			//			angle = Math.PI - angle;			
 //			angle = (xx==0) ? PI_2 : (yy>=0) ? Math.PI-Math.atan2(yy,xx) : Math.PI - angle;
@@ -401,47 +398,20 @@ public final static int findNearestPoint(final Vector2D point, final ObjectArray
 	return  index;
 }
 
-public final AffineTransform combine(EdgeDetector ed,double distRaced){	
+public final void combine(AffineTransform at,EdgeDetector ed){
 	long ti = System.currentTimeMillis();
-	if (distRaced>ed.straightDist)
-		return null;
-	if (trackWidth<=0) {
-		trackWidth = ed.trackWidth;
-	}	
 	straightDist = Math.max(ed.straightDist - distRaced,this.straightDist);
-	double tW = Math.round(trackWidth)*0.5d;
-	double prevTW = Math.round(ed.trackWidth)*0.5d;
-	double toMiddle = -tW*curPos;
-	double prevToMiddle = -prevTW*ed.curPos;
-	double ax = toMiddle-prevToMiddle;
 	int len=ed.numpoint;
-
-	double scale = tW/prevTW;		
-//	double[] xx = ed.x.elements();
-//	double[] yy = ed.y.elements();	
-	
-	AffineTransform at = new AffineTransform();
-	at.scale(scale, 1);
-	at.translate(ax, -distRaced);
-//	int sz = (numpoint+ed.numpoint<NUM_POINTS) ? NUM_POINTS : (numpoint+ed.numpoint)*2;
-//	if (backP.length<sz){
-//		backR = new Vector2D[sz];
-//		System.arraycopy(backP, 0, backP, 0, numpoint);
-//		backP = new Vector2D[sz];
-//		System.arraycopy(backR, 0, backR, 0, numpoint);
-//	} 		
 	Vector2D[] bF = new Vector2D[len];
 	Vector2D[] bB = new Vector2D[len];
 	int j = 0;
-	int sL = (ed==null || ed.left==null) ? 0 : ed.left.size();
+	int sL = (ed==null || ed.left==null) ? 0 : ed.left.size();	
 	if (sL>0)	
 	for (int i=0;i<sL;++i){		
-		Vector2D v = ed.left.get(i);		
-		if (v.y<straightDist) continue;
+		Vector2D v = ed.left.get(i);				
 		if (v.length()<=MAX_DISTANCE){
-			v.x *= scale;
-			v.x += ax;
-			v.y -= distRaced;
+			at.transform(v, v);
+			if (v.y<straightDist) continue;
 			v.certain = false;
 			v.x = Math.round(v.x*PRECISION)/PRECISION;
 			v.y = Math.round(v.y*PRECISION)/PRECISION;
@@ -458,12 +428,10 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 	j =0;
 	if (sR>0)	
 	for (int i=0;i<sR;++i){		
-		Vector2D v = ed.right.get(i);
-		if (v.y<straightDist) continue;
+		Vector2D v = ed.right.get(i);		
 		if (v.length()<=MAX_DISTANCE){
-			v.x *= scale;
-			v.x += ax;
-			v.y -= distRaced;
+			at.transform(v, v);
+			if (v.y<straightDist) continue;
 			v.x = Math.round(v.x*PRECISION)/PRECISION;
 			v.y = Math.round(v.y*PRECISION)/PRECISION;
 			v.certain = false;
@@ -474,6 +442,8 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 		join(right,ObjectArrayList.wrap(bB, j));
 	else if (right==null && j>0)
 		right = ObjectArrayList.wrap(bB, j);
+	if (right==null)
+		System.out.println();
 	System.out.println("Time now  is  "+(System.currentTimeMillis()-ti));
 	if (ed!=null && ed.highestPoint!=null && ed.highestPoint.length()<MAX_DISTANCE) at.transform(ed.highestPoint, ed.highestPoint);
 	Vector2D lower = (highestPoint !=null && ed.highestPoint!=null && highestPoint.y<ed.highestPoint.y) ? highestPoint : (highestPoint==null || ed.highestPoint==null) ? null : ed.highestPoint;	
@@ -557,14 +527,14 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 			} 
 			
 			if (whichL==0){
-				if (angleL<angleH && left!=null) {
+				if (angleL<angleH && left!=null && higher!=null && higher.length()<MAX_DISTANCE) {
 					if (nearestL==null){
 						Vector2D nearest = new Vector2D();
 						int index = findNearestPoint(lower, left, nearest);
 						if (!nearest.equals(lower)) insert(left, index, lower);
 					} else if (!nearestL.equals(lower)) insert(left, indexL, lower);
 					whichL = -1;
-				} else if (angleL>angleH && right!=null){
+				} else if (angleL>angleH && right!=null && higher!=null && higher.length()<MAX_DISTANCE){
 					if (nearestR==null){
 						Vector2D nearest = new Vector2D();
 						int index = findNearestPoint(lower, right, nearest);
@@ -613,34 +583,78 @@ public final AffineTransform combine(EdgeDetector ed,double distRaced){
 
 		}
 	}	
-	highestPoint = higher;
-	whichE = whichH;
+	if (higher.length()<MAX_DISTANCE){
+		highestPoint = higher;
+		whichE = whichH;
+	} else {
+		highestPoint = lower;
+		whichE = whichL;
+	}
 	System.out.println("I : "+(System.currentTimeMillis()-ti));
 
 	int lS = (left==null || left.size()==0) ? 0 : left.size();
 	int rS = (right==null || right.size()==0) ? 0 : right.size();
-	numpoint = (whichE==0) ? lS+rS+1 : lS+rS;
+	numpoint = (whichE==0 && highestPoint.length()<MAX_DISTANCE) ? lS+rS+1 : lS+rS;
 	Vector2D[] newArr = new Vector2D[numpoint];
 	j = lS;
 	if (left!=null)
 		System.arraycopy(left.elements(), 0, newArr, 0, j);
-	if (whichE==0)
+	if (whichE==0 && highestPoint.length()<MAX_DISTANCE)
 		newArr[j++] = highestPoint;
 	
 	if (right!=null)
 		System.arraycopy(right.elements(), 0, newArr, j, rS);
 
 	allPoints = ObjectArrayList.wrap(newArr, numpoint);
+	
+//	double l0 = (left!=null && left.size()>0) ? left.get(0).x : -10000;
+//	double l1 = (left!=null && left.size()>0) ? left.get(left.size()-1).x : -10000;
+//	double r0 = (right!=null && right.size()>0) ? right.get(0).x : -10000;
+//	double r1 = (right!=null && right.size()>0) ? right.get(right.size()-1).x : -10000;
+//	boolean straight = (highestPoint!=null && highestPoint.length()>=MAX_DISTANCE);
+//	boolean nlS = Math.abs(l1-l0)>TrackSegment.EPSILON;
+//	boolean nrS = Math.abs(r1-r0)>TrackSegment.EPSILON;
+//	if (straight && (Math.abs(l1-l0)<=TrackSegment.EPSILON || Math.abs(r1-r0)<=TrackSegment.EPSILON)) 
+//		turn = MyDriver.STRAIGHT;
+//	else if ((nlS && l1>l0) || (nrS && r1>r0))
+//		turn = 1;
+//	else if ((nlS && l1<l0) || (nrS && r1<r0))
+//		turn = -1;
+//	else turn = 2;
+
 	double dL = getStraightDist(left);
 	double dR = getStraightDist(right);
 	straightDist = Math.max(dL, dR);
 	System.out.println("K : "+(System.currentTimeMillis()-ti));
+
+}
+public final AffineTransform combine(EdgeDetector ed,double distRaced){	
+
+//	if (distRaced>ed.straightDist)
+//		return null;
+	if (trackWidth<=0) {
+		trackWidth = ed.trackWidth;
+	}	
+		
+	double tW = Math.round(trackWidth)*0.5d;
+	double prevTW = Math.round(ed.trackWidth)*0.5d;
+	double toMiddle = Math.round((-tW*curPos)*PRECISION)/PRECISION;
+	double prevToMiddle = Math.round((-prevTW*ed.curPos)*PRECISION)/PRECISION;
+	double ax = toMiddle-prevToMiddle;
+	
+
+	double scale = tW/prevTW;		
+	
+	AffineTransform at = new AffineTransform();
+	at.scale(scale, 1);
+	at.translate(ax, -distRaced);
+	combine(at,ed);
 	return at;
 }
 
 
 
-public int estimateTurn(){						
+public final int estimateTurn(){						
 	boolean all=true;
 	double toRight = toRightEdge();
 	int firstIndexMax = left.size();
@@ -694,17 +708,17 @@ public int estimateTurn(){
 
 
 public double toMiddle(){
-	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
+//	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
 	return Math.round(trackWidth/2*curPos*10000.0d)/10000.0d;
 }
 
 public double toLeftEdge(){
-	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
+//	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
 	return Math.round(trackWidth/2*(1+curPos)*10000.0d)/10000.0d;
 }
 
 public double toRightEdge(){
-	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
+//	if (trackWidth<=0 || curPos<-1 || curPos>1) return Double.NaN;
 	return -Math.round(trackWidth/2*(1-curPos)*10000.0d)/10000.0d;
 }
 
@@ -809,15 +823,17 @@ public static void drawEdge(ObjectList<Vector2D> vs,final String title){
 
 	// Create plot and show it
 	final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
-	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+//	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
+//	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+	chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+	chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 
 	Thread p = new Thread(new Runnable(){
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
 			try{
-				BufferedImage image = chart.createBufferedImage(600, 400);
+				BufferedImage image = chart.createBufferedImage(500, 500);
 				ImageIO.write(image, "png", new File(title+".png"));
 			} catch (Exception e) {
 				// TODO: handle exception
@@ -840,8 +856,10 @@ public static void drawEdge(Vector2D[] vs,final String title){
 
 	// Create plot and show it
 	final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
-	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+//	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
+//	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+	chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+	chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 
 	Thread p = new Thread(new Runnable(){
 		@Override
@@ -897,8 +915,10 @@ public static void drawEdge(XYSeries series,final String title){
 
 	// Create plot and show it
 	final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
-	chart.getXYPlot().getDomainAxis().setRange(-200.0,200.0);
-	chart.getXYPlot().getRangeAxis().setRange(-200.0,200.0);
+//	chart.getXYPlot().getDomainAxis().setRange(-200.0,200.0);
+//	chart.getXYPlot().getRangeAxis().setRange(-200.0,200.0);
+	chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
+	chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 	//		chart.getXYPlot().getDomainAxis().setRange(-5.0,5.0);
 	//		chart.getXYPlot().getRangeAxis().setRange(-5.0,5.0);
 
