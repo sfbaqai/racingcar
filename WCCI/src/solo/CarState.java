@@ -16,6 +16,10 @@ import raceclient.SensorModel;
  *
  */
 public class CarState implements SensorModel,Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2662665933180307220L;
 	/* (non-Javadoc)
 	 * @see raceclient.SensorModel#getAngleToTrackAxis()
 	 */
@@ -129,15 +133,15 @@ public class CarState implements SensorModel,Serializable{
     double distRaced;
     double fuel;
     int   gear;
-    double lastLapTime;    
-    double[] opponents = new double[OPPONENTS_SENSORS_NUM];
+    double lastLapTime;
+    double trackPos;    
     int   racePos;
     double   rpm;
     double speedX;
     double speedY;
-    double[] track = new double[OPPONENTS_SENSORS_NUM];
-    double trackPos;
-    double[] wheelSpinVel = new double[4];
+    double[] track;
+    double[] opponents;
+    double[] wheelSpinVel;
 	/**
 	 * Copy Constructor
 	 *
@@ -200,53 +204,53 @@ public class CarState implements SensorModel,Serializable{
 		
 	
 	public void fromString(String s){
-		MessageParser mp = new MessageParser(s);		
-		String str = (String)(mp.getReading("angle"));
+		MessageParser.fromString(s);			
+		String str = (String)(MessageParser.getReading("angle"));
 		angle = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("curLapTime"));
+		str = (String)(MessageParser.getReading("curLapTime"));
 		curLapTime = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("damage"));
+		str = (String)(MessageParser.getReading("damage"));
 		damage = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("distFromStart"));
+		str = (String)(MessageParser.getReading("distFromStart"));
 		distFromStart = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("distRaced"));
+		str = (String)(MessageParser.getReading("distRaced"));
 		distRaced = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("fuel"));
+		str = (String)(MessageParser.getReading("fuel"));
 		fuel = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("gear"));
+		str = (String)(MessageParser.getReading("gear"));
 		gear = (str==null)?0:Integer.parseInt(str);
 		
-		str = (String)(mp.getReading("lastLapTime"));
+		str = (String)(MessageParser.getReading("lastLapTime"));
 		lastLapTime = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("racePos"));
+		str = (String)(MessageParser.getReading("racePos"));
 		racePos = (str==null)?0:Integer.parseInt(str);
 		
-		str = (String)(mp.getReading("rpm"));
+		str = (String)(MessageParser.getReading("rpm"));
 		rpm = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("speedX"));
+		str = (String)(MessageParser.getReading("speedX"));
 		speedX = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("speedY"));
+		str = (String)(MessageParser.getReading("speedY"));
 		speedY = (str==null)?0:Double.parseDouble(str);
 		
-		str = (String)(mp.getReading("trackPos"));
+		str = (String)(MessageParser.getReading("trackPos"));
 		trackPos = (str==null)?0:Double.parseDouble(str);
 		
-		DoubleArrayList dal = (DoubleArrayList)(mp.getReading("opponents"));
+		DoubleArrayList dal = (DoubleArrayList)(MessageParser.getReading("opponents"));
 		opponents = (dal==null)?null:dal.toDoubleArray();
 		
-		dal = (DoubleArrayList)(mp.getReading("track"));
+		dal = (DoubleArrayList)(MessageParser.getReading("track"));
 		track = (dal==null)?null:dal.toDoubleArray();
 		
-		dal = (DoubleArrayList)(mp.getReading("wheelSpinVel"));
+		dal = (DoubleArrayList)(MessageParser.getReading("wheelSpinVel"));
 		wheelSpinVel = (dal==null)?null:dal.toDoubleArray();
 	}
 	

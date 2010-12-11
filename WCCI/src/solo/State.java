@@ -12,6 +12,10 @@ import java.io.Serializable;
 public final class State<T,V> implements Serializable,Comparable<State<T,V>>{
 	
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8358277356007167255L;
 	public int num;
 	public T state;
 	public State<T,V> prev;
@@ -54,6 +58,7 @@ public final class State<T,V> implements Serializable,Comparable<State<T,V>>{
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
+		@SuppressWarnings("unchecked")
 		final State<T,V> other = (State<T,V>) obj;
 		if (num != other.num)
 			return false;

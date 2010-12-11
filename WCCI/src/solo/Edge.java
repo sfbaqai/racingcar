@@ -152,7 +152,7 @@ public final class Edge {
 		try{
 			cf.fit();
 			double r = cf.getEstimatedRadius();
-			double d = 0;
+//			double d = 0;
 			int n = 0;
 			Vector2D o = cf.getEstimatedCenter();
 			this.center = o;

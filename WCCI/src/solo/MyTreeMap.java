@@ -12,10 +12,11 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class MyTreeMap<K,V> {
+public final class MyTreeMap<K,V> {
 	private Object2ObjectRBTreeMap<K, State<K, V>> map;
 	private String name;
 	
+	@SuppressWarnings("unchecked")
 	public MyTreeMap(String name){
 		this.name = name;
 		ObjectInputStream ois;
@@ -32,7 +33,7 @@ public class MyTreeMap<K,V> {
 		} 
 	}
 	
-	public void remove(K obj){
+	public final void remove(K obj){
 		map.remove(obj);
 	}
 	
@@ -42,7 +43,7 @@ public class MyTreeMap<K,V> {
 	};
 	
 	
-	public void save(String name){		
+	public final void save(String name){		
 		ObjectOutputStream oos;
 		try{
 			File file = new File(name);
@@ -58,19 +59,19 @@ public class MyTreeMap<K,V> {
 		}
 	};
 	
-	public void save(){		
+	public final void save(){		
 		save(name);
 	};
 	
-	public int size(){
+	public final int size(){
 		return map.size();
 	}
 	
-	public State<K, V> get(K obj){
+	public final State<K, V> get(K obj){
 		return map.get(obj);
 	}
 	
-	public void store(K cur,V action,K rs){
+	public final void store(K cur,V action,K rs){
 		if (cur==null){
 			map.put(rs, new State<K,V>(0,rs,null,null) );
 			return;
@@ -85,7 +86,7 @@ public class MyTreeMap<K,V> {
 		map.put(rs, newState);
 	}
 	
-	public void store(State<K,V> cur,V action,K rs){						
+	public final void store(State<K,V> cur,V action,K rs){						
 		if (cur==null){
 			map.put(rs, new State<K,V>(0,rs,null,null) );
 			return;
@@ -94,16 +95,16 @@ public class MyTreeMap<K,V> {
 		map.put(rs, newState);
 	}
 	
-	public ObjectSortedSet<K> keySet(){
+	public final ObjectSortedSet<K> keySet(){
 		return map.keySet();
 	}
 	
-	public ObjectCollection<State<K,V>> values(){
+	public final ObjectCollection<State<K,V>> values(){
 		return map.values();
 	}
 	
 	
-	public ObjectList<State<K,V>> walk(K target){		
+	public final ObjectList<State<K,V>> walk(K target){		
 		if (target==null || map.isEmpty() || !map.containsKey(target))
 			return null;
 		State<K,V> s = map.get(target);

@@ -14,6 +14,10 @@ import com.graphbuilder.geom.Geom;
  */
 public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -261507871662860181L;
 	double targetRadius = 	180;
 	double maxSpeed = 0;
 	double AllowTime = 60;
@@ -246,14 +250,14 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 		double angle = state.angle;		
 		double posX = state.posX;
 		double posY = state.posY;
-		double speed = state.getSpeed();
+//		double speed = state.getSpeed();
 		double cx = state.cx;
 		double cy = state.cy;
 		double d = Geom.distance(posX, posY, cx, cy);
-		Vector2D p = new Vector2D(cx-posX,cy-posY).orthogonal().normalised().rotated(angle);
-		double closeDist = speed*0.04/3.6;
+//		Vector2D p = new Vector2D(cx-posX,cy-posY).orthogonal().normalised().rotated(angle);
+//		double closeDist = speed*0.04/3.6;
 		double[] r = null;
-		double rd = 0;
+//		double rd = 0;
 		
 		Vector2D dir = new Vector2D(cx-posX,cy-posY);
 		Vector2D v = dir.orthogonal().normalised().rotated(-angle);
@@ -270,7 +274,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 			point = o.plus(new Vector2D(dir.orthogonal()));		
 		}
 		
-		if (r!=null) rd = Geom.distance(r[0], r[1], posX, posY);		
+//		if (r!=null) rd = Geom.distance(r[0], r[1], posX, posY);		
 		return  steerToPoint(state, point.minus(o));		
 	}
 
@@ -315,7 +319,7 @@ public final class CircleDriver extends BaseStateDriver<NewCarState,CarControl> 
 				avgSpeed += speed;
 				avgRadius += d;			
 				avgSteer += steer;
-				double r = avgRadius/n;
+//				double r = avgRadius/n;
 				if (time>=60+startTime && mr<d) mr = d;
 			}
 			if (n>200) {				

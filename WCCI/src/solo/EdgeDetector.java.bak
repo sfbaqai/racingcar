@@ -35,7 +35,6 @@ public final class EdgeDetector {
 	private static final int UPPER_LIM = 16;
 	private static final int LOWER_LIM = 6;
 	private static final double E = 0.1*TrackSegment.EPSILON;
-	private final Vector2D tmpHighestPoint = new Vector2D();
 	final static double steerLock=0.785398;
 	private static final double CERTAIN_DIST = 0.05;
 	private static final double SMALL_MARGIN = 0.002;
@@ -184,11 +183,11 @@ public final class EdgeDetector {
 		if (edgeDetector.center==null) 
 			this.center = null;
 		else if (this.center==null) 
-				this.center = new Vector2D(edgeDetector.center);
-			else {
-				this.center.x = edgeDetector.center.x;
-				this.center.y = edgeDetector.center.y;
-			}		
+			this.center = new Vector2D(edgeDetector.center);
+		else {
+			this.center.x = edgeDetector.center.x;
+			this.center.y = edgeDetector.center.y;
+		}		
 		this.radiusL = edgeDetector.radiusL;
 		this.radiusR = edgeDetector.radiusR;		
 		//		this.left = edgeDetector.left;
@@ -199,13 +198,7 @@ public final class EdgeDetector {
 		this.leftStraight = edgeDetector.leftStraight;
 		this.rightStraight = edgeDetector.rightStraight;
 		this.straightDist = edgeDetector.straightDist;
-//		this.highestPoint = edgeDetector.highestPoint;
-		if (edgeDetector.highestPoint==null){
-			this.highestPoint = null;
-		} else {
-			this.highestPoint = tmpHighestPoint;
-			this.highestPoint.copy(edgeDetector.highestPoint);
-		}
+		this.highestPoint = edgeDetector.highestPoint;
 		//		this.x = new DoubleArrayList(edgeDetector.x);
 		//		this.y = new DoubleArrayList(edgeDetector.y);
 		this.numpoint = edgeDetector.numpoint;
@@ -373,14 +366,14 @@ public final class EdgeDetector {
 			}			
 
 			if (yy<-5) continue;
-//			Vector2D v = edge[j];			
+			Vector2D v = edge[j];			
 
 			if (j<=0 || Math.abs(yy-edge[j-1].y)>0.15){
-				edge[j++].copy(xx, yy,true);
-//				j++;
-//				v.x = xx;
-//				v.y = yy;
-//				v.certain = true;
+//				edge[j++].copy(xx, yy);
+				j++;
+				v.x = xx;
+				v.y = yy;
+				v.certain = true;
 				if (i==9){
 					currentPointAhead.copy(xx,yy);
 					pointAheadIndx = j-1;
@@ -391,13 +384,9 @@ public final class EdgeDetector {
 		}
 
 		Vector2D[] other = (sign<0) ? left : right;
-		for (int i=j-1;i>=0;--i){
-//			Vector2D v = edge[j-1-i];
-//			Vector2D s = other[i];
-//			s.x = v.x;
-//			s.y = v.y;
-			other[i].copyValue(edge[j-1-i]);
-		}
+		for (int i=j-1;i>=0;--i)			
+			other[i].copy(edge[j-1-i]);
+		
 		numpoint = j;
 		int lsz = (firstIndexMax>=0 && firstIndexMax<numpoint) ? firstIndexMax  : 0;
 		int rsz = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? numpoint-1-lastIndexMax : 0;
@@ -405,9 +394,8 @@ public final class EdgeDetector {
 			yy = edge[0].y;			
 			int oldIndx = firstIndexMax;
 			firstIndexMax = 0;
-			Vector2D p;
 			for (int i=1;i<numpoint;++i){
-				p = edge[i];
+				Vector2D p = edge[i];
 				if (p.y>yy){
 					yy = p.y;
 					firstIndexMax = i;
@@ -454,12 +442,9 @@ public final class EdgeDetector {
 						for (int i = tmp.length-1;i>=0;--i) tmp[i] = new Vector2D();
 					}//*/
 					int startIndx = numpoint-1;
-					for (int i = oldRsz-1;i>=0;--i){
-						Vector2D s = other[startIndx--];
-						Vector2D d = tmp[i];
-						d.x = s.x;
-						d.y = s.y;
-					}
+					for (int i = oldRsz-1;i>=0;--i)						
+						tmp[i].copy(other[startIndx--]);						
+					
 //					System.arraycopy(other, numpoint-oldRsz, tmp, 0, oldRsz);
 				}
 				if (rsz>0) {
@@ -496,12 +481,9 @@ public final class EdgeDetector {
 						d.y = s.y;
 					}
 					
-					for (int i = 0;i<lsz;++i){
-						Vector2D s = tmp[i];
-						Vector2D d = left[i];
-						d.x = s.x;
-						d.y = s.y;
-					}
+					for (int i = 0;i<lsz;++i)						
+						left[i].copy(tmp[i]);
+						
 //					System.arraycopy(edge, oldIndx+1, left, 0, lsz+1);
 				}
 				
@@ -2188,8 +2170,8 @@ public final class EdgeDetector {
 							l.opp.type = Segment.UNKNOWN;
 							CircleDriver2.occupied[ indx ] = 0;
 							trSz = Segment.remove(l, -1, j, trSz);
-							//if (trSz-j-1>0) System.arraycopy(trIndx, j+1, trIndx, j, trSz-j-1);
-							//trSz--;
+							if (trSz-j-1>0) System.arraycopy(trIndx, j+1, trIndx, j, trSz-j-1);
+							trSz--;
 							CircleDriver2.trSz = trSz;
 							break;
 						}  else {
@@ -2230,8 +2212,8 @@ public final class EdgeDetector {
 							l.opp.type = Segment.UNKNOWN;
 							CircleDriver2.occupied[ indx ] = 0;
 							trSz = Segment.remove(l, 1, j, trSz);
-//							if (trSz-j-1>0) System.arraycopy(trIndx, j+1, trIndx, j, trSz-j-1);
-//							trSz--;
+							if (trSz-j-1>0) System.arraycopy(trIndx, j+1, trIndx, j, trSz-j-1);
+							trSz--;
 							CircleDriver2.trSz = trSz;
 							break;
 						}  else {
@@ -2294,8 +2276,8 @@ public final class EdgeDetector {
 							l.opp.type = Segment.UNKNOWN;
 							CircleDriver2.occupied[ indx ] = 0;
 							trSz = Segment.remove(l, -1, k, trSz);
-//							if (trSz-k-1>0) System.arraycopy(trIndx, k+1, trIndx, k, trSz-k-1);
-//							trSz--;
+							if (trSz-k-1>0) System.arraycopy(trIndx, k+1, trIndx, k, trSz-k-1);
+							trSz--;
 							CircleDriver2.trSz = trSz;
 							break;
 						} else {
@@ -2318,8 +2300,8 @@ public final class EdgeDetector {
 								l.opp.type = Segment.UNKNOWN;
 								CircleDriver2.occupied[ indx ] = 0;
 								trSz = Segment.remove(l, 1, k, trSz);
-//								if (trSz-k-1>0) System.arraycopy(trIndx, k+1, trIndx, k, trSz-k-1);
-//								trSz--;
+								if (trSz-k-1>0) System.arraycopy(trIndx, k+1, trIndx, k, trSz-k-1);
+								trSz--;
 								CircleDriver2.trSz = trSz;
 								break;
 							} else {

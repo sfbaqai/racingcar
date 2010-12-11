@@ -17,6 +17,10 @@ import java.io.FileWriter;
  */
 public class MyStateDriver extends BaseStateDriver<CarRpmState,CarControl> {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7347235349237429114L;
 	private BufferedWriter writer;
 	/**
 	 * 
@@ -119,7 +123,7 @@ public class MyStateDriver extends BaseStateDriver<CarRpmState,CarControl> {
 		// TODO Auto-generated method stub
 		try{
 			if (input!=null && action!=null && output!=null){
-				writer.write(round(input.getRPM())+"\t\t"+round(action.accel)+"\t\t"+round(output.getRPM()));
+				writer.write(round(input.getRPM())+"\t\t"+round(action.getAccel())+"\t\t"+round(output.getRPM()));
 				writer.newLine();
 				writer.flush();
 			}

@@ -85,7 +85,7 @@ public abstract class SimpleDriver extends BaseDriver implements Controller{
 	/* (non-Javadoc)
 	 * @see solo.BaseDriver#drive(java.lang.String)
 	 */
-	@Override
+	
 	public String drive(String sensors) {
 		// TODO Auto-generated method stub		
 		CarState cs = new CarState(sensors);
@@ -232,11 +232,11 @@ public abstract class SimpleDriver extends BaseDriver implements Controller{
 		CarControl cc = wDrive(cs);		
 //		System.out.println(cc);
 		Action action = new Action();
-		action.steering = cc.steer;
-		action.brake = (cc.brake>0);
-		action.accelerate = (cc.accel>0);
-		action.gear = cc.gear;
-		action.restartRace = (cc.meta==1);
+		action.steering = cc.getSteer();
+		action.brake = (cc.getBrake()>0);
+		action.accelerate = (cc.getAccel()>0);
+		action.gear = cc.getGear();
+		action.restartRace = (cc.getMeta()==1);
 		return action;	
 
 	}

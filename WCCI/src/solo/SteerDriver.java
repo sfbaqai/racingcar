@@ -19,6 +19,10 @@ import com.graphbuilder.geom.Geom;
  */
 public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2390261840257478234L;
 	private BufferedWriter writer;
 	/**
 	 * 
@@ -130,7 +134,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 		ObjectList<CarControl> ol = new ObjectArrayList<CarControl>();
 		int gear = state.state.getGear();
 		double brake = 0.0d;
-		double dist = state.state.getDistanceRaced();
+//		double dist = state.state.getDistanceRaced();
 		double rpm = state.state.getRpm();
 		steer = targetSteer;
 
@@ -250,7 +254,7 @@ public class SteerDriver extends BaseStateDriver<NewCarState,CarControl> {
 			speedChange[currentGear] = speedAtChange;
 			smaxSpeed = avgSpeed;
 			savgSpeed = avgSpeed;
-			savgSteer = savgSteer;
+//			savgSteer = savgSteer;
 			savgRadius = avgRadius;
 			savgAngle = avgAngle;
 			if (currentGear>2 && Math.abs(speedAtChange-speedChange[currentGear-1])==0){				

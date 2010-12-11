@@ -21,6 +21,10 @@ import java.io.FileWriter;
  */
 public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2998679043491965841L;
 	private BufferedWriter writer;
 	/**
 	 * 
@@ -87,7 +91,7 @@ public class RPMDriver extends BaseStateDriver<CarRpmState,CarControl> {
 	public ObjectList<CarControl> drive(State<CarRpmState, CarControl> state) {
 		// TODO Auto-generated method stub
 		double steer = state.state.getAngleToTrackAxis()/SimpleDriver.steerLock;
-		double speed = state.state.getSpeed();		
+//		double speed = state.state.getSpeed();		
 		ObjectList<CarControl> ol = new ObjectArrayList<CarControl>();		
 
 		/*if (state.state.getSpeed()>=296.8 || state.state.gear==6){
