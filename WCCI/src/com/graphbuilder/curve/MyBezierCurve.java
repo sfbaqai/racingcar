@@ -9,13 +9,15 @@ import com.graphbuilder.math.PascalsTriangle;
  * @author kokichi3000
  *
  */
-public class MyBezierCurve extends BezierCurve {
+public class MyBezierCurve extends My2DParametricCurve {
 
 
 	// a[] is required to compute (1 - t)^n starting from the last index.
 	// The idea is that all Bezier curves can share the same array, which
 	// is more memory efficient than each Bezier curve having its own array.
 	private static double[] a = new double[0];
+	private static double[] b = new double[0];
+	private static double[][] q = null;
 
 	private double t_min = 0.0;
 	private double t_max = 1.0;
@@ -33,63 +35,32 @@ public class MyBezierCurve extends BezierCurve {
 	@Override
 	public void eval(double[] p) {
 		double t = p[p.length - 1];
-
-		int numPts = gi.getGroupSize();
-
-		if (numPts > a.length)
-			a = new double[2 * numPts];
-
-		a[numPts - 1] = 1;
-		double b = 1.0;
-		double one_minus_t = 1.0 - t;
-
-		for (int i = numPts - 2; i >= 0; i--)
-			a[i] = a[i+1] * one_minus_t;
-
-		gi.set(0, 0);
-
-		int i = 0;
-
-		while (i < numPts) {
-			double pt = PascalsTriangle.nCr(numPts - 1, i);
-
-			if (Double.isInfinite(pt) || Double.isNaN(pt)) {
-				// are there any techniques that can be used
-				// to calculate past 1030 points?
-				// 1031 choose 515 == infinity
-			}
-			else {
-				double gravity = a[i] * b * pt;
-				double[] d = cp.getPoint(gi.next()).getLocation();
-
-				for (int j = 0; j < p.length - 1; j++)
-					p[j] = p[j] + d[j] * gravity;
-			}
-
-			b = b * t;
-			i++;
-		}
-	}
-	
-	public double radius(double t){
-		double[] p = new double[3];
-		p[2] = t;		
-		firstDerivative(p);
-		
-		double dx = p[0];
-		double dy = p[1];
 		p[0] = 0;
 		p[1] = 0;
-		secondDerivative(p);
+		int numPts = gi.getGroupSize();
+
+		if (a==null || numPts > a.length)
+			a = new double[2 * numPts];
+
+		a[0] = 1;		
+		double one_minus_t = 1.0 - t;
+
+		for (int i = 1; i < numPts;++i)
+			a[i] = a[i-1] * one_minus_t;
+		int n = numPts -1;	
+		b = B(n,a,t);
+		gi.set(0, 0);
 		
-		double ddx = p[0];
-		double ddy = p[1];
-		double d = dx*dx+dy*dy;
-		return Math.sqrt(d*d*d)/Math.abs(dx*ddy-dy*ddx);
+		for  (int i =0;i<=n;++i){			
+			double[] d = cp.getPoint(gi.next()).getLocation();
+			for (int j = 0; j < p.length - 1; j++)
+				p[j] += d[j] * b[i];
+		}
+
 	}
-	
+		
 	public double[][] Q(int n){
-		double[][] q = new double[n][];
+		if (q==null || q.length<n) q = new double[n][];
 		gi.set(0, 0);
 		double[] old = null;
 		for  (int i =0;i<n;++i){
@@ -98,7 +69,7 @@ public class MyBezierCurve extends BezierCurve {
 				old = d;
 				d = cp.getPoint(gi.next()).getLocation();
 			}
-			q[i] = new double[d.length];
+			if (q[i]==null || q[i].length<d.length) q[i] = new double[d.length];
 			for (int j = 0;j<d.length;++j)
 				q[i][j] = n*(d[j]-old[j]);
 			old = d;
@@ -106,7 +77,7 @@ public class MyBezierCurve extends BezierCurve {
 		return q;
 	}
 	
-	public void firstDerivative(double[] p) {
+	public void df(double[] p) {
 		double t = p[p.length - 1];
 
 		int numPts = gi.getGroupSize();
@@ -121,8 +92,8 @@ public class MyBezierCurve extends BezierCurve {
 			a[i] = a[i-1] * one_minus_t;
 
 		int i = 0;
-		double[][] q = Q(numPts-1);
-		double[] b = B(numPts-2,a,t);
+		q = Q(numPts-1);
+		b = B(numPts-2,a,t);
 		for  (i =0;i<numPts-1;++i){			
 			for (int j = 0; j < p.length - 1; j++)
 				p[j] += q[i][j] * b[i];
@@ -132,7 +103,7 @@ public class MyBezierCurve extends BezierCurve {
 	
 	
 	public double[] B(int n,double[] a,double t){
-		double[] b = new double[n+1];
+		if (b==null || b.length!=n+1) b = new double[n+1];
 		double tt = 1;		
 		
 		for (int i = 0;i<=n;++i){
@@ -143,7 +114,7 @@ public class MyBezierCurve extends BezierCurve {
 		return b;
 	}
 	
-	public void secondDerivative(double[] p) {
+	public void ddf(double[] p) {
 		double t = p[p.length - 1];
 
 		int numPts = gi.getGroupSize();
@@ -158,8 +129,8 @@ public class MyBezierCurve extends BezierCurve {
 			a[i] = a[i-1] * one_minus_t;
 
 		int i = 0;
-		double[][] q = Q(numPts-1);
-		double[] b = B(numPts-3,a,t);
+		q = Q(numPts-1);
+		b = B(numPts-3,a,t);
 		for  (i =0;i<numPts-2;++i){			
 			for (int j = 0; j < p.length - 1; j++)
 				p[j] += (q[i+1][j]-q[i][j]) * b[i]*(numPts-2);
@@ -247,6 +218,83 @@ public class MyBezierCurve extends BezierCurve {
 	public void resetMemory() {
 		if (a.length > 0)
 			a = new double[0];
+	}
+
+	@Override
+	public double[] ddf(double t) {
+		// TODO Auto-generated method stub
+		double[] p = new double[3];
+
+		int numPts = gi.getGroupSize();
+
+		if (numPts > a.length)
+			a = new double[2 * numPts];
+
+		a[0] = 1;		
+		double one_minus_t = 1.0 - t;
+
+		for (int i = 1; i < numPts;++i)
+			a[i] = a[i-1] * one_minus_t;
+
+		int i = 0;
+		q = Q(numPts-1);
+		b = B(numPts-3,a,t);
+		for  (i =0;i<numPts-2;++i){			
+			for (int j = 0; j < p.length - 1; j++)
+				p[j] += (q[i+1][j]-q[i][j]) * b[i]*(numPts-2);
+		}
+		return p;
+	}
+
+	@Override
+	public double[] df(double t) {
+		// TODO Auto-generated method stub
+		double[] p = new double[3];
+		int numPts = gi.getGroupSize();
+
+		if (numPts > a.length)
+			a = new double[2 * numPts];
+
+		a[0] = 1;		
+		double one_minus_t = 1.0 - t;
+
+		for (int i = 1; i < numPts;++i)
+			a[i] = a[i-1] * one_minus_t;
+
+		int i = 0;
+		q = Q(numPts-1);
+		b = B(numPts-2,a,t);
+		for  (i =0;i<numPts-1;++i){			
+			for (int j = 0; j < p.length - 1; j++)
+				p[j] += q[i][j] * b[i];
+		}
+		return p;
+	}
+
+	@Override
+	public double[] eval(double t) {
+		// TODO Auto-generated method stub
+		double[] p = new double[3];		
+		int numPts = gi.getGroupSize();
+
+		if (a==null || numPts > a.length)
+			a = new double[2 * numPts];
+
+		a[0] = 1;		
+		double one_minus_t = 1.0 - t;
+
+		for (int i = 1; i < numPts;++i)
+			a[i] = a[i-1] * one_minus_t;
+		int n = numPts -1;	
+		b = B(n,a,t);
+		gi.set(0, 0);
+		
+		for  (int i =0;i<=n;++i){			
+			double[] d = cp.getPoint(gi.next()).getLocation();
+			for (int j = 0; j < p.length - 1; j++)
+				p[j] += d[j] * b[i];
+		}
+		return p;
 	}
 
 }
