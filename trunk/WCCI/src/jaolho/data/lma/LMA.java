@@ -78,7 +78,11 @@ public class LMA {
 	// default end conditions
 	public double minDeltaChi2 = 1e-30;
 	public int maxIterations = 100;
-	
+	static int len = 100;
+	static int paramLen = 2;
+	public static double[][] partialDerivative = new double[len][paramLen];
+	public static double[] dy = new double[len];
+
 	
 	
 	/**
@@ -402,7 +406,7 @@ public class LMA {
 			}
 			iterationCount++;
 		} while (!stop());
-		printEndReport();
+		if (verbose) printEndReport();
 	}
 	
 	private void printEndReport() {

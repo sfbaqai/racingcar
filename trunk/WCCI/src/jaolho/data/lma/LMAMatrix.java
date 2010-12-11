@@ -7,6 +7,11 @@ package jaolho.data.lma;
  */
 public interface LMAMatrix {
 	public static class InvertException extends RuntimeException {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -484861101650215403L;
+
 		public InvertException(String message) {
 			super(message);
 		}
