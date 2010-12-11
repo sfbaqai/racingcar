@@ -15,7 +15,16 @@ import java.util.List;
  *
  */
 public abstract class BaseStateDriver<T,V> implements Serializable{
-	private class StackNode implements Serializable{		
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8209089706156610910L;
+
+	private final class StackNode implements Serializable{		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7405677296475558091L;
 		public State<T,V> state;		
 		public V action;
 		public StackNode(State<T, V> state, V action) {
@@ -111,8 +120,8 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 	public abstract V shutdown();
 	
 	
-	public V wDrive(T state){
-		if (state==null || map == null) return null;
+	public final V wDrive(T state){
+		if (state==null || map == null) return null;		
 		if (!started) {
 			started = true;
 			targetAction = null;
@@ -120,11 +129,11 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 				target = null;
 			 else target = startStates.remove(0);
 			start = target;
-			index++;
+			index++;//*/
 			init();			
 		}
 		State<T, V> s = null;
-		if (map.isEmpty()){			
+		if (!storeNewState || map.isEmpty()){			
 			if (storeNewState) {
 				storeSingleAction(null, null, state);
 				map.store(current,null,state);
@@ -184,7 +193,8 @@ public abstract class BaseStateDriver<T,V> implements Serializable{
 		} else if (target==null || target.compareTo(current)<=0){
 			ObjectList<V> l = drive(current);
 			StackNode sn;
-			for (V v : l) {
+			for (int i =0;i<l.size();++i) {
+				V v = l.get(i);
 				sn = new StackNode(current,v);
 				stack.push(sn);
 			}

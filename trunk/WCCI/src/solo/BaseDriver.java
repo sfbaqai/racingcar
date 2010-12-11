@@ -8,7 +8,7 @@ package solo;
  *
  */
 public abstract class BaseDriver {
-	public abstract String drive(String sensors);
+	public abstract int drive(int[] sensors,int len);
 	public void onShutdown(){};
 	public void onRestart(){};
 

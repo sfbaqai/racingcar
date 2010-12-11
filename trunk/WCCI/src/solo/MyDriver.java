@@ -225,7 +225,7 @@ public final class MyDriver extends SimpleDriver {
 
 	@Override
 	public void init(){		
-		edgeDetector = new EdgeDetector(carState,trackWidth);
+		edgeDetector.init(carState,trackWidth);
 //		edgeDetector.init(carState);
 		if (edgeDetector.trackWidth<=0 && prevEdge!=null)
 			edgeDetector.trackWidth = prevEdge.trackWidth;
@@ -1020,6 +1020,12 @@ public final class MyDriver extends SimpleDriver {
 
 //		Left + Right -
 //		return 0;
+	}
+
+	@Override
+	public int drive(int[] sensors, int len) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 

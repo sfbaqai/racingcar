@@ -15,6 +15,11 @@ import raceclient.SensorModel;
 public class CarRpmState extends CarState implements Comparable<CarRpmState>,Serializable{
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2308540767430283946L;
+
+	/**
 	 * @param carState
 	 */
 	public CarRpmState(CarState carState) {

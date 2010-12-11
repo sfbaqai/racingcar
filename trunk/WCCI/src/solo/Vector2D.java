@@ -28,17 +28,17 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	    this.polar = vector2D.polar;
 	}
 	@Override	
-	public double getX() {
+	public final double getX() {
 		// TODO Auto-generated method stub
 		return x;
 	}
 	@Override
-	public double getY() {
+	public final double getY() {
 		// TODO Auto-generated method stub
 		return y;
 	}
 	@Override
-	public void setLocation(double x, double y) {
+	public final void setLocation(double x, double y) {
 		// TODO Auto-generated method stub
 		this.x = x;
 		this.y = y;
@@ -53,7 +53,8 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	}
 
 	public Vector2D(double x, double y) {
-		this(x, y, false);
+		this.x = x;
+		this.y = y;		
 	}
 
 	/**
@@ -72,56 +73,74 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 		}
 	}
 
-	public double x() { return x; }
-	public double y() { return y; }
+	public final double x() { return x; }
+	public final double y() { return y; }
 
-	public double angle() { return Math.atan2(y, x); }
-	public double length() { return Math.sqrt(x*x + y*y); }
+	public final double angle() { return Math.atan2(y, x); }
+	public final double length() { return Math.sqrt(x*x + y*y); }
 	
-	public void copy(Vector2D v){		
+	public final void copy(Vector2D v){	
 		x = v.x;
 		y = v.y;
 		certain = v.certain;
 	}
 	
-	public Vector2D scale(double xs,double ys) {
+	public final void copyValue(Vector2D v){	
+		x = v.x;
+		y = v.y;		
+	}
+	
+	public final void copy(Vector2D v,boolean cert){	
+		x = v.x;
+		y = v.y;
+		certain = cert;
+	}
+	
+	public final void copy(double vx,double vy){		
+		x = vx;
+		y = vy;				
+	}
+	
+	public final void copy(double vx,double vy,boolean cert){		
+		x = vx;
+		y = vy;				
+		certain = cert;
+	}
+	
+	public final Vector2D scale(double xs,double ys) {
 		return new Vector2D(xs * x, ys * y);
 	}
 
-	public Vector2D plus(Vector2D vector) {
+	public final Vector2D plus(Vector2D vector) {
 		return new Vector2D(x + vector.x, y + vector.y);
 	}
-	public Vector2D minus(Vector2D vector) {
+	public final Vector2D minus(Vector2D vector) {
 		return new Vector2D(x - vector.x, y - vector.y);
 	}
 	
-	public Vector2D times(double scaler) {
+	public final Vector2D times(double scaler) {
 		return new Vector2D(scaler * x, scaler * y);
 	}
 
-	public double dot(Vector2D that) {
+	public final double dot(Vector2D that) {
 		return this.x * that.x + this.y * that.y;
 	}
 	
 	
-	public double det(Vector2D that) {
+	public final double det(Vector2D that) {
 		return this.x * that.y - this.y * that.x;
 	}
 	
-	public static double angle(Vector2D a, Vector2D b)	{
-//	  double cosine = (a.x * b.x + a.y * b.y) / Math.sqrt((a.x*a.x+a.y*a.y) * (b.x*b.x+b.y*b.y));
-//	  // rounding errors might make dotproduct out of range for cosine
-//	  if (cosine > 1) cosine = 1;
-//	  else if (cosine < -1) cosine = -1;
-//	 
-//	  if ((a.x * b.y - a.y * b.x) < 0)
-//	    return -Math.acos(cosine);
-//	  else
-//	    return Math.acos(cosine);
+	public static final double angle(Vector2D a, Vector2D b)	{
 		return -Math.atan2(b.y, b.x)+Math.atan2(a.y, a.x);
 	}
 	
-	public double angle(Vector2D b)	{
+	public static final double angle(double ax,double ay,double bx,double by)	{
+		return -Math.atan2(by, bx)+Math.atan2(ay, ax);
+	}
+
+	
+	public final double angle(Vector2D b)	{
 //		  double cosine = (x * b.x + y * b.y) / Math.sqrt((x*x+y*y) * (b.x*b.x+b.y*b.y));
 //		  // rounding errors might make dotproduct out of range for cosine		  
 //		  if (cosine > 1) cosine = 1;
@@ -133,6 +152,10 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 //		    return Math.acos(cosine);
 		return -Math.atan2(b.y, b.x)+Math.atan2(y, x);
 		}
+	
+	public final double angle(double bx,double by)	{
+		return -Math.atan2(by, bx)+Math.atan2(y, x);
+		}
 
 
 	/**
@@ -140,10 +163,30 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 *
 	 * @param angle by which to rotate in degrees
 	 */
-	public Vector2D rotated(double angle) {
-		double cos = Math.cos(angle);
+	public final Vector2D rotated(double angle) {
 		double sin = Math.sin(angle);
+		double cos = (sin==1.0 || sin==-1.0) ? 0.0 : Math.cos(angle);
+		if (cos==1.0) return new Vector2D(x,y);
+		if (cos==-1.0) return new Vector2D(-x,-y);
 		return new Vector2D(x * cos - y * sin, x * sin + y * cos);
+	}
+	
+	public final void rotate(double angle,double cx,double cy) {
+		double sin = Math.sin(angle);
+		double cos = (sin==1.0 || sin==-1.0) ? 0.0 : Math.cos(angle);
+		x -= cx;
+		y -= cy;
+		if (cos==-1.0) {
+			x = -x;
+			y = -y;
+		} else if (cos!=1){
+			double tx = x;
+			x = x * cos - y * sin;
+			y = tx * sin + y * cos;
+		}		
+
+		x+=cx;
+		y+=cy;		
 	}
 
 
@@ -152,7 +195,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * which assumed to be normalised.  The operation is <code>on *
 	 * (this dot on)</code>.
 	 */
-	public Vector2D projectedOn(Vector2D normalised) {
+	public final Vector2D projectedOn(Vector2D normalised) {
 		return normalised.times(dot(normalised));
 	}
 
@@ -162,7 +205,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * if they are identical.
 	 */
 	@Override
-	public boolean equals(Object thatObject) {
+	public final boolean equals(Object thatObject) {
 		if (thatObject instanceof Vector2D) {
 			Vector2D that = (Vector2D) thatObject;
 			return this.x == that.x && this.y == that.y;
@@ -171,7 +214,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	}
 
 	@Override
-	public int hashCode() { return (int) (x + y); }
+	public final int hashCode() { return (int) (x + y); }
 
 	/**
 	 * This returns the Vector2D that is orthogonal to this and to the
@@ -179,23 +222,34 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * cross y-axis then the result of this function is z-axis cross
 	 * this.
 	 **/
-	public Vector2D orthogonal() { return new Vector2D(-y, x); }
+	public final Vector2D orthogonal() { return new Vector2D(-y, x); }
 
 	/**
 	 * Produces a unit vector version of this.  In other words, a
 	 * vector that points in the same direction but has a length of
 	 * one.  This is the same as <code>normalised()</code>.
 	 **/
-	public Vector2D normalized() {
-		double length = length();
-		return length > 0.0 ? times(1.0d / length) : this;
+	public final Vector2D normalized() {
+		double x = this.x;
+		double y = this.y;
+		double length = Math.sqrt(x*x + y*y);
+		if (length==0) return this;
+		double d = 1.0d/length;		
+		return new Vector2D(x*d, y*d);
 	}
 	/**
 	 * Produces a unit vector version of this.  In other words, a
 	 * vector that points in the same direction but has a length of
 	 * one.  This is the same as <code>normalized()</code>.
 	 **/
-	public Vector2D normalised() { return normalized(); }
+	public final Vector2D normalised() {
+		double x = this.x;
+		double y = this.y;
+		double length = Math.sqrt(x*x + y*y);
+		if (length==0) return this;
+		double d = 1.0d/length;		
+		return new Vector2D(x*d, y*d);
+	}
 
 	/**
 	 * A vector of the same length in the opposite direction.  "That's
@@ -209,7 +263,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	}
 	
 
-	public static Vector2D[] toVector2D(double[] x,double[] y){
+	public static final Vector2D[] toVector2D(double[] x,double[] y){
 		if (x==null || y==null || x.length!=y.length || x.length==0)
 			return null;
 		int len = x.length;
@@ -223,15 +277,23 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * @see java.awt.geom.Point2D#clone()
 	 */
 	@Override
-	public Object clone() {
+	public final Object clone() {
 		// TODO Auto-generated method stub
 		return super.clone();
 	}
 	/* (non-Javadoc)
 	 * @see java.awt.geom.Point2D#distance(java.awt.geom.Point2D)
 	 */
+	
+	public final double distance(Vector2D arg0) {
+		// TODO Auto-generated method stub
+		double dx =x-arg0.x;
+		double dy =y-arg0.y;
+		return Math.sqrt(dx*dx+dy*dy);
+	}
+	
 	@Override
-	public double distance(Point2D arg0) {
+	public final double distance(Point2D arg0) {
 		// TODO Auto-generated method stub
 		double dx =x-arg0.getX();
 		double dy =y-arg0.getY();
@@ -241,7 +303,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * @see java.awt.geom.Point2D#distance(double, double)
 	 */
 	@Override
-	public double distance(double arg0, double arg1) {
+	public final double distance(double arg0, double arg1) {
 		// TODO Auto-generated method stub
 		double dx =x-arg0;
 		double dy =y-arg1;
@@ -251,7 +313,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * @see java.awt.geom.Point2D#distanceSq(java.awt.geom.Point2D)
 	 */
 	@Override
-	public double distanceSq(Point2D arg0) {
+	public final double distanceSq(Point2D arg0) {
 		// TODO Auto-generated method stub
 		double dx =x-arg0.getX();
 		double dy =y-arg0.getY();
@@ -261,7 +323,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * @see java.awt.geom.Point2D#distanceSq(double, double)
 	 */
 	@Override
-	public double distanceSq(double arg0, double arg1) {
+	public final double distanceSq(double arg0, double arg1) {
 		// TODO Auto-generated method stub
 		double dx =x-arg0;
 		double dy =y-arg1;
@@ -271,7 +333,7 @@ public final class Vector2D extends java.awt.geom.Point2D implements Point2d,jav
 	 * @see java.awt.geom.Point2D#setLocation(java.awt.geom.Point2D)
 	 */
 	@Override
-	public void setLocation(Point2D arg0) {
+	public final void setLocation(Point2D arg0) {
 		// TODO Auto-generated method stub
 		super.setLocation(arg0);
 	}

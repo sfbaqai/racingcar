@@ -19,6 +19,7 @@ import com.graphbuilder.geom.Geom;
  */
 public class CurveCoordinate {	
 	Double2ObjectSortedMap<Vector2D> lMap;
+	private static final double ANGLEACCURACY =100.0d;
 	double[] allLengths;	
 	Vector2D[] allPoints;
 	double width;
@@ -299,7 +300,7 @@ public class CurveCoordinate {
 		}
 		
 		double angle = -Vector2D.angle(new Vector2D(0,1),t);
-		angle=Math.round(angle*EdgeDetector.ANGLEACCURACY)/EdgeDetector.ANGLEACCURACY;
+		angle=Math.round(angle*ANGLEACCURACY)/ANGLEACCURACY;
 		System.out.println(angle+"    "+t);
 		if (angle!=0)
 			System.out.println(new ObjectArrayList<Vector2D>(v));

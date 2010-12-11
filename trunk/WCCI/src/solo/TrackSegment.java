@@ -19,16 +19,46 @@ import org.jfree.data.xy.XYSeriesCollection;
 import com.graphbuilder.geom.Geom;
 
 public class TrackSegment {
-	final static int STRT = 0;
-	final static int LFT = -1;
-	final static int RGT = 1;
-	final static int LEFTSTART = 0;
-	final static int LEFTEND=1;
-	final static int RIGHTSTART = 2;
-	final static int RIGHTEND=3;
-	final static double MAXRADIUS = 1000;
-	final static double EPSILON = 0.001;
-	final static double MINLENGTH = 0.01;
+	private static final char[] MAX_DOUBLE_STRING = {'1','.','7','9','7','6','9','3','1','3','4','8','6','2','3','1','5','7','E','3','0','8'};
+	public final static int STRT = 0;
+	public final static int LFT = -1;
+	public final static int RGT = 1;
+//	private final static int LEFTSTART = 0;
+//	private final static int LEFTEND=1;
+//	private final static int RIGHTSTART = 2;
+//	private final static int RIGHTEND=3;
+//	public final static double MAXRADIUS = 1000;
+	public final static double EPSILON = 0.001;
+	private final static double MINLENGTH = 0.01;	
+	private static final int PRECISION_DIGIT = 6;
+	private static final double PRECISION = 1000000.0d;
+
+	private static final int int10pow[] = {
+		1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000	            
+	};
+
+	private static final long long10pow[] = {
+		1,
+		10,
+		100,
+		1000,
+		10000,
+		100000,
+		1000000,
+		10000000,
+		100000000,
+		1000000000,
+		10000000000L,
+		100000000000L,
+		1000000000000L,
+		10000000000000L,
+		100000000000000L,
+		1000000000000000L,
+		10000000000000000L,
+		100000000000000000L,
+		1000000000000000000L		
+	};
+
 
 	int type;
 
@@ -39,9 +69,25 @@ public class TrackSegment {
 	double radius;		/**< Radius in meters of the middle of the track (>0) */
 	double arc;			/**< Arc in rad of the curve (>0) */
 	double startX,startY,endX,endY; 
-
-
-
+	private static final char[] buf = new char[300];
+	private static final String TAB = "    ";
+	private static final String[] headers = {"TrackSegment (type = ",TAB+"centerx = ",TAB+"centery = ",TAB+"length = ",TAB+"dist = ",TAB+"radius = ","arc = ",TAB+"startX = ",TAB+"startY = ",TAB+"endX = ",TAB+"endY = "," )"};	
+	private static final char[] tp = headers[0].toCharArray();
+	private static final char[] cntrx = headers[1].toCharArray();
+	private static final char[] cntry = headers[2].toCharArray();
+	private static final char[] lngth = headers[3].toCharArray();
+	private static final char[] dist = headers[4].toCharArray();
+	private static final char[] rad = headers[5].toCharArray();
+	
+	private static final char[] sX = headers[7].toCharArray();
+	private static final char[] sY = headers[8].toCharArray();
+	private static final char[] eX = headers[9].toCharArray();
+	private static final char[] eY = headers[10].toCharArray();
+	private static final char[] fin = headers[11].toCharArray();
+	static {
+		System.arraycopy(tp, 0, buf, 0, tp.length);
+	}
+	
 	/**
 	 * Copy Constructor
 	 *
@@ -61,6 +107,22 @@ public class TrackSegment {
 		this.endX = trackSegment.endX;
 		this.endY = trackSegment.endY;
 	}
+	
+	public TrackSegment(Segment trackSegment) 
+	{
+		this.type = trackSegment.type;
+		this.centerx = (trackSegment.center!=null) ? trackSegment.center.x : 0;
+		this.centery = (trackSegment.center!=null) ? trackSegment.center.y : 0;
+		this.length = trackSegment.length;
+		this.distanceFromLocalOrigin = trackSegment.dist;
+		this.radius = trackSegment.radius;
+		this.arc = trackSegment.arc;
+		this.startX = (trackSegment.start!=null) ? trackSegment.start.x : 0;
+		this.startY = (trackSegment.start!=null) ? trackSegment.start.y : 0;
+		this.endX = (trackSegment.end!=null) ? trackSegment.end.x : 0;
+		this.endY = (trackSegment.end!=null) ? trackSegment.end.y : 0;
+	}
+
 
 
 	public TrackSegment() {
@@ -69,10 +131,10 @@ public class TrackSegment {
 
 	public final static TrackSegment createStraightSeg(double dist,double startX,double startY,double endX,double endY){
 		double radius = Double.MAX_VALUE;
-		startX = Math.round(startX*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
-		startY = Math.round(startY*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
-		endX = Math.round(endX*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
-		endY = Math.round(endY*EdgeDetector.PRECISION)/EdgeDetector.PRECISION;
+		startX = Math.round(startX*PRECISION)/PRECISION;
+		startY = Math.round(startY*PRECISION)/PRECISION;
+		endX = Math.round(endX*PRECISION)/PRECISION;
+		endY = Math.round(endY*PRECISION)/PRECISION;
 		double arc = -1;
 		double dx = endX-startX;
 		double dy = endY - startY;
@@ -86,7 +148,7 @@ public class TrackSegment {
 	public final static TrackSegment createTurnSeg(double dist,double centerx,double centery,double radius,double startX,double startY,double endX,double endY,double x2,double y2){		
 		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
 		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);
-		Vector2D v3 = new Vector2D(x2-centerx,y2-centery);
+//		Vector2D v3 = new Vector2D(x2-centerx,y2-centery);
 		double angle = Vector2D.angle(v1, v2);
 		if (angle<-Math.PI) 
 			angle += 2*Math.PI;
@@ -120,18 +182,20 @@ public class TrackSegment {
 		return new TrackSegment(type,centerx,centery,length,0,radius,angle,startX,startY,endX,endY);
 	}
 	
-	public final static int getTurn(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){		
-		Vector2D v1 = new Vector2D(startX-centerx,startY-centery);
-		Vector2D v2 = new Vector2D(endX-centerx,endY-centery);		
-		double angle = Vector2D.angle(v1, v2);	
-//		angle = (-Math.PI*2+angle)%(Math.PI*2);
-		if (angle<-Math.PI) 
-			angle += 2*Math.PI;
-		else if (angle>Math.PI) 
-			angle -= 2*Math.PI;
-		
-		return (angle<0) ? LFT : RGT;				
-	}
+//	public final static int getTurn(double centerx,double centery,double radius,double startX,double startY,double endX,double endY){				
+//		double ax = startX-centerx;
+//		double ay = startY-centery;
+//		double bx = endX-centerx;
+//		double by = endY-centery;
+//		double angle = -Math.atan2(by, bx)+Math.atan2(ay, ax);
+////		angle = (-Math.PI*2+angle)%(Math.PI*2);
+//		if (angle<-Math.PI) 
+//			angle += 2*Math.PI;
+//		else if (angle>Math.PI) 
+//			angle -= 2*Math.PI;
+//					
+//		return (angle<0) ? LFT : RGT;				
+//	}
 
 	
 	public final static double distance(double x1,double y1,double x2,double y2){
@@ -167,7 +231,7 @@ public class TrackSegment {
 			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
 			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
 			int j=i+3;
-			if (!isCircle || radius>MAXRADIUS){//is a straight line
+			if (!isCircle || radius>Segment.MAX_RADIUS-1){//is a straight line
 				double allowedDist = Math.max(EPSILON, Geom.ptLineDistSq(x1, y1, x2, y2, x3, y3, null));
 				double dt2 = distance(x1, y1, x2, y2);
 				double dt3 = distance(x1, y1, x3, y3);
@@ -272,8 +336,9 @@ public class TrackSegment {
 		
 		if (ts.type==STRT){
 			if (d1<dist && d2<dist) return null;
-			double[] rs = Geom.getLineSegCircleIntersection(x1, y1, x2, y2, p.x, p.y, dist);
-			if (rs==null) return null;
+			double[] rs = new double[4];
+			int sz = Geom.getLineSegCircleIntersection(x1, y1, x2, y2, p.x, p.y, dist,rs);
+			if (sz==0) return null;
 			return new Vector2D(rs[0],rs[1]);
 		};
 		
@@ -333,7 +398,7 @@ public class TrackSegment {
 			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
 			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
 			int j=i+3;
-			if (!isCircle || radius>MAXRADIUS){//is a straight line
+			if (!isCircle || radius>Segment.MAX_RADIUS){//is a straight line
 				double allowedDist = Math.max(EPSILON, Geom.ptLineDistSq(x1, y1, x2, y2, x3, y3, null));
 				double dt2 = distance(x1, y1, x2, y2);
 				double dt3 = distance(x1, y1, x3, y3);
@@ -455,7 +520,7 @@ public class TrackSegment {
 			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
 			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
 			int j=i+3;
-			if (!isCircle || radius>MAXRADIUS){//is a straight line								
+			if (!isCircle || radius>Segment.MAX_RADIUS-1){//is a straight line								
 				for (j=i+3;j<len;++j){
 					double x = v[j].x;
 					double y = v[j].y;
@@ -702,7 +767,7 @@ public class TrackSegment {
 			boolean isCircle = Geom.getCircle(x1, y1, x2, y2, x3, y3, result);
 			double radius = (isCircle) ? Math.sqrt(result[2]) : Double.MAX_VALUE;
 			int j=i+3;
-			if (!isCircle || radius>MAXRADIUS){//is a straight line								
+			if (!isCircle || radius>Segment.MAX_RADIUS-1){//is a straight line								
 				for (j=i+3;j<len;++j){
 					double x = v[j].x;
 					double y = v[j].y;
@@ -861,7 +926,7 @@ public class TrackSegment {
 			return ts;
 		double d = dist-ts.distanceFromLocalOrigin;
 		if (ts.type==STRT){
-			TrackSegment t = TrackSegment.createStraightSeg(dist, ts.startX, ts.startY-d, ts.endX, ts.endY-d);
+//			TrackSegment t = TrackSegment.createStraightSeg(dist, ts.startX, ts.startY-d, ts.endX, ts.endY-d);
 		} else {
 			double arc = d/ts.radius;
 			if (ts.type==LFT) arc = -arc;
@@ -930,7 +995,7 @@ public class TrackSegment {
 				line(t.startX, t.startY, t.endX, t.endY, series);
 			} else {
 				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
-//				series.add(t.centerx,t.centery);
+				series.add(t.centerx,t.centery);
 			}
 		}
 
@@ -971,6 +1036,22 @@ public class TrackSegment {
 
 
 	public TrackSegment(int type, double centerx, double centery,
+			double length, double distanceFromLocalOrigin, double radius,
+			double arc, double startX, double startY, double endX, double endY) {
+		this.type = type;
+		this.centerx = centerx;
+		this.centery = centery;
+		this.length = length;
+		this.distanceFromLocalOrigin = distanceFromLocalOrigin;
+		this.radius = radius;
+		this.arc = arc;
+		this.startX = startX;
+		this.startY = startY;
+		this.endX = endX;
+		this.endY = endY;
+	}
+	
+	public void copy(int type, double centerx, double centery,
 			double length, double distanceFromLocalOrigin, double radius,
 			double arc, double startX, double startY, double endX, double endY) {
 		this.type = type;
@@ -1241,30 +1322,7 @@ public class TrackSegment {
 	 * @return a <code>String</code> representation 
 	 * of this object.
 	 */
-	@Override
-	public String toString()
-	{
-		final String TAB = "    ";
-
-		String retValue = "";
-
-		retValue = "TrackSegment ( "
-			+ super.toString() + TAB
-			+ "type = " + this.type + TAB
-			+ "centerx = " + this.centerx + TAB
-			+ "centery = " + this.centery + TAB
-			+ "length = " + this.length + TAB
-			+ "distanceFromLocalOrigin = " + this.distanceFromLocalOrigin + TAB
-			+ "radius = " + this.radius + TAB
-			+ "arc = " + this.arc + TAB
-			+ "startX = " + this.startX + TAB
-			+ "startY = " + this.startY + TAB
-			+ "endX = " + this.endX + TAB
-			+ "endY = " + this.endY + TAB
-			+ " )";
-
-		return retValue;
-	}
+	
 	
 	public Vector2D[] getSegIntersection(double x1,double y1,double x2,double y2){
 		double[] r = null;
@@ -1283,6 +1341,235 @@ public class TrackSegment {
 			return rs;
 		}
 		return null;
+	}
+	
+	private static final int int2string(int ivalue,char[] s,int from){
+		if (ivalue==0){
+			s[from++]='0';
+			return from;
+		}
+		int ndigits = 0;	               
+		if (ivalue<0) {
+			s[from++] ='-';
+			ivalue = -ivalue;
+		}
+		while (ivalue>=int10pow[ndigits]) ndigits++;
+		int digitno = from+ndigits-1;
+		int c =ivalue%10;       
+		while ( ivalue != 0){
+			s[digitno--] = (char)(c+'0');              
+			ivalue /= 10;
+			c = ivalue%10;
+
+		}          
+		return from+ndigits;
+	}
+	
+	private static final int double2string(double val,char[] s,int from){		
+		if (val==Double.MAX_VALUE){
+			System.arraycopy(MAX_DOUBLE_STRING, 0, s, from, MAX_DOUBLE_STRING.length);
+			return from+MAX_DOUBLE_STRING.length;
+		}
+		long lval = Math.round(val*PRECISION);
+		if (lval==0) {
+			s[from++]='0';
+			return from;
+		}
+		if (lval<0){
+			s[from++] = '-';
+			lval = -lval;
+		}
+		int ndigits = 0;
+		int rt = 0;
+		int dotIndex;
+		if (lval<=1000000000){
+			int ivalue = (int)lval;
+			while (ivalue>=int10pow[ndigits]) ndigits++;
+			dotIndex = ndigits-PRECISION_DIGIT;
+			if (dotIndex<=0) {
+				s[from++]='0';
+				s[from++]='.';
+				while (dotIndex++<0) s[from++]='0';				
+				int digitno = from+ndigits-1;
+				rt = digitno;
+				rt++;
+				int c =ivalue%10;       								
+				while ( c == 0 ){
+					digitno--;
+					rt--;
+					ivalue /= 10;
+					c = ivalue%10;
+				}
+				while ( ivalue != 0){
+					s[digitno--] = (char)(c+'0');              
+					ivalue /= 10;
+					c = ivalue%10;
+				}   
+			} else {								
+				int c =ivalue%10;       					
+				while ( c == 0 && ndigits>dotIndex){
+					ndigits--;				
+					ivalue /= 10;
+					c = ivalue%10;
+					
+				}				
+				int digitno = from+ndigits;
+				rt = digitno+1;
+				if (ndigits==dotIndex) {					
+					digitno--;
+					rt--;
+					s[digitno--] = (char)(c+'0');
+					ivalue /= 10;
+					c = ivalue%10;
+					while ( ivalue != 0){						
+						s[digitno--] = (char)(c+'0');              
+						ivalue /= 10;
+						c = ivalue%10;
+					}   
+					return rt;
+				}
+				while ( ivalue != 0){
+					if (ndigits==dotIndex) {
+						s[digitno--] = '.';	
+						ndigits--;
+					}
+					ndigits--;
+					s[digitno--] = (char)(c+'0');              
+					ivalue /= 10;
+					c = ivalue%10;
+
+				}   
+			}
+		} else {
+			while (lval>=long10pow[ndigits]) ndigits++;
+			dotIndex = ndigits-PRECISION_DIGIT;
+			if (dotIndex<=0) {
+				s[from++]='0';
+				s[from++]='.';
+				while (dotIndex++<0) s[from++]='0';				
+				int digitno = from+ndigits-1;
+				rt = digitno;
+				rt++;
+				int c =(int)(lval%10L);       								
+				while ( c == 0 ){
+					digitno--;
+					rt--;
+					lval /= 10;
+					c =(int)(lval%10L);
+				}
+				while ( lval != 0){
+					s[digitno--] = (char)(c+'0');              
+					lval /= 10;
+					c =(int)(lval%10L);
+				}   
+			} else {								
+				int c =(int)(lval%10L);      					
+				while ( c == 0 && ndigits>dotIndex){
+					ndigits--;				
+					lval /= 10;
+					c =(int)(lval%10L);
+					
+				}				
+				int digitno = from+ndigits;
+				rt = digitno+1;
+				
+				if (lval<=Integer.MAX_VALUE){
+					int ivalue = (int)lval;
+					if (ndigits==dotIndex) {					
+						digitno--;
+						rt--;
+						s[digitno--] = (char)(c+'0');
+						ivalue /= 10;
+						c = ivalue%10;
+						while ( ivalue != 0){						
+							s[digitno--] = (char)(c+'0');              
+							ivalue /= 10;
+							c = ivalue%10;
+						}   
+						return rt;
+					}
+					while ( ivalue != 0){
+						if (ndigits==dotIndex) {
+							s[digitno--] = '.';	
+							ndigits--;
+						}
+						ndigits--;
+						s[digitno--] = (char)(c+'0');              
+						ivalue /= 10;
+						c = ivalue%10;
+
+					}   
+
+				} else {
+					if (ndigits==dotIndex) {					
+						digitno--;
+						rt--;
+						s[digitno--] = (char)(c+'0');
+						lval /= 10;
+						c =(int)(lval%10L);
+						while ( lval != 0){						
+							s[digitno--] = (char)(c+'0');              
+							lval /= 10;
+							c =(int)(lval%10L);
+						}   
+						return rt;
+					}
+					while ( lval != 0){
+						if (ndigits==dotIndex) {
+							s[digitno--] = '.';	
+							ndigits--;
+						}
+						ndigits--;
+						s[digitno--] = (char)(c+'0');              
+						lval /= 10;
+						c =(int)(lval%10L);
+	
+					}
+
+				}
+			}
+
+		}
+		return rt;
+	}
+
+
+
+
+	@Override
+	public String toString() {
+		int len = tp.length;	
+		len = int2string(this.type, buf, len);
+		System.arraycopy(cntrx, 0, buf, len, cntrx.length);
+		len+=cntrx.length;
+		len = double2string(this.centerx, buf, len);
+		System.arraycopy(cntry, 0, buf, len, cntry.length);
+		len+=cntry.length;
+		len = double2string(this.centery, buf, len);
+		System.arraycopy(lngth, 0, buf, len, lngth.length);
+		len+=lngth.length;
+		len = double2string(this.length, buf, len);
+		System.arraycopy(dist, 0, buf, len, dist.length);
+		len+=dist.length;
+		len = double2string(this.distanceFromLocalOrigin, buf, len);
+		System.arraycopy(rad, 0, buf, len, rad.length);
+		len+=rad.length;
+		len = double2string(this.radius, buf, len);
+		System.arraycopy(sX, 0, buf, len, sX.length);
+		len+=sX.length;
+		len = double2string(this.startX, buf, len);
+		System.arraycopy(sY, 0, buf, len, sY.length);
+		len+=sY.length;
+		len = double2string(this.startY, buf, len);
+		System.arraycopy(eX, 0, buf, len, eX.length);
+		len+=eX.length;
+		len = double2string(this.endX, buf, len);
+		System.arraycopy(eY, 0, buf, len, eY.length);
+		len+=eY.length;
+		len = double2string(this.endY, buf, len);
+		System.arraycopy(fin, 0, buf, len, fin.length);
+		len+=fin.length;		
+		return new String(buf,0,len);
 	}
 
 	public static ObjectArrayList<TrackSegment> combine(TrackSegment a, TrackSegment b){

@@ -2043,7 +2043,7 @@ public final class Segment {
 					i++;
 					t = (i<sz-1) ? lArr[i+1] : null;
 				}
-				if ((sz-=oldI)>0) System.arraycopy(lArr, oldI,lArr, i, sz);
+				if ((sz-=oldI)>0) arraycopy(lArr, oldI,lArr, i, sz);
 				sz+=i;
 				continue;
 			}
@@ -2125,7 +2125,7 @@ public final class Segment {
 					t.copy(s);
 					if (t.opp!=null) t.opp.copy(s.opp);
 					int idx = i+1;
-					if ((sz-=idx)>0) System.arraycopy(lArr,idx,lArr,idx-1,sz);
+					if ((sz-=idx)>0) arraycopy(lArr,idx,lArr,idx-1,sz);
 					sz+=idx-1;
 					continue;
 				}
@@ -2304,8 +2304,7 @@ public final class Segment {
 
 		if (len<3) {
 			if (len==2 && type!=0){
-				center = tmpCenter; 
-				circle(first, last, this.center.x,this.center.y, radius,center);				
+				center = circle(first, last, this.center, radius);				
 				double tx = center.x;
 				double ty = center.y;
 				if (ty<SMALL_MARGIN && ty>-SMALL_MARGIN) {
@@ -5109,7 +5108,7 @@ public final class Segment {
 					if ((sz-=size)>0 && rsArr!=null){
 //						if (l+1<0 || indx+1<0 || l+1>rsArr.length || indx+1>rsArr.length || l+1+size>rsArr.length || indx+1+size>rsArr.length)
 //							System.out.println();
-						System.arraycopy(rsArr, l+1, rsArr, indx+1, size);
+						arraycopy(rsArr, l+1, rsArr, indx+1, size);
 					}
 
 					l = indx;
@@ -5152,29 +5151,33 @@ public final class Segment {
 					int size = l-indx-1;
 					if (sI>eI && indx<l-1){
 						if ((sz-=size)>0)
-							System.arraycopy(rsArr, l, rsArr, indx+1, size);										
+							arraycopy(rsArr, l, rsArr, indx+1, size);										
 						l = indx+1;
 					} else if (sI<=eI){
 						if (indx<l-2){
 							size = l-indx-2;
 							int np = indx+2;
 							if ((sz-=size)>0)
-								System.arraycopy(rsArr, l, rsArr, np, size);														
+								arraycopy(rsArr, l, rsArr, np, size);														
 							l = np;
 						}
 						int pos = indx+1;
 						if (l==indx+1){
-							Segment ns = new Segment();
+							if (rsArr[pos]==null)
+								rsArr[pos] = new Segment();
+							Segment ns = rsArr[pos];
+							ns.reset();
+							ns.map = null;
 							ns.start = new Vector2D(v[sI]);							
 							ns.end = new Vector2D(v[eI]);							
 							ns.num = eI-sI+1;						
 							int np = pos +1;
 							if ((sz-=pos)>0)							
-								System.arraycopy(rsArr, pos, rsArr, np, sz);								
+								arraycopy(rsArr, pos, rsArr, np, sz);								
 							sz+=np;
 							ns.startIndex = sI;
 							ns.endIndex = eI;
-							rsArr[pos] = ns;										
+//							rsArr[pos] = ns;										
 						} else {						
 							Segment ns = rsArr[pos];
 							ns.start = new Vector2D(v[sI]);
@@ -5230,7 +5233,7 @@ public final class Segment {
 
 				if (changed && s.num<=0) {			
 					if ((sz-=l)>0)
-						System.arraycopy(rsArr, l, rsArr, l-1, sz);						
+						arraycopy(rsArr, l, rsArr, l-1, sz);						
 					sz+=l-1;				
 				}
 			}
@@ -5260,21 +5263,26 @@ public final class Segment {
 						circle(p, s.end, s.center.x,s.center.y, s.radius,center);
 						if (center.y==0) s.center.x = center.x;
 						if (j>0){
-							Segment ns = new Segment();
+//							Segment ns = new Segment();
+							if (rsArr[0]==null)
+								rsArr[0] = new Segment();
+							Segment ns = rsArr[0];
+							ns.reset();
+							ns.map = null;
 							ns.start = new Vector2D(v[0]);
 							ns.end = new Vector2D(v[j-1]);
 							ns.startIndex = 0;
 							ns.center = center;
 							ns.endIndex = j-1;
 							ns.num = j;
-							rsArr[0] = ns;								
+//							rsArr[0] = ns;								
 							indx = 1;
 						}
 						break;
 					}
 				}
 				if (indx<i){
-					System.arraycopy(rsArr, i, rsArr, indx, sz-=i);
+					arraycopy(rsArr, i, rsArr, indx, sz-=i);
 					sz+=indx;
 				}
 				i = indx;
@@ -5296,7 +5304,7 @@ public final class Segment {
 				s.endIndex = next.endIndex;
 				if (s.end==null && s.num>0) s.end = new Vector2D(v[s.endIndex]);
 				if (sz>i+2)
-					System.arraycopy(rsArr, i+2, rsArr, i+1, sz-i-2);
+					arraycopy(rsArr, i+2, rsArr, i+1, sz-i-2);
 
 				sz--;				
 				found = true;
@@ -5321,11 +5329,11 @@ public final class Segment {
 						}
 					} else {
 						if (sz>i+1)
-							System.arraycopy(rsArr, i+1, rsArr, i, sz-i-1);							
+							arraycopy(rsArr, i+1, rsArr, i, sz-i-1);							
 						sz--;						
 						if (sz>i+1)							
-							System.arraycopy(rsArr, i+1, rsArr, i+1+olSz, sz-i-1);							
-						System.arraycopy(olArr, 0, rsArr, i, olSz);						
+							arraycopy(rsArr, i+1, rsArr, i+1+olSz, sz-i-1);							
+						arraycopy(olArr, 0, rsArr, i, olSz);						
 						sz+=olSz;
 						for (int j = i;j<olSz+i;++j){
 							s = rsArr[j];
@@ -10416,7 +10424,7 @@ public final class Segment {
 				Segment t = (jj==0) ? null : rs[jj-1];
 				while (l!=null && s!=null && l.start.y>s.end.y && (t==null || t.end.y<s.start.y)){
 					if (i==jj && rs==liArr){
-						if (lz-i>0) System.arraycopy(liArr, i, liArr, i+1, lz-i);
+						if (lz-i>0) arraycopy(liArr, i, liArr, i+1, lz-i);
 						++lz;
 						++i;								
 					} 
@@ -10426,7 +10434,7 @@ public final class Segment {
 				}
 
 				if (s==null && i<lz){
-					if (lz-i>0) System.arraycopy(liArr, i, rs, jj, lz-i);
+					if (lz-i>0) arraycopy(liArr, i, rs, jj, lz-i);
 					jj+=lz-i;
 					break;
 				}
@@ -10692,7 +10700,7 @@ public final class Segment {
 					if (k>=sz) s = null;
 				}
 				if (k<sz-1){
-					System.arraycopy(ssArr, k, rs, jj, sz-k);
+					arraycopy(ssArr, k, rs, jj, sz-k);
 					jj += sz-k;
 				}
 				break;
@@ -12509,7 +12517,7 @@ public final class Segment {
 
 
 	public static final void reSynchronize(Segment s,Segment o,int from,int to,int which,double tW){
-		if (s==null || s.type==Segment.UNKNOWN) {
+		if (s.type==Segment.UNKNOWN) {
 			if (o!=null) o.type=Segment.UNKNOWN;
 			return;
 		}
@@ -13070,40 +13078,36 @@ public final class Segment {
 		Segment os = s.opp;
 		s.type = Segment.UNKNOWN;							
 		if (os!=null) os.type = Segment.UNKNOWN;
-		occupied[ trIndx[currentIndx] ] = 0;
-		if (currentIndx==trSz-1) return trSz-1;
-//		if (!s.unsafe){
-//			Segment next = null;
-			int i = 0;
-			for (i = currentIndx+1;i<trSz;++i){
+		if (!s.unsafe){
+			Segment next = null;
+			for (int i = currentIndx+1;i<trSz;++i){
 				int j = trIndx[i]; 
 				Segment t = trArr[ j ];
-				if (t.unsafe) {
-					/*if (!t.unsafe) {
+				if (t.unsafe || i==trSz-1) {
+					if (!t.unsafe) {
 						t.leftSeg.type = Segment.UNKNOWN;
 						t.rightSeg.type = Segment.UNKNOWN;
 						t.type = Segment.UNKNOWN;
 						occupied[j] = 0;
 						i++;
-					}//*/
-					if (i-currentIndx>0) {
-						if (trSz-i>0) System.arraycopy(trIndx, i, trIndx, currentIndx, trSz-i);							
-						trSz-=i-currentIndx;
 					}
-					/*if (trSz>currentIndx){
-						next = trArr[trIndx[currentIndx]];
+					if (i-currentIndx-1>0) {
+						if (trSz-i>0) System.arraycopy(trIndx, i, trIndx, currentIndx+1, trSz-i);
+						trSz-=i-currentIndx-1;
+					}
+					if (trSz>currentIndx+1){
+						next = trArr[trIndx[currentIndx+1]];
 						next = (which==1) ? next.rightSeg : next.leftSeg;
-					} else next = null;//*/
-					return trSz;
+					} else next = null;
+					break;
 				}
 				t.leftSeg.type = Segment.UNKNOWN;
 				t.rightSeg.type = Segment.UNKNOWN;
 				t.type = Segment.UNKNOWN;
 				occupied[j] = 0;
 			}
-			if (i==trSz) return currentIndx;
-//		}
-		return trSz-1;
+		}
+		return trSz;
 	}
 	
 
@@ -13307,28 +13311,17 @@ public final class Segment {
 					else {
 						occupied[ trIndx[currentIndx+1] ] = 0; 
 						trSz = remove(next, which, currentIndx+1, trSz);
-						if (trSz>currentIndx+1){
-							next = trArr[trIndx[currentIndx+1]];
-							next = (which==1) ? next.rightSeg : next.leftSeg;
-						} else next = null;
-						on = (next==null) ? null : next.opp;
 					}
-					if (next!=null){
-						next.updated = true;
-						if (next.type!=Segment.UNKNOWN)
-							reSynchronize(next,on,0,otherTo,-which,tW*2);
-						else if (trSz>currentIndx+1){
-							int idx = currentIndx+2;
-							occupied[ trIndx[currentIndx+1] ] = 0; 
-							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-							trSz+=currentIndx+1;
-							on.type = Segment.UNKNOWN;
-							if (trSz>currentIndx+1){
-								next = trArr[trIndx[currentIndx+1]];
-								next = (which==1) ? next.rightSeg : next.leftSeg;
-							} else next = null;
-							on = (next==null) ? null : next.opp;
-						}
+					next.updated = true;
+					if (next.type!=Segment.UNKNOWN)
+						reSynchronize(next,on,0,otherTo,-which,tW*2);
+					else {
+						int idx = currentIndx+2;
+						occupied[ trIndx[currentIndx+1] ] = 0; 
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+						trSz+=currentIndx+1;
+						on.type = Segment.UNKNOWN;
+						if (currentIndx==trSz-1) next = null;
 					}
 					
 				} else if (s!=null && s.type!=Segment.UNKNOWN && next!=null && next.type!=Segment.UNKNOWN && next.end.y<=s.end.y+SMALL_MARGIN){
@@ -13350,27 +13343,19 @@ public final class Segment {
 						if (next.unsafe) 
 							removeFirstPoint(next, on, s.end.y+SMALL_MARGIN);
 						else {
-							occupied[ trIndx[idx] ] = 0; 
-							trSz = remove(next, which, idx, trSz);
-							next = (idx>=trSz) ? null : (which==1) ? trArr[ trIndx[idx] ].rightSeg : trArr[ trIndx[idx] ].leftSeg;
-							on = (next==null) ? null : next.opp;
+							occupied[ trIndx[currentIndx+1] ] = 0; 
+							trSz = remove(next, which, currentIndx+1, trSz);
 						}
-						if (next!=null){
-							next.updated = true;
-							if (next.type!=Segment.UNKNOWN)
-								reSynchronize(next,on,0,otherTo,-which,tW*2);
-							else {
-								idx = currentIndx+2;
-								occupied[ trIndx[currentIndx+1] ] = 0;
-								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-								trSz+=currentIndx+1;
-								on.type = Segment.UNKNOWN;	
-								if (trSz>currentIndx+1){
-									next = trArr[trIndx[currentIndx+1]];
-									next = (which==1) ? next.rightSeg : next.leftSeg;
-								} else next = null;
-								on = (next==null) ? null : next.opp;
-							}
+						next.updated = true;
+						if (next.type!=Segment.UNKNOWN)
+							reSynchronize(next,on,0,otherTo,-which,tW*2);
+						else {
+							idx = currentIndx+2;
+							occupied[ trIndx[currentIndx+1] ] = 0;
+							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+							trSz+=currentIndx+1;
+							on.type = Segment.UNKNOWN;	
+							if (currentIndx==trSz-1) next = null;
 						}
 					}
 				}
@@ -13381,29 +13366,19 @@ public final class Segment {
 					else {
 						occupied[ trIndx[currentIndx+1] ] = 0; 
 						trSz = remove(on, -which, currentIndx+1, trSz);
-						if (trSz>currentIndx+1){
-							next = trArr[trIndx[currentIndx+1]];
-							next = (which==1) ? next.rightSeg : next.leftSeg;
-						} else next = null;
-						on = (next==null) ? null : next.opp;
 					}
-					if (on!=null){
-						on.updated = true;
-						if (on.type!=Segment.UNKNOWN)
-							reSynchronize(on,next,0,to,which,tW*2);
-						else {
-							int idx = currentIndx+2;
-							occupied[ trIndx[currentIndx+1] ] = 0; 
-							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-							trSz+=currentIndx+1;
-							next.type = Segment.UNKNOWN;
-							if (trSz>currentIndx+1){
-								next = trArr[trIndx[currentIndx+1]];
-								next = (which==1) ? next.rightSeg : next.leftSeg;
-							} else next = null;
-							on = (next==null) ? null : next.opp;
-						}
+					on.updated = true;
+					if (on.type!=Segment.UNKNOWN)
+						reSynchronize(on,next,0,to,which,tW*2);
+					else {
+						int idx = currentIndx+2;
+						occupied[ trIndx[currentIndx+1] ] = 0; 
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+						trSz+=currentIndx+1;
+						next.type = Segment.UNKNOWN;
+						if (currentIndx==trSz-1) next = null;
 					}
+
 				} else if (os!=null && os.type!=Segment.UNKNOWN && on!=null && on.type!=Segment.UNKNOWN && on.end.y<=os.end.y+SMALL_MARGIN){
 					int idx = currentIndx+1;
 					while (on!=null && on.type!=Segment.UNKNOWN && on.end.y<=os.end.y+SMALL_MARGIN){														
@@ -13425,25 +13400,17 @@ public final class Segment {
 						else {
 							occupied[ trIndx[currentIndx+1] ] = 0; 
 							trSz = remove(on, -which, currentIndx+1, trSz);
-							next = (idx>=trSz) ? null : (which==1) ? trArr[ trIndx[idx] ].rightSeg : trArr[ trIndx[idx] ].leftSeg;
-							on = (next==null) ? null : next.opp;
 						}
-						if (on!=null){
-							on.updated = true;
-							if (on.type!=Segment.UNKNOWN)
-								reSynchronize(on,next,0,to,which,tW*2);
-							else {
-								idx = currentIndx+2;
-								occupied[ trIndx[currentIndx+1] ] = 0;
-								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-								trSz+=currentIndx+1;
-								next.type = Segment.UNKNOWN;
-								if (trSz>currentIndx+1){
-									next = trArr[trIndx[currentIndx+1]];
-									next = (which==1) ? next.rightSeg : next.leftSeg;
-								} else next = null;
-								on = (next==null) ? null : next.opp;
-							}
+						on.updated = true;
+						if (on.type!=Segment.UNKNOWN)
+							reSynchronize(on,next,0,to,which,tW*2);
+						else {
+							idx = currentIndx+2;
+							occupied[ trIndx[currentIndx+1] ] = 0;
+							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+							trSz+=currentIndx+1;
+							next.type = Segment.UNKNOWN;
+							if (currentIndx==trSz-1) next = null;
 						}
 					}
 				}
@@ -13483,16 +13450,6 @@ public final class Segment {
 				} else {
 //					occupied[ trIndx[currentIndx] ] = 0; 
 					trSz = remove(s, which, currentIndx, trSz);
-					if (trSz>currentIndx+1){
-						next = trArr[trIndx[currentIndx+1]];
-						next = (which==1) ? next.rightSeg : next.leftSeg;
-					} else next = null;
-					on = (next==null) ? null : next.opp;
-					if (trSz>currentIndx){
-						s = trArr[trIndx[currentIndx]];
-						s = (which==1) ? s.rightSeg : s.leftSeg;
-					} else s = null;
-					os = (s==null) ? null : s.opp;
 				}
 				reSynchronize(s,os,0,otherTo,-which,tW*2);
 			} else if (op!=null && op.end.y>=os.start.y-SMALL_MARGIN){
@@ -13502,16 +13459,6 @@ public final class Segment {
 				} else {
 //					occupied[ trIndx[currentIndx] ] = 0; 
 					trSz = remove(os, -which, currentIndx, trSz);
-					if (trSz>currentIndx+1){
-						next = trArr[trIndx[currentIndx+1]];
-						next = (which==1) ? next.rightSeg : next.leftSeg;
-					} else next = null;
-					on = (next==null) ? null : next.opp;
-					if (trSz>currentIndx){
-						s = trArr[trIndx[currentIndx]];
-						s = (which==1) ? s.rightSeg : s.leftSeg;
-					} else s = null;
-					os = (s==null) ? null : s.opp;
 				}
 				reSynchronize(os,s,0,to,which,tW*2);
 			}
@@ -13558,29 +13505,18 @@ public final class Segment {
 						else {
 							occupied[ trIndx[currentIndx+1] ] = 0; 
 							trSz = remove(next, which, currentIndx+1, trSz);
-							if (trSz>currentIndx+1){
-								next = trArr[trIndx[currentIndx+1]];
-								next = (which==1) ? next.rightSeg : next.leftSeg;
-							} else next = null;
-							on = (next==null) ? null : next.opp;
 						}
-						if (next!=null){
-							next.updated = true;
-							if (next.type!=Segment.UNKNOWN)
-								reSynchronize(next,on,0,otherTo,-which,tW*2);
-							else {
-								int idx = currentIndx+2;
-								occupied[ trIndx[currentIndx+1] ] = 0; 
-								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-								trSz+=currentIndx+1;
-								on.type = Segment.UNKNOWN;
-								if (trSz>currentIndx+1){
-									next = trArr[trIndx[currentIndx+1]];
-									next = (which==1) ? next.rightSeg : next.leftSeg;
-								} else next = null;
-								on = (next==null) ? null : next.opp;
-							}
-						}
+						next.updated = true;
+						if (next.type!=Segment.UNKNOWN)
+							reSynchronize(next,on,0,otherTo,-which,tW*2);
+						else {
+							int idx = currentIndx+2;
+							occupied[ trIndx[currentIndx+1] ] = 0; 
+							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+							trSz+=currentIndx+1;
+							on.type = Segment.UNKNOWN;
+							if (currentIndx==trSz-1) next = null;
+						}						
 					} else if (next!=null && next.type!=Segment.UNKNOWN && (next.endIndex<s.startIndex || next.end.y<=s.end.y+SMALL_MARGIN)){
 						int idx = currentIndx+1;
 						while (next!=null && next.type!=Segment.UNKNOWN && next.end.y<=s.end.y+SMALL_MARGIN){														
@@ -13602,28 +13538,17 @@ public final class Segment {
 							else {
 								occupied[ trIndx[currentIndx+1] ] = 0; 
 								trSz = remove(next, which, currentIndx+1, trSz);
-								if (trSz>currentIndx+1){
-									next = trArr[trIndx[currentIndx+1]];
-									next = (which==1) ? next.rightSeg : next.leftSeg;
-								} else next = null;
-								on = (next==null) ? null : next.opp;
 							}
-							if (next!=null){
-								next.updated = true;
-								if (next.type!=Segment.UNKNOWN)
-									reSynchronize(next,on,0,otherTo,-which,tW*2);
-								else {
-									idx = currentIndx+2;
-									occupied[ trIndx[currentIndx+1] ] = 0;
-									if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-									trSz+=currentIndx+1;
-									on.type = Segment.UNKNOWN;		
-									if (trSz>currentIndx+1){
-										next = trArr[trIndx[currentIndx+1]];
-										next = (which==1) ? next.rightSeg : next.leftSeg;
-									} else next = null;
-									on = (next==null) ? null : next.opp;
-								}
+							next.updated = true;
+							if (next.type!=Segment.UNKNOWN)
+								reSynchronize(next,on,0,otherTo,-which,tW*2);
+							else {
+								idx = currentIndx+2;
+								occupied[ trIndx[currentIndx+1] ] = 0;
+								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+								trSz+=currentIndx+1;
+								on.type = Segment.UNKNOWN;		
+								if (currentIndx==trSz-1) next = null;
 							}
 						}
 					}
@@ -13791,9 +13716,9 @@ public final class Segment {
 					ok = (d>=0);
 					if (s.num>2){
 						if (!ok && fst!=null && lst!=fst){
-//							Vector2D center = tmpCenter; 
-//							circle(fst, lst, s.center.x,s.center.y, s.radius,center);
-							Vector2D center = circle(fst,lst, s.center, s.radius);
+							Vector2D center = tmpCenter;
+							circle(fst, lst, center.x,center.y, s.radius,center);
+//							Vector2D center = circle(fst, lst, s.center, s.radius);
 							double d1 = check(v, firstIndex,lastIndex, center, s.radius);
 							ok = (d1>=0);
 							if (ok) {
@@ -13819,16 +13744,6 @@ public final class Segment {
 						if (currentMap[sR]>1) currentMap[sR]--;
 						if (!isConfirmed(s, which, tW) && currentMap[sR]<1){							
 							trSz = remove(s, which, currentIndx, trSz);
-							if (trSz>currentIndx+1){
-								next = trArr[trIndx[currentIndx+1]];
-								next = (which==1) ? next.rightSeg : next.leftSeg;
-							} else next = null;
-							on = (next==null) ? null : next.opp;
-							if (trSz>currentIndx){
-								s = trArr[trIndx[currentIndx]];
-								s = (which==1) ? s.rightSeg : s.leftSeg;
-							} else s = null;
-							os = (s==null) ? null : s.opp;
 						} 													
 					} 
 //					else bkupS.copy(s);
@@ -14182,7 +14097,7 @@ public final class Segment {
 						}
 					}
 					if (psz>0){																	
-						System.arraycopy(oalArr, 0, tmp, 0, psz);
+						arraycopy(oalArr, 0, tmp, 0, psz);
 						sz+=psz;
 					} 					
 				}
@@ -14205,7 +14120,7 @@ public final class Segment {
 				if (ok){													
 					nsz = bestGuess(v, s.endIndex+1, endIndx, -which*tW, s, next, oalArr,sz);					
 					if (nsz>sz){												
-						System.arraycopy(oalArr, sz, tmp, sz, nsz-sz);
+						arraycopy(oalArr, sz, tmp, sz, nsz-sz);
 						sz = nsz;												
 					} 					
 				}
@@ -14328,7 +14243,7 @@ public final class Segment {
 		if (liSz>0){ 
 			if (salSz>0) 				
 				liSz = mix(salArr,salSz, oalArr,liSz, which, tW,tmpStore);
-			else System.arraycopy(oalArr, 0, tmpStore, 0, liSz);										
+			else arraycopy(oalArr, 0, tmpStore, 0, liSz);										
 			if (liSz>1) liSz = adjust(tmpStore,liSz);	
 			trSz = replaceSideElems(tmpStore, 0, liSz, trArr, trIndx, prevIndx+1, nextIndx, trSz, which,tW);
 			for (int ii = oldSz-1;ii>=0;--ii){
@@ -14918,7 +14833,6 @@ public final class Segment {
 				oldTrSz = trSz;
 				if (oldIndx<i) oldIndx = i;				
 			}			
-			oldTrSz = trSz;
 			next = (i<trSz-1) ? trArr[ trIndx[i+1] ] : null;
 			Segment l = t.leftSeg;
 			Segment r = t.rightSeg;
@@ -14965,7 +14879,8 @@ public final class Segment {
 					l = t.leftSeg;
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;					
+					nr = (next==null) ? null : next.rightSeg;
+					oldTrSz = trSz;
 					while (pl!=null && pl.type==UNKNOWN){
 						occupied[ trIndx[i-1] ] = 0;					
 						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
@@ -15009,7 +14924,8 @@ public final class Segment {
 					l = t.leftSeg;
 					r = t.rightSeg;	
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;					
+					nr = (next==null) ? null : next.rightSeg;
+					oldTrSz = trSz;
 					while (pr!=null && pr.type==UNKNOWN){					
 						occupied[ trIndx[i-1] ] = 0;					
 						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
@@ -15091,7 +15007,7 @@ public final class Segment {
 //				nextREndIndx = nr.endIndex;
 //			}
 
-			if (i>0 && pl!=null && l!=null && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
+			if (i>0 && pl!=null && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && Math.abs(pl.center.y-l.center.y)<1)){
 				pl.end.copy(l.end);
 				pl.endIndex = l.endIndex;
 				pr.end.copy(r.end);
@@ -15100,7 +15016,7 @@ public final class Segment {
 				pr.num = pr.endIndex+1-pr.startIndex;
 				pl.upper = l.upper;
 				pr.upper = r.upper;
-				if (pl.center!=null && pl.center.y!=0){
+				if (pl.center.y!=0){
 					if (pl.num>2){
 						circle(lV[pl.startIndex], lV[pl.endIndex], pl.center.x,pl.center.y, pl.radius,pl.center);
 					} else circle(pl.start,pl.end, pl.center.x,pl.center.y, pl.radius,pl.center);
@@ -15182,7 +15098,7 @@ public final class Segment {
 				if (l.type!=UNKNOWN) {
 					toMiddleSegment(l,t, -1, tW);
 					t.radCount = l.radCount;					
-				} else if (oldTrSz==trSz){													
+				} else {													
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15199,9 +15115,9 @@ public final class Segment {
 					int idx = i+1;					
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
 					trSz+=i;
-					i--;	//*/					
+					i--;					
 					continue;
-				} else i -= oldTrSz-trSz;
+				}
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
 					toMiddleSegment(r,t, 1, tW);
@@ -15209,7 +15125,8 @@ public final class Segment {
 					//					r.updated = false;
 					//					if (l!=null) l.updated = false;
 					//					t.updated = false;
-				} else if (oldTrSz==trSz){												
+				} else {
+					int idx = i+1;										
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15223,16 +15140,15 @@ public final class Segment {
 					}
 					t.radCount = r.radCount;
 					occupied[ trIndx[i] ] = 0;
-					int idx = i+1;						
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
 					trSz+=i;
-					i--;//*/					
+					i--;					
 					continue; 
-				} else i -= oldTrSz - trSz;
+				}
 			}			
 
 			Segment firstSeg = trArr[ trIndx[0] ];
-			if (prev!=null && t!= null && t.type!=Segment.UNKNOWN && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center!=null && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius))){
+			if (prev!=null && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius))){
 				boolean good = true;
 				if (t.type!=0){
 					for (int j = 0;j<l.startIndex;++j){
@@ -15298,15 +15214,9 @@ public final class Segment {
 			
 			if (trSz>0){
 				int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
-				for (int i = trSz-1;i>=minSeg;--i){					
+				for (int i = trSz-1;i>=minSeg;--i){
 					t = trArr[ trIndx[i] ];	
-					Segment s = t.leftSeg;
-					if (s.type==Segment.UNKNOWN){
-						occupied[ trIndx[i] ] = 0;
-						if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
-						trSz--;
-						continue;
-					}
+					Segment s = t.leftSeg;					
 					toMiddleSegment(s,t, -1, tW);
 					prev = (i>0) ? trArr[ trIndx[i-1] ].leftSeg : null;
 					

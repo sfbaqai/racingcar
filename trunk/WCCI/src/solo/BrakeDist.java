@@ -14,6 +14,10 @@ import com.graphbuilder.geom.Geom;
  */
 public final class BrakeDist extends BaseStateDriver<NewCarState,CarControl> {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6394450484554616642L;
 	double targetRadius = 	0;
 	double maxSpeed = 250;
 //	double AllowTime = 60000;
@@ -154,14 +158,14 @@ public final class BrakeDist extends BaseStateDriver<NewCarState,CarControl> {
 		double angle = state.angle;		
 		double posX = state.posX;
 		double posY = state.posY;
-		double speed = state.getSpeed();
+//		double speed = state.getSpeed();
 		double cx = state.cx;
 		double cy = state.cy;
 		double d = Geom.distance(posX, posY, cx, cy);
-		Vector2D p = new Vector2D(cx-posX,cy-posY).orthogonal().normalised().rotated(angle);
-		double closeDist = speed*0.04/3.6;
+//		Vector2D p = new Vector2D(cx-posX,cy-posY).orthogonal().normalised().rotated(angle);
+//		double closeDist = speed*0.04/3.6;
 		double[] r = null;
-		double rd = 0;
+//		double rd = 0;
 		
 		Vector2D dir = new Vector2D(cx-posX,cy-posY);
 		Vector2D v = dir.orthogonal().normalised().rotated(-angle);
@@ -178,7 +182,7 @@ public final class BrakeDist extends BaseStateDriver<NewCarState,CarControl> {
 			point = o.plus(new Vector2D(dir.orthogonal()));		
 		}
 		
-		if (r!=null) rd = Geom.distance(r[0], r[1], posX, posY);		
+//		if (r!=null) rd = Geom.distance(r[0], r[1], posX, posY);		
 		return  steerToPoint(state, point.minus(o));		
 	}
 
@@ -206,12 +210,12 @@ public final class BrakeDist extends BaseStateDriver<NewCarState,CarControl> {
 		ObjectList<CarControl> ol = new ObjectArrayList<CarControl>();
 		int meta =0;
 		double speed = state.state.getSpeed();
-		double time = state.state.getLastLapTime();
-		double posX = state.state.posX;
-		double posY = state.state.posY;
-		double cx = state.state.cx;
-		double cy = state.state.cy;
-		double d = Geom.distance(posX, posY, cx, cy);		
+//		double time = state.state.getLastLapTime();
+//		double posX = state.state.posX;
+//		double posY = state.state.posY;
+//		double cx = state.state.cx;
+//		double cy = state.state.cy;
+//		double d = Geom.distance(posX, posY, cx, cy);		
 		int gear = state.state.getGear();
 		double brake = 0.0d;		
 		double acc = 1;
