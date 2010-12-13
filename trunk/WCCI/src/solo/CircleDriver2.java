@@ -3561,8 +3561,19 @@ public final class CircleDriver2{
 //					if (F_LFT<=0 || F_RGT<=0 || Math.abs(steer)==1 && toOutterEdge>=tW+W) brake = 0;				
 				} else if (relativeTargetAngle>0){					
 					System.out.println("------------------------------TURN ----------------------------");
+					
+					if (relativeAngleMovement<0 && relativeTargetAngle>0 && absSpeedY<absLastSpeedY-5){
+						if (absSpeedY>=MODERATE_SPEEDY)
+							steer = (speedY>0) ? -1 : 1;
+						else steer = 0;
+						if (speed<targetSpeed+5)
+							acc = 1;
+						else acc = 1;
+						return acc;
+					} 
+					
 					double TURNDIST = (speed>targetSpeed+FAST_MARGIN) ? 15 : (speed>targetSpeed+20) ? 10 :5;
-					brake = (absSpeedY>HIGH_SPEEDY || absSpeedY>MODERATE_SPEEDY && speed>targetSpeed+FAST_MARGIN || mLastY>0 && speed>=targetSpeed+Math.min(mLen,FAST_MARGIN) && mLen>TURNDIST) ? relativeAngle<0 ? Math.min(brake,0.1) : 1 : 
+					brake = (absSpeedY>HIGH_SPEEDY && speed>targetSpeed+FAST_MARGIN || mLastY>0 && speed>=targetSpeed+Math.min(mLen,FAST_MARGIN) && mLen>TURNDIST) ? relativeAngle<0 ? Math.min(brake,0.1) : 1 : 
 						(mLastY>0 && speed>=targetSpeed+Math.min(mLen,10)) ? brake : 0;
 					
 					if (speed<lowestSpeed+10 &&  toOutterEdge<tW+W*0.5 && !canGoAtCurrentSpeed && !canGoToLastSeg && !maxTurn){
@@ -3715,7 +3726,7 @@ public final class CircleDriver2{
 				
 		
 		if (absSpeedY>=VERY_HIGH_SPEEDY){
-			steer = turn;
+			steer = (relativeAngle>0) ? 0 : turn;
 			acc = (relativeAngle>0) ? 1 : 0;
 			brake = 0;
 		}
@@ -8863,9 +8874,9 @@ public final class CircleDriver2{
 			maxSpeed = speed + 10;
 			return steer;
 		}
-		if (trSz>1 && mLastX!=0 && mLastY>0 && mustPassPoint.x*mLastX<0){ 
+		if (trSz>1 && speed>200 && mLastX!=0 && mLastY>0 && mustPassPoint.x*mLastX<0){ 
 			if (canGoToLastSeg) 
-				steer = 0;
+				steer *= 0.5;
 			else steer = gotoPoint(cs, mLastX, mLastY);
 		} else steer = (maxTurn && relativeTargetAngle>0) ? -turn : gotoPoint(cs, mustPassPoint);
 		if (edgeDetector.highestPoint!=null && first.type==turn && relativeAngle<0 && absSpeedY<MODERATE_SPEEDY && (steer==0 || steer*turn>0))
