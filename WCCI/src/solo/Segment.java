@@ -9026,7 +9026,7 @@ public final class Segment {
 									s.radius = r;
 									if (s.center==null) s.center = new Vector2D();
 									circle(first, last, cx,cy, r,s.center);
-									if (s.type!=0 && (!CircleDriver2.inTurn && (s.end.y-s.start.y<=4 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
+									if (s.type!=0 && (!CircleDriver2.inTurn && (s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
 										s.type = Segment.UNKNOWN;
 										os.type = Segment.UNKNOWN;
 									}
@@ -14967,10 +14967,12 @@ public final class Segment {
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;					
 					while (pl!=null && pl.type==UNKNOWN){
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;					
-						prev.radCount = pl.radCount;
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;					
+							prev.radCount = pl.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;					
@@ -14985,11 +14987,13 @@ public final class Segment {
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;				
-					while (pr!=null && pr.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;
-						prev.radCount = pr.radCount;
+					while (pr!=null && pr.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;
+							prev.radCount = pr.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;					
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;
@@ -15010,11 +15014,13 @@ public final class Segment {
 					r = t.rightSeg;	
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;					
-					while (pr!=null && pr.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;					
-						prev.radCount = pr.radCount;
+					while (pr!=null && pr.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;					
+							prev.radCount = pr.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;		
@@ -15034,11 +15040,13 @@ public final class Segment {
 					r = t.rightSeg;
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;				
-					while (pl!=null && pl.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;
-						prev.radCount = pl.radCount;
+					while (pl!=null && pl.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;
+							prev.radCount = pl.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;			
