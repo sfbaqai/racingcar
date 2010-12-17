@@ -2383,7 +2383,7 @@ public final class EdgeDetector {
 			}
 		}
 		if (turn==2){
-			turn = (whichE==1) ? -1 : (whichE==-1) ? 1 : (higher==null || higher.length()<MAX_DISTANCE) ? 2 : 0;
+			turn = (numpoint==lSize+rSize || whichE==0) ? (higher==null || higher.length()<MAX_DISTANCE) ? 2 : 0 : (whichE==1) ? -1 : 1;
 		}
 
 		double dL = getStraightDist(left,lSize);
