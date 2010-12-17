@@ -14,7 +14,7 @@ public final class Storage {
 	public static int numMap = 128;
 	static {
 		int MAP_SZ = Segment.MAX_RADIUS<<1;
-		int APPEAR_SZ = 100;
+		int APPEAR_SZ = 200;
 		for (int i = numMap-1;i>=0;--i){
 			allMaps[i] = new int[MAP_SZ];
 			allAppear[i] = new int[APPEAR_SZ];
@@ -115,7 +115,7 @@ public final class Storage {
 		}
 		int total_N = totalRad_N[j];
 		midIndx-=startIndx;
-		if (aRads[midIndx]!=0) return;
+		if (midIndx<0 || midIndx>aRads.length || aRads[midIndx]!=0) return;
 		if (tp==0){
 			for (int i=total_N-1;i>=0;--i)
 				if (aMidIndx[i]==midIndx) return;

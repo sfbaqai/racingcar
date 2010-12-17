@@ -12898,6 +12898,7 @@ public final class Segment {
 		int sz = to-from;
 		int dSz = endIndx-startIndx;
 		int[] occupied = CircleDriver2.occupied;
+		if (size<0) return size;
 		if (sz==dSz){
 			if (endIndx>size) {
 				int j = 0;
@@ -14330,7 +14331,7 @@ public final class Segment {
 				liSz = mix(salArr,salSz, oalArr,liSz, which, tW,tmpStore);
 			else System.arraycopy(oalArr, 0, tmpStore, 0, liSz);										
 			if (liSz>1) liSz = adjust(tmpStore,liSz);	
-			trSz = replaceSideElems(tmpStore, 0, liSz, trArr, trIndx, prevIndx+1, nextIndx, trSz, which,tW);
+			if (trSz>=0) trSz = replaceSideElems(tmpStore, 0, liSz, trArr, trIndx, prevIndx+1, nextIndx, trSz, which,tW);
 			for (int ii = oldSz-1;ii>=0;--ii){
 				Segment ss = oalArr[ii];
 				ss.map = null;
