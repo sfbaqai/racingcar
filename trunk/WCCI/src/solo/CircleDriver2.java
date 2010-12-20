@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 612.43; 
+	public static final double BREAK_TIME = 971.24; 
 //		661.28;
 	
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -1574,7 +1574,18 @@ public final class CircleDriver2{
 				rMap.setRowLen(sR);
 				combine(null, left, sL, right,sR);
 				sL = edgeDetector.lSize;
-				sR = edgeDetector.rSize;				
+				sR = edgeDetector.rSize;	
+				last = (trSz>0) ? trArr[ trIndx[trSz-1] ] : null;
+				if (trSz>0){
+					lSeg = last.leftSeg;
+					rSeg = last.rightSeg;
+					lastTurnL = turnLeft;
+					lastTurnR = turnRight;
+					turnLeft = 0;
+					turnRight = 0;
+					numL = sL - lSeg.endIndex-1; 
+					numR = sR - rSeg.endIndex-1;
+				}
 //				first = (trSz==0) ? null : trArr[ trIndx[0] ];
 			}
 			int oldTrSz = trSz;
@@ -3020,6 +3031,7 @@ public final class CircleDriver2{
 		//		final double Dxb  = 0.05f;
 		//		final double Dxxb = 0.01f;
 		if (targetSpeed==0) return 0;
+		
 
 
 		double mx = mustPassPoint.x;
@@ -3037,6 +3049,10 @@ public final class CircleDriver2{
 		double relativeSpeedY = turn*speedY;
 		double absSpeedY = Math.abs(speedY);
 		double absLastSpeedY = Math.abs(lastSpeedY);
+		if (edgeDetector.highestPoint!=null && edgeDetector.highestPoint.length()>95){
+			targetSpeed = Math.max(targetSpeed,speed+10);
+			brake = 0;
+		}
 		
 		//All relative variables: >=0: correct direction;  <0 wrong direction
 		double relativeAngleMovement = (curAngle-lastAngle)*turn;
@@ -3052,6 +3068,7 @@ public final class CircleDriver2{
 		if (angle<-Math.PI) angle+=Math.PI*2;
 		double relativeTargetAngle = angle*turn;
 		double relativeTargetAngleMovement = (angle-lastTargetAngle)*turn;
+		
 
 //		if (relativeAngle>0 && relativeAngleMovement>0 && relativePosMovement>0 && relativeTargetAngle>0 && absSpeedY<HIGH_SPEEDY)// turning toward the right point
 //			targetSpeed += d;
@@ -3254,6 +3271,7 @@ public final class CircleDriver2{
 			}
 			return acc;
 		}
+				
 		
 		if (trSz==1 && first.end.y<15 || last!=null && last.end.y<15){
 			steer = gotoPoint(cs, edgeDetector.highestPoint);
@@ -7913,17 +7931,9 @@ public final class CircleDriver2{
 				Vector2D cnt = lastS.center;			
 				double cnx = cnt.x;
 				double cny = cnt.y;				
-				if (Geom.ptTangentLine(0, 0, cnx, cny, rad,tmpBuf)>0){
+				if (lastS.center.length()>rad && Geom.ptTangentLine(0, 0, cnx, cny, rad,tmpBuf)>0){
 					double mx = (lastSeg.type==TURNRIGHT) ? tmpBuf[0] : tmpBuf[2];
 					double my = (lastSeg.type==TURNRIGHT) ? tmpBuf[1] : tmpBuf[3];									
-					//					double d = Math.sqrt(mx*mx+my*my);
-					//					double ddx = mx - ox;
-					//					double ddy= my-5 - oy;					
-					//					double s = steerAtSpeed(speed)*EdgeDetector.steerLock;
-					//					double angle = Vector2D.angle(carDirection.x, carDirection.y, mx, my);
-					//					if (angle>Math.PI) angle-=Math.PI*2;
-					//					if (angle<-Math.PI) angle+=Math.PI*2;
-
 					if (mustPassPoint==null) 
 						mustPassPoint = new Vector2D( mx,my);
 					else {
@@ -7946,15 +7956,8 @@ public final class CircleDriver2{
 					canGoAtCurrentSpeed = true;
 //					if (turn!=0 && carDirection.x*turn<-0.001) tryMaxTurn(carDirection, rr, turn);
 					return;							
-				} 
+				}
 				
-//					double l = lastS.radius;
-//					double lx = -turn*Math.sqrt(l*l-100);
-//					double ly = 10 - cny;
-//					
-//					double r = rad/l;
-//					mustPassPoint.x = cnx +lx*r;
-//					mustPassPoint.y = cny+ly*r;
 					mustPassPoint.x = 0;
 					mustPassPoint.y = 1;
 					canGoAtCurrentSpeed =  true;
@@ -8946,15 +8949,15 @@ public final class CircleDriver2{
 		}
 					
 		
-		if (edgeDetector.highestPoint!=null && edgeDetector.highestPoint.length()>95 && absSpeedY<=HIGH_SPEEDY){
-			steer = gotoPoint(cs, edgeDetector.highestPoint);
-			if (speed<lowestSpeed) {
-				steer = (steer+lastSteer)*0.5;
-			}
-			
-			maxSpeed = speed + 10;
-			return steer;
-		}
+//		if (edgeDetector.highestPoint!=null && edgeDetector.highestPoint.length()>95 && absSpeedY<=HIGH_SPEEDY){
+//			steer = gotoPoint(cs, edgeDetector.highestPoint);
+//			if (speed<lowestSpeed) {
+//				steer = (steer+lastSteer)*0.5;
+//			}
+//			
+//			maxSpeed = speed + 10;
+//			return steer;
+//		}
 						
 		double m = Math.sqrt(mLastX*mLastX+mLastY*mLastY);
 		if (trSz>1 && turn!=0 && lastSeg.type!=0 && lastSeg.type!=Segment.UNKNOWN && lastSeg.center!=null && turn==lastSeg.type){
@@ -8969,7 +8972,7 @@ public final class CircleDriver2{
 				double dd = (!inTurn) ? tW+tW-W : tW-W;
 				double mmx = 0;				
 				double mmy = 0;
-				if ( a<=0.15 && cny>35 || (m>30 || cny>25) && canGoToLastSeg){
+				if (speed>lowestSpeed-m && (a<=0.15 && cny>35 || (m>30 || cny>25) && canGoToLastSeg)){
 					mmy = mLastY;
 					mmx = mLastX-turn*dd;
 					mLastX = mmx;
@@ -8982,7 +8985,7 @@ public final class CircleDriver2{
 //					if (speed>=150) steer*=0.5;
 					if (trSz>1 && lastSeg!=null && lastSeg.type!=0 && lastSeg.end.distance(ox,oy)>=rad) maxSpeed = Math.max(maxSpeed,last_speed+lastSeg.end.y-15);
 					return steer;
-				} else if (canGoToLastSeg && mLastY>0){					
+				} else if (speed>lowestSpeed-m && canGoToLastSeg && mLastY>0){					
 					double cx = lastSeg.center.x;
 					double cy = lastSeg.center.y;
 					double lx = -lastSeg.type * SIN_PI_4;
@@ -8993,7 +8996,7 @@ public final class CircleDriver2{
 					mustPassPoint.x = mLastX;
 					mustPassPoint.y = mLastY;									
 				}
-			} else if (mLastY>0){				
+			} else if (speed>lowestSpeed-m && mLastY>0 ){				
 				if (m>30 && canGoToLastSeg && a<=0.15){
 					double cx = lastSeg.center.x;
 					double cy = lastSeg.center.y;
@@ -9467,7 +9470,7 @@ public final class CircleDriver2{
 		for (int i = trSz-1;i>=0;--i){
 			int idx = trIndx[i];
 			Segment t = trArr[idx];
-			if (t.type==Segment.UNKNOWN){
+			if (t.type==Segment.UNKNOWN || t.leftSeg.type==Segment.UNKNOWN || t.rightSeg.type==Segment.UNKNOWN){
 				occupied[ idx ] = 0;
 				if (trSz -i-1>0) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
 				trSz--;

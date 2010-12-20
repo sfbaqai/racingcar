@@ -3668,7 +3668,7 @@ public final class Segment {
 					int sr = (s1.type==0) ? 0 : (int)Math.round(s1.radius+s1.type*which*tW);
 					if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 					if (s1.type==1) sr+=Segment.MAX_RADIUS;					
-					if (sr==mr || map!=null && map[sr]>0 && map[sr]>=map[mr]){
+					if (sr==mr || map!=null && sr>=0 && mr>=0 && map[sr]>0 && map[sr]>=map[mr]){
 						rs.type = s1.type;
 						if (rs.start==null) 
 							rs.start = new Vector2D(fst);
@@ -8824,7 +8824,7 @@ public final class Segment {
 										s.type = 0;
 									}
 									if (s.type==1) er+=Segment.MAX_RADIUS;
-									if (map[er]>0) {
+									if (er>=0 && map[er]>0) {
 										ok = true;
 										isGPN = true;
 									}
@@ -8880,7 +8880,7 @@ public final class Segment {
 										s1.type = 0;
 									}
 									if (s1.type==1) er+=Segment.MAX_RADIUS;
-									if (map[er]>0){ 
+									if (er>=0 && map[er]>0){ 
 										ok = true;
 										s.copy(s1);
 										isGPN = true;
@@ -10930,7 +10930,7 @@ public final class Segment {
 
 
 	private static void removeFirstPoint(Segment s,Segment other,double pointy){//remove the first point of s
-		if (pointy<s.start.y-SMALL_MARGIN) return;		
+		if (pointy<s.start.y-SMALL_MARGIN && (s.num==0 || s.points[s.startIndex].y>pointy)) return;		
 		Vector2D[] vv = s.points;
 		int fst = (s.num==0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
 		if (s.num>0){
@@ -11305,7 +11305,7 @@ public final class Segment {
 
 
 	private static void removeLastPoint(Segment s,Segment other,double pointy){//remove the last point of s
-		if (s.type==Segment.UNKNOWN || pointy>s.end.y+SMALL_MARGIN) return;					
+		if (s.type==Segment.UNKNOWN || pointy>s.end.y+SMALL_MARGIN && (s.num==0 || pointy>s.points[s.endIndex].y)) return;					
 		Vector2D[] vv = s.points;
 		int j = (s.num==0 || s.endIndex<=0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
 		j = (j<0) ? -j-1 : j;
@@ -14739,7 +14739,7 @@ public final class Segment {
 		}
 		int sr = (s.type==0 || s.radius>=MAX_RADIUS) ? MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*tW*which);
 		if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-		if (s.map!=null && s.map[sr]==0){
+		if (s.map!=null && sr>=0 && s.map[sr]==0){
 			s.appearedRads[s.radCount++] = sr;
 			s.opp.radCount++;
 			s.map[sr]++;
