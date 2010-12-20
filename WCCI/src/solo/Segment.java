@@ -108,8 +108,8 @@ public final class Segment {
 	public static final double REJECT_VALUE = 11;
 	public static final double EPSILON = TrackSegment.EPSILON;
 	public static final double EPS = TrackSegment.EPSILON*5;
-	public static final Segment[] oalArr = new Segment[30];
-	private static final Segment[] salArr = new Segment[30];
+	public static final Segment[] oalArr = new Segment[64];
+	private static final Segment[] salArr = new Segment[64];
 	static {
 		for (int i=tmpS.length-1;i>=0;--i) tmpS[i] = new Segment();
 		for (int i=oalArr.length-1;i>=0;--i) {
@@ -597,10 +597,10 @@ public final class Segment {
 			} else {
 				int er = (int)Math.round(radius-type*tW);
 				if (er>=MAX_RADIUS) er = MAX_RADIUS-1;
-				if (er<MAX_RADIUS && map[er]==0) {					
+				if (er<MAX_RADIUS && er>=0 && map[er]==0) {					
 					if (appearedRads!=null) appearedRads[radCount++] = er;
 				}	
-				map[er]++;
+				if (er>=0) map[er]++;
 			}
 			if (opp!=null) opp.radCount = radCount;
 		}
@@ -2268,7 +2268,7 @@ public final class Segment {
 					map[rr]++;
 				} else if (rr>REJECT_VALUE && rr<MAX_RADIUS-1){
 					if (map[rr]==0) {
-						appearedRads[radCount++] = rr;
+						if (appearedRads!=null) appearedRads[radCount++] = rr;
 						if (opp!=null) opp.radCount++;
 					}
 					map[rr]++;					
@@ -6455,7 +6455,7 @@ public final class Segment {
 		double d = dx*dx+dy*dy;
 
 		double nx = (tp==1) ? dy : -dy;
-		double ny = dx;		
+		double ny = -tp*dx;		
 		double dn = nx*nx+ny*ny;
 		
 
@@ -8757,8 +8757,9 @@ public final class Segment {
 				double startX = fst.x;
 				double startY = fst.y;	
 				int r_index = index<<SIZE_N;
+				if (r_index>=totalRad_N.length) continue;
 				for (int k=to-1;k>index+1;--k){
-					int m_indx = r_index + k;
+					int m_indx = r_index + k;					
 					int total = totalRad_N[m_indx];
 					boolean donePrev = total>=k-index-1;
 					boolean isFound = false;
@@ -9112,7 +9113,7 @@ public final class Segment {
 
 						if (s.endIndex<to-1  && s.type!=Segment.UNKNOWN){																														
 //							if (s.type!=0) forwardOnly(v, prev, s, to, tW);
-							if (to-s.endIndex>2)																																	
+							if (to-s.endIndex>2 && s.num>0)																																	
 								indx = bestGuess(v, s.endIndex+1, to, tW, s, next,oalArr,indx);									
 
 						} else if (s.type==Segment.UNKNOWN){
@@ -11306,7 +11307,7 @@ public final class Segment {
 	private static void removeLastPoint(Segment s,Segment other,double pointy){//remove the last point of s
 		if (s.type==Segment.UNKNOWN || pointy>s.end.y+SMALL_MARGIN) return;					
 		Vector2D[] vv = s.points;
-		int j = (s.num==0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
+		int j = (s.num==0 || s.endIndex<=0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
 		j = (j<0) ? -j-1 : j;
 
 		//		if (j<=s.endIndex && vv[j].y<=point.y) j++;
@@ -14147,7 +14148,7 @@ public final class Segment {
 		////////////////////////////////FILL GAP FROM HERE //////////////////////////////////
 		int prevIndx = currentIndx-1;
 		while (prev!=null && prev.type==Segment.UNKNOWN){
-			prev = (prevIndx==0) ? null : (which==1) ? trArr[ trIndx[--prevIndx] ].rightSeg : trArr[ trIndx[--prevIndx] ].leftSeg; 
+			prev = (prevIndx<=0) ? null : (which==1) ? trArr[ trIndx[--prevIndx] ].rightSeg : trArr[ trIndx[--prevIndx] ].leftSeg; 
 		}
 		op = (prev==null) ? null : prev.opp;
 		int nextIndx = currentIndx+1;
