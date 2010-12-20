@@ -129,13 +129,13 @@ public final class Storage {
 				tp = 0;
 			}
 			if (tp==1) er+=Segment.MAX_RADIUS;
-			if (map[er]==0)
+			if (er>=0 && map[er]==0)
 				appear[ appearRad_N[j]++ ] = er;			
 			
-			map[er]++;
+			if (er>=0) map[er]++;
 			aRads[midIndx] = er;
 			int mr = maxRad[j];					
-			if (mr!=er && map[mr]<=map[er]) maxRad[j] = er;	
+			if (mr!=er && er>=0 && mr>=0 && map[mr]<=map[er]) maxRad[j] = er;	
 		}
 		totalRad_N[j] = total_N;
 	}
