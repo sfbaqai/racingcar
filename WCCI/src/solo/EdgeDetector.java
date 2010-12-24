@@ -17,6 +17,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.omg.CORBA.UNKNOWN;
 
 import com.graphbuilder.curve.ControlPath;
 import com.graphbuilder.geom.Geom;
@@ -261,13 +262,23 @@ public final class EdgeDetector {
 			if (indx-- == idx)
 				continue;
 			indx = tmpIndx[j+1];
-			if (rSize>lastIndx+1) System.arraycopy(right, lastIndx+1, right, indx, rSize-lastIndx-1);
+			if (rSize>lastIndx+1) {
+				for (int ii = 0,nn = rSize-lastIndx-1;ii<nn;++ii){
+					right[indx+ii].copy(right[lastIndx+1+ii]);
+				}
+//				System.arraycopy(right, lastIndx+1, right, indx, rSize-lastIndx-1);
+			}
 			rSize -= lastIndx-indx+1;
 			lastIndx = idx;							
 			indx = lastIndx;														
 		}
 		indx = tmpIndx[0];
-		if (rSize>lastIndx+1) System.arraycopy(right, lastIndx+1, right, indx, rSize-lastIndx-1);
+		if (rSize>lastIndx+1) {
+			for (int ii = 0,nn = rSize-lastIndx-1;ii<nn;++ii){
+				right[indx+ii].copy(right[lastIndx+1+ii]);
+			}
+//			System.arraycopy(right, lastIndx+1, right, indx, rSize-lastIndx-1);
+		}
 		rSize -= lastIndx-indx+1;
 		CircleDriver2.trSz = trSz;
 		return tmpIndx[0];
@@ -319,13 +330,23 @@ public final class EdgeDetector {
 			if (indx-- == idx)
 				continue;
 			indx = tmpIndx[j+1];
-			if (lSize>lastIndx+1) System.arraycopy(left, lastIndx+1, left, indx, lSize-lastIndx-1);
+			if (lSize>lastIndx+1) {
+				for (int ii = 0,nn = lSize-lastIndx-1;ii<nn;++ii){
+					left[indx+ii].copy(left[lastIndx+1+ii]);
+				}
+//				System.arraycopy(left, lastIndx+1, left, indx, lSize-lastIndx-1);
+			}
 			lSize -= lastIndx-indx+1;
 			lastIndx = idx;							
 			indx = lastIndx;														
 		}
 		indx = tmpIndx[0];
-		if (lSize>lastIndx+1) System.arraycopy(left, lastIndx+1, left, indx, lSize-lastIndx-1);
+		if (lSize>lastIndx+1) {
+			for (int ii = 0,nn = lSize-lastIndx-1;ii<nn;++ii){
+				left[indx+ii].copy(left[lastIndx+1+ii]);
+			}
+//			System.arraycopy(left, lastIndx+1, left, indx, lSize-lastIndx-1);
+		}
 		lSize -= lastIndx-indx+1;
 		CircleDriver2.trSz = trSz;
 		return tmpIndx[0];
@@ -517,10 +538,9 @@ public final class EdgeDetector {
 			double absYY = yy*sign;
 			
 			if (maxY<absYY || tracks[i]>MAX_DISTANCE){
-				if (maxY<absYY) maxY = absYY;
-				if (firstIndexMax==-1) 
-					firstIndexMax = j;
-				else if (tracks[firstIndexMax]<=MAX_DISTANCE) firstIndexMax = j;
+				if (maxY<absYY)
+					maxY = absYY;									
+				firstIndexMax = j;
 				lastIndexMax = firstIndexMax;								
 			} else if (maxY==absYY && lastIndexMax>=0){
 				lastIndexMax =j;
@@ -656,7 +676,7 @@ public final class EdgeDetector {
 				
 				
 				if (lsz>0) {					
-					int startIndx = numpoint-1;
+					int startIndx = firstIndexMax-1;
 					for (int i = 0;i<lsz;++i){
 						nleft[i].copy(other[startIndx--]);
 //						Vector2D s = other[startIndx--];
@@ -793,6 +813,7 @@ public final class EdgeDetector {
 			else if (rsz>0 && binarySearchFromTo(right, currentPointAhead, 0, rsz-1)>=0)
 				whichEdgeAhead = 1;
 		}
+				
 		
 		lSize = lsz;
 		rSize = rsz;
@@ -1198,12 +1219,9 @@ public final class EdgeDetector {
 				end = start;
 				s.endIndex = end;
 				if (sz-start>0) {
-					for (int ii = sz-start-1;ii>=0;--ii){
-						Vector2D src = elems[start+ii];
-						Vector2D dest = elems[start+1+ii];
-						dest.x = src.x;
-						dest.y = src.y;
-					}
+					for (int ii = sz-start-1;ii>=0;--ii)
+						elems[start+1+ii].copy(elems[start+ii]);
+						
 //					System.arraycopy(elems, start, elems, start+1, sz);
 				}
 				sz++;
@@ -1252,6 +1270,7 @@ public final class EdgeDetector {
 				p = elems[indx];
 				p.x = v.x;
 				p.y = v.y;
+				p.certain = v.certain;
 //				elems[indx] = v;					
 				return sz;
 			}
@@ -1282,24 +1301,25 @@ public final class EdgeDetector {
 				if (d1<=d2){ 					
 					p1.x = v.x;
 					p1.y = v.y;
+					p1.certain = v.certain;
 				} else {					
 					p2.x = v.x;
 					p2.y = v.y;
+					p2.certain = v.certain;
 				}
 			} else if (ok1){ 				
 				p1.x = v.x;
-				p1.y = v.y;							
+				p1.y = v.y;
+				p1.certain = v.certain;
 			} else if (ok2) {				
 				p2.x = v.x;
-				p2.y = v.y;							
+				p2.y = v.y;
+				p2.certain = v.certain;
 			} else {
 				if ((sz-indx)>0) {
-					for (int ii = sz-indx-1;ii>=0;--ii){
-						Vector2D src = elems[indx+ii];
-						Vector2D dest = elems[indx+1+ii];
-						dest.x = src.x;
-						dest.y = src.y;
-					}
+					for (int ii = sz-indx-1;ii>=0;--ii)
+						elems[indx+1+ii].copy(elems[indx+ii]);
+						
 //					System.arraycopy(elems, indx, elems, indx+1, sz);
 				}
 				sz++;
@@ -2189,6 +2209,19 @@ public final class EdgeDetector {
 		CircleDriver2.trSz = trSz;
 		return k;
 	}
+	
+	public void reset(){
+		lSize = nLsz;
+		for (int ii = lSize-1;ii>=0;--ii)
+			left[ii].copy(nleft[ii]);
+		rSize = nRsz;
+		for (int ii = rSize-1;ii>=0;--ii)
+			right[ii].copy(nright[ii]);
+		CircleDriver2.inTurn = true;
+		for (int ii = CircleDriver2.trSz-1;ii>=0;--ii)
+			CircleDriver2.occupied[CircleDriver2.trIndx[ii]] = 0;
+		CircleDriver2.trSz = 0;
+	}
 
 	public final void combine(EdgeDetector ed,double distRaced,Segment[] trArr,int[] trIndx,int trSz){	
 		long ti = System.currentTimeMillis();
@@ -2244,6 +2277,9 @@ public final class EdgeDetector {
 					System.out.println();
 				if (left[i].y<left[i-1].y){
 					System.out.println();
+					turn = Segment.UNKNOWN;
+					reset();
+					return;
 				}
 			}				
 		}
@@ -2265,9 +2301,11 @@ public final class EdgeDetector {
 					System.out.println();
 				if (right[i].y<right[i-1].y){
 					System.out.println();
+					reset();
+					return;
 				}
 			}		
-		}
+		}		
 		
 								
 		Segment first = (trSz>0) ? trArr[ trIndx[0] ] : null;
@@ -2291,7 +2329,7 @@ public final class EdgeDetector {
 						System.out.println();
 				}
 			}
-		}
+		}		
 
 		Vector2D edH = ed.highestPoint;		
 		if (ed!=null && edH!=null && edH.length()<MAX_DISTANCE){
@@ -2300,6 +2338,7 @@ public final class EdgeDetector {
 			edH.y+=-distRaced;
 //			at.transform(edH, edH);
 		}
+				
 		
 		Vector2D lower = (highestPoint !=null && edH!=null && highestPoint.y<edH.y) ? highestPoint : (highestPoint==null || edH==null) ? null : edH;	
 		int whichL = (highestPoint !=null && edH!=null && highestPoint.y<edH.y) ? whichE : (lower==null) ? 0 : ed.whichE;
@@ -2470,8 +2509,7 @@ public final class EdgeDetector {
 		}
 		
 		CircleDriver2.edgeDetector.lSize = lSize;
-		CircleDriver2.edgeDetector.rSize = rSize;
-				
+		CircleDriver2.edgeDetector.rSize = rSize;		
 		
 		if (CircleDriver2.debug && highestPoint!=null)System.out.println("Highest Point : "+highestPoint+"    "+highestPoint.length());
 		int nlS = lSize;
@@ -2505,19 +2543,7 @@ public final class EdgeDetector {
 		//	else turn = 2;
 		
 		
-		turn = 2;
-		int i=0;
-		for (i = trSz-1;i>=1;--i){
-			Segment s = trArr[ trIndx[i] ];
-			int tp = s.type;
-			if (tp!=0 && tp!=Segment.UNKNOWN){
-				turn = tp;
-				break;
-			}
-		}
-		if (turn==2){
-			turn = (numpoint==lSize+rSize || whichE==0) ? (higher==null || higher.length()<MAX_DISTANCE) ? 2 : 0 : (whichE==1) ? -1 : 1;
-		}
+		
 
 		double dL = getStraightDist(left,lSize);
 		double dR = getStraightDist(right,rSize);
