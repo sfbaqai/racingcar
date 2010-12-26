@@ -2222,6 +2222,105 @@ public final class EdgeDetector {
 			CircleDriver2.occupied[CircleDriver2.trIndx[ii]] = 0;
 		CircleDriver2.trSz = 0;
 	}
+	
+	public void double_check(Vector2D highest){
+		Segment[] trArr = CircleDriver2.trArr;
+		int[] trIndx = CircleDriver2.trIndx;
+		int trSz = CircleDriver2.trSz;
+		int isL = 0;
+		numClosePoints = 0;
+		for (int i = lSize-1;i>=0;--i){
+			Vector2D v = left[i];
+			if (v.y<=0) break;
+			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
+			double dv = v.distance(highest);			
+			if (highest.length() > MAX_DISTANCE ||dv>trackWidth+EPS){
+				if (angle>=0){
+					i = removeFromLeftEdge(i, trArr, trSz, trIndx, CircleDriver2.occupied);
+					trSz = CircleDriver2.trSz;
+				}				
+			} 
+		}
+		
+		for (int i = lSize-1;i>=0;--i){
+			Vector2D v = left[i];
+			if (v.y<=0) break;
+			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
+			double dv = v.distance(highest);			
+			if (highest.length() < MAX_DISTANCE && dv<=trackWidth-EPS){
+				isL = 1;
+				closePointV[numClosePoints].copy(v);
+				closePoint[numClosePoints++] = dv<0.1 || angle<=0 ? -1 : 1;
+			}
+		}
+						
+		
+		int isR = 0;
+		for (int i = rSize-1;i>=0;--i){
+			Vector2D v = right[i];
+			if (v.y<=0) break;			
+			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
+			double dv = v.distance(highest);
+			if (highest.length() > MAX_DISTANCE || dv>trackWidth+EPS){
+				if (angle<0){
+					i = removeFromRightEdge(i, trArr, trSz, trIndx, CircleDriver2.occupied);
+					trSz = CircleDriver2.trSz;
+				}
+			} 
+		}
+		
+		for (int i = rSize-1;i>=0;--i){
+			Vector2D v = right[i];
+			if (v.y<=0) break;			
+			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
+			double dv = v.distance(highest);
+			if (highest.length() < MAX_DISTANCE && dv<=trackWidth-EPS){				
+				isR = 1;
+				closePointV[numClosePoints].copy(v);
+				closePoint[numClosePoints++] = dv>0.1 && angle<0 ? -1 : 1;								
+			} 
+		}
+				
+		
+		if (isL==1 || isR==1){
+			//sort vector of closepoints
+			for (int i = numClosePoints-1;i>=1;--i){
+				for (int j = i-1;j>=0;--j){
+					if (closePointV[j].y>closePointV[i].y){
+						Vector2D tmp = closePointV[i];
+						closePointV[i] = closePointV[j];
+						closePointV[j] = tmp;
+						int tmpI = closePoint[i];
+						closePoint[i] = closePoint[j];
+						closePoint[j] = tmpI;
+					}
+				}
+			}
+			
+			int firstGuess = closePoint[0];
+			int n = removeElems(closePointV, 0, numClosePoints, tmpIndx);
+			
+			if (n!=numClosePoints || !(firstGuess==1 && isL==0 || firstGuess==-1 && isR==0)){ 
+				for (int i = n-1;i>=0;--i){
+					Vector2D v = closePointV[ tmpIndx[i] ];
+					int j = binarySearchFromTo(left, v, 0, lSize-1);
+					if (j>=0 && firstGuess==1){					
+						removeFromLeftEdge(j, trArr, trSz, trIndx, CircleDriver2.occupied);
+						trSz = CircleDriver2.trSz;
+					} else if (j<0 && firstGuess==-1){
+						j = binarySearchFromTo(right, v, 0, rSize-1);
+						if (j>=0){
+							removeFromRightEdge(j, trArr, trSz, trIndx, CircleDriver2.occupied);
+							trSz = CircleDriver2.trSz;
+						}
+					}
+				}
+			}
+		}
+		CircleDriver2.trSz = trSz;
+		CircleDriver2.edgeDetector.lSize = lSize;
+		CircleDriver2.edgeDetector.rSize = rSize;
+	}
 
 	public final void combine(EdgeDetector ed,double distRaced,Segment[] trArr,int[] trIndx,int trSz){	
 		long ti = System.currentTimeMillis();
@@ -2417,99 +2516,7 @@ public final class EdgeDetector {
 			if (lSeg.end.y>highest.y) highest = lSeg.end;
 		}//*/
 		
-		int isL = 0;
-		numClosePoints = 0;
-		for (int i = lSize-1;i>=0;--i){
-			Vector2D v = left[i];
-			if (v.y<=0) break;
-			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
-			double dv = v.distance(highest);			
-			if (highest.length() > MAX_DISTANCE ||dv>trackWidth+EPS){
-				if (angle>=0){
-					i = removeFromLeftEdge(i, trArr, trSz, trIndx, CircleDriver2.occupied);
-					trSz = CircleDriver2.trSz;
-				}				
-			} 
-		}
-		
-		for (int i = lSize-1;i>=0;--i){
-			Vector2D v = left[i];
-			if (v.y<=0) break;
-			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
-			double dv = v.distance(highest);			
-			if (highest.length() < MAX_DISTANCE && dv<=trackWidth-EPS){
-				isL = 1;
-				closePointV[numClosePoints].copy(v);
-				closePoint[numClosePoints++] = dv<0.1 || angle<=0 ? -1 : 1;
-			}
-		}
-						
-		
-		int isR = 0;
-		for (int i = rSize-1;i>=0;--i){
-			Vector2D v = right[i];
-			if (v.y<=0) break;			
-			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
-			double dv = v.distance(highest);
-			if (highest.length() > MAX_DISTANCE || dv>trackWidth+EPS){
-				if (angle<0){
-					i = removeFromRightEdge(i, trArr, trSz, trIndx, CircleDriver2.occupied);
-					trSz = CircleDriver2.trSz;
-				}
-			} 
-		}
-		
-		for (int i = rSize-1;i>=0;--i){
-			Vector2D v = right[i];
-			if (v.y<=0) break;			
-			double angle = Vector2D.angle(highest.x, highest.y, v.x, v.y);
-			double dv = v.distance(highest);
-			if (highest.length() < MAX_DISTANCE && dv<=trackWidth-EPS){				
-				isR = 1;
-				closePointV[numClosePoints].copy(v);
-				closePoint[numClosePoints++] = dv>0.1 && angle<0 ? -1 : 1;								
-			} 
-		}
-				
-		
-		if (isL==1 || isR==1){
-			//sort vector of closepoints
-			for (int i = numClosePoints-1;i>=1;--i){
-				for (int j = i-1;j>=0;--j){
-					if (closePointV[j].y>closePointV[i].y){
-						Vector2D tmp = closePointV[i];
-						closePointV[i] = closePointV[j];
-						closePointV[j] = tmp;
-						int tmpI = closePoint[i];
-						closePoint[i] = closePoint[j];
-						closePoint[j] = tmpI;
-					}
-				}
-			}
-			
-			int firstGuess = closePoint[0];
-			int n = removeElems(closePointV, 0, numClosePoints, tmpIndx);
-			
-			if (n!=numClosePoints || !(firstGuess==1 && isL==0 || firstGuess==-1 && isR==0)){ 
-				for (int i = n-1;i>=0;--i){
-					Vector2D v = closePointV[ tmpIndx[i] ];
-					int j = binarySearchFromTo(left, v, 0, lSize-1);
-					if (j>=0 && firstGuess==1){					
-						removeFromLeftEdge(j, trArr, trSz, trIndx, CircleDriver2.occupied);
-						trSz = CircleDriver2.trSz;
-					} else if (j<0 && firstGuess==-1){
-						j = binarySearchFromTo(right, v, 0, rSize-1);
-						if (j>=0){
-							removeFromRightEdge(j, trArr, trSz, trIndx, CircleDriver2.occupied);
-							trSz = CircleDriver2.trSz;
-						}
-					}
-				}
-			}
-		}
-		
-		CircleDriver2.edgeDetector.lSize = lSize;
-		CircleDriver2.edgeDetector.rSize = rSize;		
+		double_check(highest);					
 		
 		if (CircleDriver2.debug && highestPoint!=null)System.out.println("Highest Point : "+highestPoint+"    "+highestPoint.length());
 		int nlS = lSize;
