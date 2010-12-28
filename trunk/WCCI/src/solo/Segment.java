@@ -5505,8 +5505,8 @@ public final class Segment {
 							x1 = vv.x;
 							y1 = vv.y;
 							vv = v[indx+1];
-							x1 = vv.x;
-							y1 = vv.y;
+							x2 = vv.x;
+							y2 = vv.y;
 							vv = v[j-1];
 							xx = vv.x;
 							yy = vv.y;
