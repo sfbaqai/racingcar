@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 139.89; 
+	public static final double BREAK_TIME = 259.10; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -3522,7 +3522,7 @@ public final class CircleDriver2{
 			double ox = nx*speedRadius;
 			double oy = ny*speedRadius;
 			double dist = Math.sqrt(Geom.ptLineDistSq(t.start.x, t.start.y, t.end.x, t.end.y, ox, oy, tmp));
-			if (absSpeedY>MODERATE_SPEEDY || relativeAngle>0 || last.start.y<=5 && toOutterEdge>=W|| !maxTurn || canGoToLastSeg || canGoAtCurrentSpeed){
+			if (relativeAngle>0 || last.start.y<=5 && toOutterEdge>=W|| !maxTurn || canGoToLastSeg || canGoAtCurrentSpeed){
 				Vector2D v = (edgeDetector.highestPoint!=null && last!=null && last.end!=null && edgeDetector.highestPoint.y>last.end.y) ? edgeDetector.highestPoint : (last==null) ? null : last.end;
 				if (v!=null) steer = gotoPoint(cs, v);
 			} else steer = -turn;
@@ -9301,7 +9301,7 @@ public final class CircleDriver2{
 		} else steer = (maxTurn && !canGoToLastSeg && !canGoAtCurrentSpeed && relativeTargetAngle>0 && absSpeedY<MODERATE_SPEEDY) ? -turn : gotoPoint(cs, mustPassPoint);
 		
 //		double hy = edgeDetector.highestPoint==null ? 0 : edgeDetector.highestPoint.y;
-		if (edgeDetector.highestPoint!=null && ( lastS !=null && lastS.type!=turn && relativeAngle<0 && (steer==0 || steer*turn>0) && (lastSeg.end.y<15 || edgeDetector.highestPoint.y<40)))
+		if (edgeDetector.highestPoint!=null && edgeDetector.highestPoint.y>0 &&( lastS !=null && lastS.type!=turn && relativeAngle<0 && (steer==0 || steer*turn>0) && (lastSeg.end.y<15 || edgeDetector.highestPoint.y<40)))
 			steer = gotoPoint(cs, edgeDetector.highestPoint)*0.5;
 		//		
 		//		if (relativeAngle<0 && first.type==turn && absSpeedY<MODERATE_SPEEDY && (steer==0 || steer*turn>0))
