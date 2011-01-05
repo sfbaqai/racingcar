@@ -37,7 +37,7 @@ public final class Segment {
 	private static boolean isPossiblyConnected = false;	
 	private static final Segment tmpPrev = new Segment();
 	private static final Segment tmpSeg = new Segment();
-	private static final Segment tmpSeg0 = new Segment();
+//	private static final Segment tmpSeg0 = new Segment();
 	private static final Vector2D tmpCenter = new Vector2D();
 	private static Vector2D pt = new Vector2D();
 	private static final double[] temp = new double[6];	
@@ -8902,7 +8902,7 @@ public final class Segment {
 												break;
 											}
 										}
-									} else if (s.type!=0){																		
+									} else {																		
 										double tot = 0;
 										for (int ii = index;ii<=k;++ii){								
 											Vector2D vv = v[ii];
@@ -9024,10 +9024,10 @@ public final class Segment {
 										angle -= 2*Math.PI;
 												
 									s.type = (angle<0) ? -1 : 1;
-									s.radius = r;
+									s.radius = r; 
 									if (s.center==null) s.center = new Vector2D();
 									circle(first, last, cx,cy, r,s.center);
-									if (s.type!=0 && (!CircleDriver2.inTurn && (s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
+									if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
 										s.type = Segment.UNKNOWN;
 										os.type = Segment.UNKNOWN;
 									}
@@ -14949,7 +14949,7 @@ public final class Segment {
 //				nextREndIndx = nr.endIndex;
 //			}
 
-			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center.y==0)));
+			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center!=null && l.center.y==0)));
 			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){				
 				occupied[ trIndx[i] ] = 0;
 				if ((trSz-=i+1)>0) System.arraycopy(trIndx, i+1, trIndx, i, trSz);									
