@@ -514,6 +514,7 @@ public final class EdgeDetector {
 			angle = Math.PI-ANGLE_LK[i]-curAngle;
 			//			double xx = tracks[i]* Math.cos(angle);
 			//			double yy = tracks[i]* Math.sin(angle);
+			if (tracks[i]<=0) continue;
 			double xx =Math.round(tracks[i]* Math.cos(angle)*PRECISION)/PRECISION;
 			yy =Math.round(tracks[i]* Math.sin(angle)*PRECISION)/PRECISION;
 			if (i==9)
@@ -581,6 +582,19 @@ public final class EdgeDetector {
 		numpoint = j;
 		int lsz = (firstIndexMax>=0 && firstIndexMax<numpoint) ? firstIndexMax  : 0;
 		int rsz = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? numpoint-1-lastIndexMax : 0;
+		if (numpoint==0){
+			highestPoint.x = 0;
+			highestPoint.y = 0;
+			lSize = 0;
+			rSize = 0;
+			nLsz = 0;
+			nRsz = 0;
+			whichE = 0;
+			whichEdgeAhead = 0;
+			currentPointAhead.x = 0;
+			currentPointAhead.y = 0;
+			return;
+		}
 		if (sign<0){			
 			yy = edge[0].y;			
 			int oldIndx = firstIndexMax;
@@ -698,7 +712,7 @@ public final class EdgeDetector {
 				firstIndexMax = lsz;
 			}
 		}
-		if (firstIndexMax>=0 && sign<0){
+		if (firstIndexMax>=0 && numpoint>0 && sign<0){
 			highestPoint = (firstIndexMax>=0 && firstIndexMax<numpoint && edge[firstIndexMax].y>=0) ? new Vector2D(edge[firstIndexMax]) : null;
 			whichE = 0;
 			firstIndexMax = j-1-firstIndexMax;
