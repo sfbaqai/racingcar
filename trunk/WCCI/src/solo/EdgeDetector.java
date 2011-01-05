@@ -17,7 +17,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.omg.CORBA.UNKNOWN;
 
 import com.graphbuilder.curve.ControlPath;
 import com.graphbuilder.geom.Geom;
@@ -131,7 +130,7 @@ public final class EdgeDetector {
 	private static final int NUM_POINTS=500;
 	double curAngle;
 	double maxY;
-
+	int pointAheadIndx = -1;
 
 	public final Vector2D[] left = new Vector2D[NUM_POINTS];
 	public final Vector2D[] right = new Vector2D[NUM_POINTS];
@@ -360,6 +359,7 @@ public final class EdgeDetector {
 		this.distRaced = edgeDetector.distRaced;
 		this.curAngle = edgeDetector.curAngle;
 		this.maxY = edgeDetector.maxY;
+		this.pointAheadIndx = edgeDetector.pointAheadIndx;
 		if (edgeDetector.center==null) 
 			this.center = null;
 		else if (this.center==null) 
@@ -505,7 +505,7 @@ public final class EdgeDetector {
 //		int startIndex = (curAngle>PI_2) ? 1 : 0;
 //		int endIndex = (curAngle<-PI_2) ? 18 : 19;
 		whichEdgeAhead = 0;
-		int pointAheadIndx = -1;
+		pointAheadIndx = -1;
 		currentPointAhead.x = 0;
 		currentPointAhead.y = 0;
 		firstIndexMax = -1;
@@ -2409,23 +2409,39 @@ public final class EdgeDetector {
 								
 		Segment first = (trSz>0) ? trArr[ trIndx[0] ] : null;
 		if (left!=null && right!=null && rSize>0 && lSize>0 && first.type==0 && Math.abs(first.start.x-first.end.x)<=TrackSegment.EPSILON*0.1){
-			Segment r0 = first.rightSeg;
-			Segment l0 = first.leftSeg;
-			double x0 = r0.start.x;
-			int end = l0.endIndex+1;
-			for (int i = l0.startIndex;i<end;++i){
-				double x = left[i].x;
-				if (Math.abs(x-x0)<trackWidth-1)
-					System.out.println();
-			}
-			
-			x0 = l0.start.x;
-			end = r0.endIndex+1;
-			if (r0.startIndex>=0){
-				for (int i = r0.startIndex;i<end;++i){
-					double x = right[i].x;
+			for (int j = 0;j<trSz;++j){
+				Segment t = trArr[ trIndx[j] ];
+				if (t.type!=0 || Math.abs(t.start.x-t.end.x)>=TrackSegment.EPSILON) break;
+				Segment r0 = t.rightSeg;
+				Segment l0 = t.leftSeg;
+				double x0 = r0.start.x;
+				double xx = l0.start.x;
+				int end = l0.endIndex+1;
+				for (int i = l0.startIndex;i<end;++i){
+					double x = left[i].x;
 					if (Math.abs(x-x0)<trackWidth-1)
 						System.out.println();
+					
+					if (left[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
+						reset();
+						return;
+					}
+				}
+				
+				x0 = l0.start.x;
+				xx = r0.start.x;
+				end = r0.endIndex+1;
+				if (r0.startIndex>=0){
+					for (int i = r0.startIndex;i<end;++i){
+						double x = right[i].x;
+						if (Math.abs(x-x0)<trackWidth-1)
+							System.out.println();
+						
+						if (right[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
+							reset();
+							return;
+						}
+					}
 				}
 			}
 		}		
