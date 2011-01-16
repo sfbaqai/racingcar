@@ -9367,7 +9367,9 @@ public final class Segment {
 						maxFstIndx = aFstIndx[er];
 						maxLstIndx = aLstIndx[er];
 						if (tp==1) er-=Segment.MAX_RADIUS;
-						if (tp!=0 && v[maxLstIndx].y-v[maxFstIndx].y>=er*Math.sqrt(x/(x+er)) || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
+						Vector2D fst = v[maxFstIndx];
+						Vector2D lst = v[maxLstIndx];
+						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=er*Math.sqrt(x/(x+er)) || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
 							continue;														
 						}
 						
@@ -10749,7 +10751,7 @@ public final class Segment {
 		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null && s.center.y==0) return true;
 		int sR = (s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : double2int(s.radius+s.type*which*tW);
 		Vector2D center = s.center;
-		return ((s.map!=null && s.map[sR]>3) || (s.type!=0 && center!=null && center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
+		return ((s.map!=null && sR>=0 && sR<s.map.length && s.map[sR]>3) || (s.type!=0 && center!=null && center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
 	}
 
 	/*private static void removeFirstPoint(Segment s,Segment other){//remove the first point of s		
