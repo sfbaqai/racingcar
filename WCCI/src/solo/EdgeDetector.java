@@ -583,8 +583,10 @@ public final class EdgeDetector {
 		int lsz = (firstIndexMax>=0 && firstIndexMax<numpoint) ? firstIndexMax  : 0;
 		int rsz = (lastIndexMax<numpoint-1 && lastIndexMax>=0) ? numpoint-1-lastIndexMax : 0;
 		if (numpoint==0){
-			highestPoint.x = 0;
-			highestPoint.y = 0;
+			if (highestPoint!=null){
+				highestPoint.x = 0;
+				highestPoint.y = 0;
+			}
 			lSize = 0;
 			rSize = 0;
 			nLsz = 0;
