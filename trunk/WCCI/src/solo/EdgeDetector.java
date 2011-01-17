@@ -1495,7 +1495,7 @@ public final class EdgeDetector {
 					}
 				} 				
 
-				if (ldh<trackWidth) whichH = whichL;
+				if (hl<MAX_DISTANCE && ldh<trackWidth) whichH = whichL;
 			}			
 		}
 
