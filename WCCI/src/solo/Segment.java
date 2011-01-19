@@ -13790,7 +13790,7 @@ public final class Segment {
 			if (sR>=MAX_RADIUS) sR = MAX_RADIUS-1;
 			if (s.type!=0 && s.type!=Segment.UNKNOWN){
 				boolean ok = !s.updated;			
-				if (s.updated){					
+				if (s.updated && s.center!=null){					
 					double d = check(v, firstIndex,lastIndex, s.center, s.radius);
 					ok = (d>=0);
 					if (s.num>2){
