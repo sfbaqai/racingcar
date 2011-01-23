@@ -509,14 +509,16 @@ public final class EdgeDetector {
 		currentPointAhead.x = 0;
 		currentPointAhead.y = 0;
 		firstIndexMax = -1;
+		double ll = 0;
 
 		for (int i=startIndex;i<endIndex;++i){			
 			angle = Math.PI-ANGLE_LK[i]-curAngle;
 			//			double xx = tracks[i]* Math.cos(angle);
 			//			double yy = tracks[i]* Math.sin(angle);
-			if (tracks[i]<=0) continue;
-			double xx =Math.round(tracks[i]* Math.cos(angle)*PRECISION)/PRECISION;
-			yy =Math.round(tracks[i]* Math.sin(angle)*PRECISION)/PRECISION;
+			double l = tracks[i];
+			if (l<=0) continue;
+			double xx =Math.round(l* Math.cos(angle)*PRECISION)/PRECISION;
+			yy =Math.round(l* Math.sin(angle)*PRECISION)/PRECISION;
 			if (i==9)
 				currentPointAhead.copy(xx,yy);			
 			
@@ -526,8 +528,8 @@ public final class EdgeDetector {
 			//			angle = (xx==0) ? PI_2 : (yy>=0) ? Math.PI-Math.atan2(yy,xx) : Math.PI - angle;
 			//			angle = Math.round(angle*PRECISION)/PRECISION;			
 
-			if (maxDistance<tracks[i])
-				maxDistance = tracks[i];
+			if (maxDistance<l)
+				maxDistance = l;
 			
 			double absXX = Math.abs(xx);
 			if (absXX>=40 || (absXX>trackWidth*2 && absXX>Math.abs(yy))){
@@ -538,20 +540,32 @@ public final class EdgeDetector {
 			if (yy<-5 || (j>0 && Math.abs(yy-edge[j-1].y)<=0.15)) continue;
 			double absYY = yy*sign;
 			
-			if (maxY<absYY || tracks[i]>MAX_DISTANCE){
+			if (maxY<absYY || l>MAX_DISTANCE){
 				if (maxY<absYY)
-					maxY = absYY;									
-				firstIndexMax = j;
-				lastIndexMax = firstIndexMax;								
+					maxY = absYY;
+				if (l<=MAX_DISTANCE){
+					firstIndexMax = j;
+					lastIndexMax = firstIndexMax;		
+					ll = l;
+				} else {
+					if (ll<=MAX_DISTANCE){
+						firstIndexMax = j;
+						ll = l;
+					} else if (ll<l) ll = l;
+					lastIndexMax = j;
+				}
 			} else if (maxY==absYY && lastIndexMax>=0){
 				lastIndexMax =j;
-			} else if (tracks[i]>MAX_DISTANCE){				
-				if (maxY<absYY && firstIndexMax>=0 && tracks[firstIndexMax]<=MAX_DISTANCE){
+				if (ll<l) ll = l;
+			} else if (l>MAX_DISTANCE){				
+				if (maxY<absYY && firstIndexMax>=0 && ll<=MAX_DISTANCE){
 					maxY = absYY;
 					firstIndexMax =j;
 					lastIndexMax =j;
+					ll = l;
 				} else if (maxY==absYY && lastIndexMax>=0){
 					lastIndexMax = j;
+					if (ll<l) ll = l;
 				} else {
 					continue;
 				}
