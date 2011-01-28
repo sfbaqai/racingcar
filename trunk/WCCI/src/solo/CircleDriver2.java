@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 150.99; 
+	public static final double BREAK_TIME = 1900.82; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -392,8 +392,8 @@ public final class CircleDriver2{
 				int wEdge = (startY<0 || Math.abs(startX)>40) ? -1 : isCut(cx0, cy0, rad,0,0,startX,startY, fromSeg, toSeg, tmp,GAP);
 				if (wEdge==0){							
 					if ((k>=dSpeed || k>=speedRadius) && (wEdge= isCut(tmpx, tmpy, k,startX,startY,rx,ry,fromSeg,toSeg, tmp,GAP))==0){						
-						TrackSegment t = TrackSegment.createTurnSeg(tmpx, tmpy, k, startX, startY, rx, ry);
-						trackData.add(t);
+//						TrackSegment t = TrackSegment.createTurnSeg(tmpx, tmpy, k, startX, startY, rx, ry);
+//						trackData.add(t);
 						if (startY<=0 && Math.sqrt(tmpx*tmpx+tmpy*tmpy)>k){							
 							Geom.ptTangentLine(0, 0, tmpx, tmpy, k, tmp);
 							startX = (turn==TURNRIGHT) ? tmp[0] : tmp[2];
@@ -421,10 +421,10 @@ public final class CircleDriver2{
 						tmp[2] = Math.max(dSpeed,rd);
 						tmp[3] = startX;
 						tmp[4] = startY;
-						TrackSegment tt = TrackSegment.createTurnSeg(tmpx, tmpy, k, startX, startY, rx, ry);
-						trackData.add(tt);
-						TrackSegment ttt = TrackSegment.createTurnSeg(cx0, cy0, rad, 0,0,startX, startY);
-						trackData.add(ttt);
+//						TrackSegment tt = TrackSegment.createTurnSeg(tmpx, tmpy, k, startX, startY, rx, ry);
+//						trackData.add(tt);
+//						TrackSegment ttt = TrackSegment.createTurnSeg(cx0, cy0, rad, 0,0,startX, startY);
+//						trackData.add(ttt);
 						return 0;
 					}
 				}				
@@ -2992,8 +2992,8 @@ public final class CircleDriver2{
 		tmp[3] = startX;
 		tmp[4] = startY;
 
-		TrackSegment tt = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad,startX, startY, rx, ry);
-		trackData.add(tt);		
+//		TrackSegment tt = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad,startX, startY, rx, ry);
+//		trackData.add(tt);		
 		return true;
 	}
 	public static final double radiusAtSpeed(double x){
@@ -3068,12 +3068,12 @@ public final class CircleDriver2{
 
 		if (Geom.getCircle3(0,0,speedV.x,speedV.y,px,py,nnx,nny,tmpBuf)){
 			double rr = Math.sqrt(tmpBuf[2])-W;
-			if (time>=BREAK_TIME){
-				TrackSegment tss = TrackSegment.createTurnSeg(tmpBuf[0], tmpBuf[1], rr, 0, 0, tmpBuf[0], tmpBuf[1]+rr);
-				trackE.add(tss);
-				draw = true;
-				display();
-			}
+//			if (time>=BREAK_TIME){
+////				TrackSegment tss = TrackSegment.createTurnSeg(tmpBuf[0], tmpBuf[1], rr, 0, 0, tmpBuf[0], tmpBuf[1]+rr);
+//				trackE.add(tss);
+//				draw = true;
+//				display();
+//			}
 			if (rr>speedRadius){
 				return true;
 			}
@@ -4869,8 +4869,8 @@ public final class CircleDriver2{
 					tmp[1] = bestCy;
 					dx = startX;
 					dy = startY;
-					TrackSegment ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, startX, startY, rx, ry);
-					trackData.add(ts);
+//					TrackSegment ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, startX, startY, rx, ry);
+//					trackData.add(ts);
 					found = true;
 					break;
 				}//end of if
@@ -4883,8 +4883,8 @@ public final class CircleDriver2{
 				tmp[2] = lr;
 				tmp[3] = dx;
 				tmp[4] = dy;
-				TrackSegment ts = TrackSegment.createTurnSeg(tmp[0],tmp[1], lr, dx, dy,px,py);
-				trackData.add(ts);
+//				TrackSegment ts = TrackSegment.createTurnSeg(tmp[0],tmp[1], lr, dx, dy,px,py);
+//				trackData.add(ts);
 				return true;
 			}
 		}		
@@ -5042,10 +5042,10 @@ public final class CircleDriver2{
 					startX = (bestCx>0) ? bestCx-dbx : bestCx+dbx;							
 
 					if (bestRad>=lowestRad && isCut(bestCx, bestCy, bestRad, 0, 0, rx, ry, 0, trSz, tmp, GAP)==0){
-						TrackSegment ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, 0, 0, rx, ry);
-						//								trackData.add(ts);
-						ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, 0, 0, startX, startY);
-						trackData.add(ts);
+//						TrackSegment ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, 0, 0, rx, ry);
+//						//								trackData.add(ts);
+//						ts = TrackSegment.createTurnSeg(bestCx, bestCy, bestRad, 0, 0, startX, startY);
+//						trackData.add(ts);
 						tmp[0] = bestCx;
 						tmp[1] = bestCy;
 						//								if (speedRadius>rad && speedRadius<90){
@@ -5185,8 +5185,8 @@ public final class CircleDriver2{
 			tmp[2] = rad;
 			tmp[3] = dx;
 			tmp[4] = dy;
-			TrackSegment ts = TrackSegment.createTurnSeg(cntr.x, cntr.y, rad, 0, 0, dx, dy);
-			trackData.add(ts);
+//			TrackSegment ts = TrackSegment.createTurnSeg(cntr.x, cntr.y, rad, 0, 0, dx, dy);
+//			trackData.add(ts);
 			return rs;
 		}
 		return false;
@@ -7734,6 +7734,25 @@ public final class CircleDriver2{
 			nf.setMaximumFractionDigits(2);
 			TrackSegment.drawTrack(trackData,"E "+nf.format(time)+" a");
 			TrackSegment.drawTrack(trackE,"E "+nf.format(time)+" b");
+			TrackSegment ts;
+			/*for (int i = 0;i<trSz;++i){
+				Segment t = trArr[ trIndx[i] ];
+				t = t.leftSeg;
+				if (t.type==0){
+					ts = TrackSegment.createStraightSeg(0, t.start.x, t.start.y, t.end.x, t.end.y);
+					trackE.add(ts);
+					t = t.opp;
+					ts = TrackSegment.createStraightSeg(0, t.start.x, t.start.y, t.end.x, t.end.y);
+					trackE.add(ts);
+				} else {
+					ts = TrackSegment.createTurnSeg(t.center.x, t.center.y, t.radius, t.start.x, t.start.y, t.end.x, t.end.y);
+					trackE.add(ts);
+					t = t.opp;
+					ts = TrackSegment.createTurnSeg(t.center.x, t.center.y, t.radius, t.start.x, t.start.y, t.end.x, t.end.y);
+					trackE.add(ts);
+				}
+			}//*/
+			TrackSegment.drawTrack(trackE,"E "+nf.format(time)+" r");
 			//			if (cntr!=null)TrackSegment.circle(cntr.x, cntr.y, rr, series);
 			//			if (centerOfTurn!=null) TrackSegment.circle(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, series);
 			//			EdgeDetector.drawEdge(series, "E "+nf.format(time)+" c");
@@ -8097,8 +8116,8 @@ public final class CircleDriver2{
 		double dx = 0;
 		double dy = 0;
 		if (time>=BREAK_TIME){			
-			TrackSegment tss = TrackSegment.createTurnSeg(ox, oy, speedRadius, 0, 0, ox, oy+speedRadius);
-			trackData.add(tss);
+//			TrackSegment tss = TrackSegment.createTurnSeg(ox, oy, speedRadius, 0, 0, ox, oy+speedRadius);
+//			trackData.add(tss);
 		}
 		if ((trSz==1 && lastSeg.type==0 && isFirstSeg(lastSeg)) || (trSz>1 && curSegment.type==0 && isFirstSeg(curSegment) && lastSeg.type==0 && isFirstSeg(lastSeg))){
 			double mx = toMiddle;
@@ -8175,8 +8194,8 @@ public final class CircleDriver2{
 			if (Geom.ptTangentLine(0, 0, lastSeg.center.x, lastSeg.center.y, rad,tmpBuf)>0){
 				double mx = (lastSeg.type==TURNRIGHT) ? tmpBuf[0] : tmpBuf[2];
 				double my = (lastSeg.type==TURNRIGHT) ? tmpBuf[1] : tmpBuf[3];				
-				TrackSegment ts = TrackSegment.createStraightSeg(0, 0, 0, mx, my);
-				trackData.add(ts);
+//				TrackSegment ts = TrackSegment.createStraightSeg(0, 0, 0, mx, my);
+//				trackData.add(ts);
 				double d = Math.sqrt(mx*mx+my*my);
 				double ddx = mx - ox;
 				double ddy= my - oy;
@@ -8359,8 +8378,8 @@ public final class CircleDriver2{
 					directSx = turn;
 					directSy = 0;
 				}
-				TrackSegment ts = TrackSegment.createStraightSeg(0, 0, 0, directSx, directSy);
-				trackData.add(ts);
+//				TrackSegment ts = TrackSegment.createStraightSeg(0, 0, 0, directSx, directSy);
+//				trackData.add(ts);
 
 				//					if (mustPassPoint.y<=1) mustPassPoint.x = 0;
 				centerOfTurn = null;
@@ -8528,10 +8547,10 @@ public final class CircleDriver2{
 					double ang = Vector2D.angle(0,1,rx,ry-1);
 					DANGER = Math.abs(ang)>=MAX_ANGLE;
 				}
-				TrackSegment ts = TrackSegment.createTurnSeg(cnx, cny, rr, 0, 0, mx, my);
-				trackData.add(ts);
-				ts = TrackSegment.createStraightSeg(0, 0, 0, mx, my);
-				trackData.add(ts);
+//				TrackSegment ts = TrackSegment.createTurnSeg(cnx, cny, rr, 0, 0, mx, my);
+//				trackData.add(ts);
+//				ts = TrackSegment.createStraightSeg(0, 0, 0, mx, my);
+//				trackData.add(ts);
 
 				if (mustPassPoint==null) 
 					mustPassPoint = new Vector2D( mx,my);
@@ -10606,9 +10625,9 @@ public final class CircleDriver2{
 					//				TrackSegment ts = TrackSegment.createTurnSeg(cntr.x, cntr.y, rr, cntr.x+rr, cntr.y, cntr.x-rr, cntr.y); 
 					//				trackData.add(ts);
 
-					TrackSegment seg = TrackSegment.createStraightSeg(0,0, 0, carDirection.x*20, carDirection.y*20);
-					trackData.add(seg);				
-					trackE.add(seg);				
+//					TrackSegment seg = TrackSegment.createStraightSeg(0,0, 0, carDirection.x*20, carDirection.y*20);
+//					trackData.add(seg);				
+//					trackE.add(seg);				
 					//			ts = TrackSegment.createTurnSeg(centerOfTurn.x, centerOfTurn.y, radiusOfTurn, centerOfTurn.x-turn*radiusOfTurn, centerOfTurn.y, optimalPoint.x, optimalPoint.y);
 					//			trackData.add(ts);			
 					//			ts = TrackSegment.createTurnSeg(center.x, center.y, radiusSmall, center.x-turn*radiusSmall, center.y, center.x, center.y+radiusSmall);
@@ -10861,10 +10880,14 @@ public final class CircleDriver2{
 	private final void store(){
 		series = new XYSeries("Curve");		
 		int trackESz = 0;
-		Vector2D[] lArr = edgeDetector.left;
-		Vector2D[] rArr = edgeDetector.right;
-		int sL = edgeDetector.lSize;
-		int sR= edgeDetector.rSize;		
+//		Vector2D[] lArr = edgeDetector.left;
+//		Vector2D[] rArr = edgeDetector.right;
+//		int sL = edgeDetector.lSize;
+//		int sR= edgeDetector.rSize;
+		Vector2D[] lArr = edgeDetector.nleft;
+		Vector2D[] rArr = edgeDetector.nright;
+		int sL = edgeDetector.nLsz;
+		int sR= edgeDetector.nRsz;
 		for (int i=sL-1;i>=0;--i){	
 			Vector2D v = lArr[i]; 
 			if (v!=null) {
