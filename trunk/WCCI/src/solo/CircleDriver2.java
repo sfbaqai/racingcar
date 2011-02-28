@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 1000.11; 
+	public static final double BREAK_TIME = 1000.33; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -3823,7 +3823,7 @@ public final class CircleDriver2{
 					if (speedX>targetSpeed) {
 						acc = 0;
 					} else acc = Math.min(acc,2/(1+Math.exp(speedX - targetSpeed-1)) - 1);//*/
-				} else if (relativePosMovement>0 && relativeAngleMovement<0 && relativeTargetAngle>0 && speedX>lowestSpeed+FAST_MARGIN+tW+m*0.5) {
+				} else if (relativePosMovement>0 && relativeAngleMovement<0 && relativeTargetAngle>0 && (speedX>lowestSpeed+FAST_MARGIN+tW+m*0.5 || speedX>lowestSpeed+FAST_MARGIN+tW && absSpeedY>MODERATE_SPEEDY)) {
 					acc = 0;
 					targetSpeed = Math.min(targetSpeed, lowestSpeed+FAST_MARGIN+tW+m*0.5);
 				}
@@ -4273,7 +4273,7 @@ public final class CircleDriver2{
 										brake = 1;
 										steer = -turn;
 									} else if (relativeSpeedY>=0 && inTurn && !isSafeToAccel && relativePosMovement>=0 && (relativeAngle<0 || relativeAngleMovement<0))										
-										brake *= 0.5;
+										brake *= 1;
 								}
 								//								brake = Math.max(brake, 0.1);
 								//								if (brake>=0.4) brake *=0.5;
@@ -4285,7 +4285,7 @@ public final class CircleDriver2{
 								//									}
 								//								}
 								if (!canGoAtCurrentSpeed && a>TURNANGLE*0.75 && relativeSpeedY>LOW_SPEEDY ||  mLen<25 && (relativeAngleMovement<0 || relativePosMovement<0 || relativeAngle<-0.001) && steer*turn<=0 && !isSafeToAccel) {
-									steer = (!isOffBalance) ? -turn : steer*0.5;
+									steer = (!isOffBalance) ? -turn : steer;
 //									if (brake==0 && !canGoToLastSeg && mLastY>0 &&  a>TURNANGLE && relativeAngleMovement<-0.001) brake = 0.1;
 								}
 							}
