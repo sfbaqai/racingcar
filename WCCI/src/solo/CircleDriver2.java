@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 1000.33; 
+	public static final double BREAK_TIME = 340.94; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -9913,7 +9913,7 @@ public final class CircleDriver2{
 					steer = -turn;
 //					return steer;
 				}			
-			} else if (isFast && relativeTargetAngle>0.001 && relativeAngleMovement<0.001) 
+			} else if (isFast && relativeTargetAngle>0.001 && (relativeAngleMovement<0.001 || relativePosMovement<-0.001)) 
 				steer = -turn;			
 		} else if (steer*turn<=0 && (inTurn && !isSafeToAccel && relativeSpeedY>=-LOW_SPEEDY && relativeAngle<0 && relativeTargetAngle>=0 || inTurn && (isFast || !canGoToLastSeg || !maxTurn && toInnerEdge<-GAP) && relativeSpeedY>=0 && relativeAngleMovement<-0.001 && (relativeAngle<0 || relativeTargetAngle>=0 && (relativePosMovement<0 || absSpeedY<absLastSpeedY-1.5 || toInnerEdge<=-GAP && toInnerEdge>=-W)) && edgeDetector.whichEdgeAhead*turn<=0) && (speed>maxSpeed-tW || !canGoToLastSeg || relativeSpeedY<=-MODERATE_SPEEDY && absSpeedY>absLastSpeedY)){ 
 			steer = ((isFast || relativeAngle<-0.001 && speedX>lowestSpeed-tW) && (a>TURNANGLE*0.5 && m<10 || relativePosMovement>0 && slip>0 && canGoToLastSeg && m<10 || m<5 && a>0 && relativeAngleMovement<-0.001)) ? -turn : steer;
