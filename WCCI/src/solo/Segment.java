@@ -7986,7 +7986,7 @@ public final class Segment {
 					if (rr>=MAX_RADIUS-1){
 						double d = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, sx, sy, null));
 						d = Math.round(d-tW)+tW;
-						if (d==prev.radius && endY-startY>1){
+						if (d==prev.radius && endY-startY>1 && prev.type*(endX-startX)>0){
 							if (s!=null) apply(s, tW,0, first, last, null, Double.MAX_VALUE);	
 //							long endTime = (System.nanoTime()-ti)/1000000;
 //							if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
@@ -9245,7 +9245,7 @@ public final class Segment {
 								s.radius = rr;
 								s.startIndex = from;
 								s.endIndex = from+1;						
-							} else {																		
+							} else if (prev.type*(end.x-start.x)>0){																		
 								if (s.start==null){
 									s.start = new Vector2D(start);
 								} else s.start.copy(start);											
@@ -9256,7 +9256,7 @@ public final class Segment {
 								s.radius = 0;
 								s.startIndex = from;
 								s.endIndex = from+1;						
-							}					
+							} else continue;					
 							s.num =2;
 							s.unsafe = false;
 							reSynchronize(s, os, 0, otherTo, -which, tw);				
@@ -9496,7 +9496,7 @@ public final class Segment {
 						} else s.end.copy(end);														
 						s.type = tp;
 						s.radius = rr;						
-					} else {																		
+					} else if (prev.type*(end.x-start.x)>0){																		
 						if (s.start==null){
 							s.start = new Vector2D(start);
 						} else s.start.copy(start);											
@@ -9506,7 +9506,7 @@ public final class Segment {
 //						s.center = null;
 						s.type = 0;
 						s.radius = 0;						
-					}					
+					} else continue;					
 					s.num = 2;
 					s.startIndex = from+1;
 					s.endIndex = from+2;
