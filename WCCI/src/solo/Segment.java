@@ -7894,7 +7894,7 @@ public final class Segment {
 
 	private static double radiusFrom2Points(Segment prev,Vector2D first,Vector2D last,double tW,Segment s){
 //		long ti = System.nanoTime();
-		if (prev==null || prev.type==UNKNOWN) return -1;				
+		if (prev==null || prev.type==UNKNOWN || prev.end!=null && prev.end.distance(first)<1) return -1;				
 		double r = 0;
 		double tw = tW+tW;
 		double startX = first.x;
@@ -7984,9 +7984,9 @@ public final class Segment {
 				for (int kk =no-1;kk>=0;--kk){
 					double rr = Math.round(temp[2+3*kk]-tp*tW)+tp*tW;						
 					if (rr>=MAX_RADIUS-1){
-						double d = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, sx, sy, null));
+						double d = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, sx, sy, tmp1));
 						d = Math.round(d-tW)+tW;
-						if (d==prev.radius && endY-startY>1 && prev.type*(endX-startX)>0){
+						if (d==prev.radius && endY-startY>1 && tmp1[1]<startY && prev.type*(endX-startX)>0){
 							if (s!=null) apply(s, tW,0, first, last, null, Double.MAX_VALUE);	
 //							long endTime = (System.nanoTime()-ti)/1000000;
 //							if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
@@ -8012,7 +8012,7 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy>=startY+0.2 || ssy<=prev.end.y-0.2) continue;
+							if (ssy>=startY+0.2 || ssy<=prev.end.y-0.5) continue;
 						} else if (prev.start.y>endY){
 							if (ssy>=prev.start.y+0.2 || ssy<=endY-0.2) continue;
 						}
