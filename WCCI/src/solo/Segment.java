@@ -2127,7 +2127,7 @@ public final class Segment {
 					int idx = i+1;
 					if ((sz-=idx)>0) System.arraycopy(lArr,idx,lArr,idx-1,sz);
 					sz+=idx-1;
-					continue;
+					break;
 				}
 
 				if (s.radius!=t.radius && s.type!=0){
@@ -8704,7 +8704,7 @@ public final class Segment {
 				s.num = 2;
 				s.unsafe = false;
 				reSynchronize(s, os, 0, otherTo, -which, tw);				
-				if ((os.type!=0 && (os.radius<=REJECT_VALUE || os.end.y-os.start.y>=os.radius*Math.sqrt(x/(x+os.radius)) || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
+				if ((os.type!=0 && (os.radius<=REJECT_VALUE || os.end.y-os.start.y>=x+os.radius || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
 					return indx;
 				}
 				if (s.type==0){ 
@@ -8971,7 +8971,7 @@ public final class Segment {
 							s.radius = 0;
 //							s.center = null;							
 						}
-						if (s.type!=0 && (s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-s.type*tW<=REJECT_VALUE || s.radius-2*s.type*tW<=REJECT_VALUE || s.radius-s.type*tW>=MAX_RADIUS-1)) continue;
+						if (s.type!=0 && (s.end.y-s.start.y>=x+s.radius || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-s.type*tW<=REJECT_VALUE || s.radius-2*s.type*tW<=REJECT_VALUE || s.radius-s.type*tW>=MAX_RADIUS-1)) continue;
 						reSynchronize(s,os,0,otherTo,-which,tw);													
 						if (prev!=null && isPossiblePrevConnected && isConnected(prev, s, tW, pt) && pt.y>prev.start.y && pt.y<s.end.y) {																														
 							if ((prev.type!=s.type || prev.radius!=s.radius))				
@@ -9027,7 +9027,7 @@ public final class Segment {
 									s.radius = r; 
 									if (s.center==null) s.center = new Vector2D();
 									circle(first, last, cx,cy, r,s.center);
-									if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
+									if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius+x || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
 										s.type = Segment.UNKNOWN;
 										os.type = Segment.UNKNOWN;
 									}
@@ -9234,7 +9234,7 @@ public final class Segment {
 								if (s.center!=null){
 									circle(start, end, cx,cy, rr,center);
 								} else s.center = center;				
-								if (end.y-start.y>=rr*Math.sqrt(x/(x+rr)) || rr<=REJECT_VALUE || rr-tW*2*tp<=REJECT_VALUE || center.y>start.y || rr>=MAX_RADIUS-1) continue;
+								if (end.y-start.y>=x+rr || rr<=REJECT_VALUE || rr-tW*2*tp<=REJECT_VALUE || center.y>start.y || rr>=MAX_RADIUS-1) continue;
 								if (s.start==null){
 									s.start = new Vector2D(start);
 								} else s.start.copy(start);											
@@ -9283,7 +9283,7 @@ public final class Segment {
 								if (next!=null) {
 									int tmptp = (int)rs[3];
 									double tmpr = rs[2];																
-									if (tmptp!=0 && (lst.y-fst.y>=tmpr*Math.sqrt(x/(x+tmpr)) || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-2*tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
+									if (tmptp!=0 && (lst.y-fst.y>=x+tmpr || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-2*tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
 									
 									if (s2.start==null){
 										s2.start = new Vector2D(fst);
@@ -9312,7 +9312,7 @@ public final class Segment {
 									s2.done = true;
 									s2.points = v;
 									radiusFrom2Points(s, fst, lst, tW, s2);
-									if (s2.type==Segment.UNKNOWN || (s2.type!=0 && lst.y-fst.y>=s2.radius*(Math.sqrt(x/(x+s2.radius)))) ||(s2.type!=0 && (s2.radius<=REJECT_VALUE || s2.radius-tW*2*s2.type<=REJECT_VALUE))) continue;
+									if (s2.type==Segment.UNKNOWN || (s2.type!=0 && lst.y-fst.y>=x+s2.radius) ||(s2.type!=0 && (s2.radius<=REJECT_VALUE || s2.radius-tW*2*s2.type<=REJECT_VALUE))) continue;
 									double d = 0;
 									if (Math.abs(s.radius-s2.radius)>3 && ((d = radiusFrom2Points(s2, start, end, tW, null))<0 || Math.abs(s.radius-d) > 3)) continue;
 								}
@@ -9369,7 +9369,7 @@ public final class Segment {
 						if (tp==1) er-=Segment.MAX_RADIUS;
 						Vector2D fst = v[maxFstIndx];
 						Vector2D lst = v[maxLstIndx];
-						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=er*Math.sqrt(x/(x+er)) || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
+						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=x+er || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
 							continue;														
 						}
 						
@@ -10746,12 +10746,12 @@ public final class Segment {
 		return true;
 	}
 
-	private static boolean isConfirmed(Segment s,int which,double tW){
+	public static boolean isConfirmed(Segment s,int which,double tW){
 		if (s.type==0 && Math.abs(s.start.x-s.end.x)<TrackSegment.EPSILON) return true;
-		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null && s.center.y==0) return true;
-		int sR = (s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : double2int(s.radius+s.type*which*tW);
-		Vector2D center = s.center;
-		return ((s.map!=null && sR>=0 && sR<s.map.length && s.map[sR]>3) || (s.type!=0 && center!=null && center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
+		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null && s.center.y==0) return true;		
+		int sR = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)(Math.round(s.radius+s.type*which*tW));
+		if (sR<0) sR = 0;
+		return ((s.map!=null && sR>=0 && sR<s.map.length && s.map[sR]>3) || (s.type!=0 && s.center!=null && s.center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
 	}
 
 	/*private static void removeFirstPoint(Segment s,Segment other){//remove the first point of s		
