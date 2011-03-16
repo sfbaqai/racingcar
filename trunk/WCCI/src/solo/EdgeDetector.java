@@ -1665,7 +1665,7 @@ public final class EdgeDetector {
 				}
 
 				if (whichL!=0) break;
-				if (ly>lSeg.end.y && ly>rSeg.end.y) break;
+				if (ly>lSeg.end.y && ly>rSeg.end.y || ly>lSeg.start.y && ly>rSeg.start.y) break;
 			}//end of for			
 
 		}//end of if
@@ -1770,7 +1770,7 @@ public final class EdgeDetector {
 				}
 
 				if (whichH!=0) break;
-				if (hy>lSeg.end.y && hy>rSeg.end.y) break;
+				if (hy>lSeg.end.y && hy>rSeg.end.y || hy>lSeg.start.y && hy>rSeg.start.y) break;
 			}//end of for				
 
 		}//end of if
