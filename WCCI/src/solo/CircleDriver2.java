@@ -10467,7 +10467,9 @@ public final class CircleDriver2{
 					} else if (relativeAngle>=0 && (relativePosMovement>0 || toOutterEdge>SAFE_EDGE_MARGIN && absSpeedY<MODERATE_SPEEDY || absSpeedY<10 && max)|| canGoToLastSeg || canGoAtCurrentSpeed){
 						if (a>TURNANGLE && edgeDetector.highestPoint!=null && (edgeDetector.highestPoint.y<=lastO.end.y || edgeDetector.whichE*turn<0 && lastO.type!=0 && Vector2D.distance(lastO.center.x,lastO.center.y,edgeDetector.highestPoint.x,edgeDetector.highestPoint.y)<lastO.radius || edgeDetector.highestPoint.y<=lastS.end.y )){
 							maxSpeed = (relativePosMovement>0 && canGoToLastSeg) ? targetSpeed+FAST_MARGIN+5+m*0.35 : Math.min(speedX,targetSpeed+FAST_MARGIN+5+m*0.35);
-						} else maxSpeed = (relativePosMovement>0 && (canGoToLastSeg || toInnerEdge>=-lgap || toInnerEdge>=-GAP)) ? Math.max(speedX,targetSpeed+FAST_MARGIN+tW+m) : Math.min(Math.max(lowestSpeed,speedX),targetSpeed+FAST_MARGIN+tW+m);
+						} else maxSpeed = (relativePosMovement>0 && (canGoToLastSeg || toInnerEdge>=-lgap || toInnerEdge>=-GAP)) ? Math.max(speedX,targetSpeed+FAST_MARGIN+tW+m) : 
+							(relativePosMovement>0 && absSpeedY<HIGH_SPEEDY && speedX<targetSpeed+FAST_MARGIN+tW && distToEstCircle>-W) ? targetSpeed+FAST_MARGIN+tW 
+							: Math.min(Math.max(lowestSpeed,speedX),targetSpeed+FAST_MARGIN+tW+m);
 					} else if (toOutterEdge>SAFE_EDGE_MARGIN && absSpeedY<MODERATE_SPEEDY){
 						if (a>TURNANGLE && edgeDetector.highestPoint!=null && (edgeDetector.highestPoint.y<=lastO.end.y || edgeDetector.whichE*turn<0 && lastO.type!=0 && Vector2D.distance(lastO.center.x,lastO.center.y,edgeDetector.highestPoint.x,edgeDetector.highestPoint.y)<lastO.radius || edgeDetector.highestPoint.y<=lastS.end.y )){
 							maxSpeed = (relativePosMovement>0 && canGoToLastSeg) ? targetSpeed+FAST_MARGIN+tW+m*0.35 : Math.min(speedX-1,targetSpeed+FAST_MARGIN+tW);
