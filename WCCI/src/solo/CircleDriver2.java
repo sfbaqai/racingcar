@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 2700.05; 
+	public static final double BREAK_TIME = 1500.81; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -10501,7 +10501,10 @@ public final class CircleDriver2{
 					: (canGoAtCurrentSpeed || canGoToLastSeg) && (relativePosMovement>-0.001 || relativeAngleMovement>-0.001 && relativeAngle>0.001) 
 						? targetSpeed+FAST_MARGIN+tW+m*0.35 
 						: absSpeedY<=MODERATE_SPEEDY && (trSz==1 || last_speed-first_speed>15 || canGoToLastSeg) && ((relativePosMovement>=0 || relativeAngleMovement>=0 && canGoToLastSeg) && relativeAngle>0.001) 
-						  ? (canGoToLastSeg) ? targetSpeed+FAST_MARGIN+tW+m*0.35 : targetSpeed+Math.min(m*1.5,FAST_MARGIN+tW) 
+						  ? (canGoToLastSeg) ? targetSpeed+FAST_MARGIN+tW+m*0.35 
+								  : (relativeAngle>=0.001 && (relativePosMovement>0 || distToEstCircle>lastDistToEstCircle) && absSpeedY<HIGH_SPEEDY && distToEstCircle>-W) 
+								  	? Math.min(targetSpeed+FAST_MARGIN+tW+m*0.35,speedX+2) 
+									: targetSpeed+Math.min(m*1.5,FAST_MARGIN+tW) 
 						  : (speedX<first_speed && speedX>last_speed && m>30) ? Math.min(speedX, targetSpeed+FAST_MARGIN+tW+m) : (maxTurn) ? targetSpeed+Math.min(m*1.5,FAST_MARGIN+tW) : speedX-1;
 					
 					
