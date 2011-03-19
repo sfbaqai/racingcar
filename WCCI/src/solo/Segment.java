@@ -9027,7 +9027,7 @@ public final class Segment {
 									s.radius = r; 
 									if (s.center==null) s.center = new Vector2D();
 									circle(first, last, cx,cy, r,s.center);
-									if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || s.end.y-s.start.y<=1 || s.end.y>99) || s.end.y-s.start.y>=s.radius+x || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
+									if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || last.y-first.y<=1 || s.end.y>99) || last.y-first.y>=r+x || last.y-Math.max(0,first.y)>=r || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
 										s.type = Segment.UNKNOWN;
 										os.type = Segment.UNKNOWN;
 									}
@@ -9369,7 +9369,7 @@ public final class Segment {
 						if (tp==1) er-=Segment.MAX_RADIUS;
 						Vector2D fst = v[maxFstIndx];
 						Vector2D lst = v[maxLstIndx];
-						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=x+er || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
+						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=x+er || tp!=0 && lst.y-Math.max(0,fst.y)>=er+tW*tp || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
 							continue;														
 						}
 						
@@ -9378,11 +9378,11 @@ public final class Segment {
 						tmpSeg.endIndex = maxLstIndx;
 						tmpSeg.num = maxLstIndx-maxFstIndx+1;
 						if (tmpSeg.start==null) 
-							tmpSeg.start = new Vector2D(v[maxFstIndx]);
-						else tmpSeg.start.copy(v[maxFstIndx]);
+							tmpSeg.start = new Vector2D(fst);
+						else tmpSeg.start.copy(fst);
 						if (tmpSeg.end==null) 
-							tmpSeg.end = new Vector2D(v[maxLstIndx]);
-						else tmpSeg.end.copy(v[maxLstIndx]);
+							tmpSeg.end = new Vector2D(lst);
+						else tmpSeg.end.copy(lst);
 						
 						tmpSeg.radius = er + tW*tp;				
 						if (tmpSeg.type!=0){
