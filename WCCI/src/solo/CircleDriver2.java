@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 34.32; 
+	public static final double BREAK_TIME = 340.32; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;						// [m/s] range [0..10]
@@ -10527,10 +10527,9 @@ public final class CircleDriver2{
 						ofsDist = FAST_MARGIN;
 					if (trSz==1 && inTurn && absSpeedY<MODERATE_SPEEDY && speedX<lowestSpeed && toInnerEdge>=-W*2.5 && relativeAngle>-0.1) {
 						maxSpeed = lowestSpeed;
-					} else if (relativeAngle>=0 && (relativePosMovement>0 || toOutterEdge>SAFE_EDGE_MARGIN && absSpeedY<MODERATE_SPEEDY || absSpeedY<10 && max)|| canGoToLastSeg || canGoAtCurrentSpeed){
-						if ((relativeAngle>=0.001 && (relativePosMovement>0 || distToEstCircle>lastDistToEstCircle || distToEstCircle>=-GAP*0.5) && absSpeedY<HIGH_SPEEDY && distToEstCircle>-W))
-							maxSpeed = Math.min(targetSpeed+FAST_MARGIN+tW+m*0.35,speedX+2);
-						else
+					} else if ((relativeAngle>=0.001 && (relativePosMovement>0 || distToEstCircle>lastDistToEstCircle || distToEstCircle>=-GAP*0.5) && absSpeedY<HIGH_SPEEDY && distToEstCircle>-W)) {
+						maxSpeed = Math.min(targetSpeed+FAST_MARGIN+tW+m*0.35,speedX+2);										
+					} else if (relativeAngle>=0 && (relativePosMovement>0 || toOutterEdge>SAFE_EDGE_MARGIN && absSpeedY<MODERATE_SPEEDY || absSpeedY<10 && max)|| canGoToLastSeg || canGoAtCurrentSpeed){						
 						if (a>TURNANGLE && edgeDetector.highestPoint!=null && (edgeDetector.highestPoint.y<=lastO.end.y || edgeDetector.whichE*turn<0 && lastO.type!=0 && Vector2D.distance(lastO.center.x,lastO.center.y,edgeDetector.highestPoint.x,edgeDetector.highestPoint.y)<lastO.radius || edgeDetector.highestPoint.y<=lastS.end.y )){
 							maxSpeed = (relativePosMovement>0 && canGoToLastSeg) ? targetSpeed+FAST_MARGIN+5+m*0.35 : Math.min(speedX,targetSpeed+FAST_MARGIN+5+m*0.35);
 						} else maxSpeed = (relativePosMovement>0 && (canGoToLastSeg || toInnerEdge>=-lgap || toInnerEdge>=-GAP)) ? Math.max(speedX,targetSpeed+FAST_MARGIN+tW+m) : 							
