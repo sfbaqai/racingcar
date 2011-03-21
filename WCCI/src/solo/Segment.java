@@ -15194,7 +15194,7 @@ public final class Segment {
 				if (l.type!=UNKNOWN) {
 					toMiddleSegment(l,t, -1, tW);
 					t.radCount = l.radCount;					
-				} else if (oldTrSz==trSz){													
+				} else {													
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15211,9 +15211,11 @@ public final class Segment {
 					int idx = i+1;					
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
 					trSz+=i;
-					i--;	//*/					
-					continue;
-				} else i -= oldTrSz-trSz;
+					i--;	//*/
+					if (oldTrSz==trSz)
+						continue;
+					else i -= oldTrSz-trSz;
+				} 
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
 					toMiddleSegment(r,t, 1, tW);
@@ -15221,7 +15223,7 @@ public final class Segment {
 					//					r.updated = false;
 					//					if (l!=null) l.updated = false;
 					//					t.updated = false;
-				} else if (oldTrSz==trSz){												
+				} else {																			
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15238,9 +15240,11 @@ public final class Segment {
 					int idx = i+1;						
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
 					trSz+=i;
-					i--;//*/					
-					continue; 
-				} else i -= oldTrSz - trSz;
+					i--;//*/	
+					if (oldTrSz==trSz)
+						continue;
+					else i -= oldTrSz - trSz;
+				} 
 			}			
 
 			Segment firstSeg = trArr[ trIndx[0] ];
