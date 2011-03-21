@@ -37,7 +37,7 @@ public final class EdgeDetector {
 	private static final double E = 0.1*TrackSegment.EPSILON;
 	private final Vector2D tmpHighestPoint = new Vector2D();
 	final static double steerLock=0.785398;
-	private static final double CERTAIN_DIST = 0.05;
+	public static final double CERTAIN_DIST = 0.05;
 	private static final double SMALL_MARGIN = 0.002;
 	public static final double MAX_DISTANCE = 99.95;
 	private static final double DELTA = 0.001;
