@@ -2248,9 +2248,21 @@ public final class EdgeDetector {
 		for (int ii = rSize-1;ii>=0;--ii)
 			right[ii].copy(nright[ii]);
 		CircleDriver2.inTurn = true;
-		for (int ii = CircleDriver2.trSz-1;ii>=0;--ii)
-			CircleDriver2.occupied[CircleDriver2.trIndx[ii]] = 0;
-		CircleDriver2.trSz = 0;
+//		for (int ii = CircleDriver2.trSz-1;ii>=0;--ii)
+//			CircleDriver2.occupied[CircleDriver2.trIndx[ii]] = 0;
+//		CircleDriver2.trSz = 0;
+		int i = 0;
+		for (;i<CircleDriver2.trSz;++i) {
+			int idx = CircleDriver2.trIndx[i];
+			Segment t = CircleDriver2.trArr[idx];
+			if (t.type==0 || t.type==Segment.UNKNOWN) {
+				CircleDriver2.occupied[idx] = 0;
+			} else break;
+		}
+		if (i>0) {
+			System.arraycopy(CircleDriver2.trIndx, i, CircleDriver2.trIndx, 0, CircleDriver2.trSz-i);
+			CircleDriver2.trSz-=i;
+		}
 	}
 	
 	public void double_check(Vector2D highest){
