@@ -2252,16 +2252,75 @@ public final class EdgeDetector {
 //			CircleDriver2.occupied[CircleDriver2.trIndx[ii]] = 0;
 //		CircleDriver2.trSz = 0;
 		int i = 0;
-		for (;i<CircleDriver2.trSz;++i) {
-			int idx = CircleDriver2.trIndx[i];
-			Segment t = CircleDriver2.trArr[idx];
+		int trSz = CircleDriver2.trSz;
+		int[] trIndx = CircleDriver2.trIndx;
+		Segment[] trArr =  CircleDriver2.trArr;
+		for (;i<trSz;++i) {
+			int idx = trIndx[i];
+			Segment t = trArr[idx];
 			if (t.type==0 || t.type==Segment.UNKNOWN) {
 				CircleDriver2.occupied[idx] = 0;
 			} else break;
 		}
 		if (i>0) {
-			System.arraycopy(CircleDriver2.trIndx, i, CircleDriver2.trIndx, 0, CircleDriver2.trSz-i);
-			CircleDriver2.trSz-=i;
+			System.arraycopy(trIndx, i,trIndx, 0, trSz-i);
+			trSz -= i;
+			CircleDriver2.trSz = trSz;
+			
+			int jL = 0;
+			int jR = 0;
+			int sL= lSize;
+			int sR = rSize;
+			for (i = 0;i<trSz;++i){				
+				Segment t = trArr[ trIndx[i] ];
+				Segment l = t.leftSeg;
+				Segment r = t.rightSeg;
+				double my = l.start.y;		
+				if (sL>0){
+					for (;jL<sL;++jL){
+						Vector2D p = left[jL];
+						if (p.y>=my-SMALL_MARGIN)						
+							break;					
+					}
+					l.startIndex = jL;
+					my = l.end.y;
+					for (;jL<sL;++jL){
+						Vector2D p = left[jL];
+						if (p.y>my+SMALL_MARGIN)						
+							break;					
+					}
+					l.endIndex = jL-1;
+					l.num = jL-l.startIndex;
+				} else {
+					l.startIndex = 0;
+					l.endIndex = -1;
+					l.num = 0;
+				}
+
+
+				my = r.start.y;		
+				if (sR>0){
+					for (;jR<sR;++jR){
+						Vector2D p = right[jR];
+						if (p.y>=my-SMALL_MARGIN)						
+							break;					
+					}
+					r.startIndex = jR;
+					my = r.end.y;
+					for (;jR<sR;++jR){
+						Vector2D p = right[jR];
+						if (p.y>my+SMALL_MARGIN)						
+							break;					
+					}
+					r.endIndex = jR-1;
+					r.num = jR-r.startIndex;
+				} else {
+					r.startIndex = 0;
+					r.endIndex = -1;
+					r.num = 0;
+				}
+			}
+
 		}
 	}
 	
