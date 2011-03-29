@@ -984,6 +984,14 @@ public final class Geom {
 	}
 	
 	
+	public static double ptTangentDist(double x,double y,double x0,double y0,double a){
+		double dx = x0-x;
+		double dy = y0-y;
+		double d = dx*dx+dy*dy;
+		if (d<=a*a) return 0;		
+		return Math.sqrt(d - a*a);				
+	}
+	
 	//calculate the point on the circle centre at (x0,y0) radius a which make a tangent line with x,y
 	//x,y must be outside of the circle otherwise null is returned
 	public static int ptTangentLine(double x,double y,double x0,double y0,double a,double[] rs){
