@@ -232,6 +232,27 @@ public final class Storage {
 		}
 	}
 	
+	public int getType(Vector2D[] v,int startIndx,int endIndx){
+		int j = (startIndx<<SIZE_N)+endIndx;
+		int indx = mapIndx[j];
+		int[] map = allMaps[indx];
+		if (map==null) return -2;		
+		
+		int[] aTypes = allTypes[indx];		
+		int[] aRads = allRadius[indx];		
+		
+		int rad = maxRad[j];
+		int total_N = totalRad_N[j];
+		int tp = -2;
+		for (int i=total_N-1;i>=0;--i){
+			if (aRads[i]==rad) {
+				tp = aTypes[i];
+				break;
+			}
+		}
+		return tp;
+	}
+	
 	public int getMaxRad(int startIndx,int endIndx){
 		int j = (startIndx<<SIZE_N)+endIndx;
 		return maxRad[j];
