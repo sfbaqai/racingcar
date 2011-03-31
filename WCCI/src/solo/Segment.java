@@ -3537,6 +3537,7 @@ public final class Segment {
 				}
 
 				if (max>1){
+					tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0 ){						
 						if (!isFirst){
 							circle(fst, lst, center.x,center.y, r,center);
@@ -4176,6 +4177,7 @@ public final class Segment {
 				}	
 
 				if (max>1){
+					tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0){						
 						if (!isFirst){
 							circle(fst, lst, center.x,center.y, r,center);
@@ -4219,7 +4221,7 @@ public final class Segment {
 								else rs.center.copyValue(center);
 							}
 							rs.startIndex = from;
-							rs.endIndex = to-1;		
+							rs.endIndex = to-1;															
 						}
 					}
 				}
@@ -15189,6 +15191,11 @@ public final class Segment {
 				} else prev.type = UNKNOWN;
 			}
 			if (prev!=null && pl!=null) prev.radCount = pl.radCount;
+			if (!CircleDriver2.inTurn && (l.type!=0 && l.map!=null && l.num>1 && l.endIndex<lN-1 && lV[l.endIndex+1].y-l.end.y<=1 && (l.startIndex==0 || l.start.y - lV[l.startIndex-1].y<=1) && (!isConfirmed(l, -1, tW) || l.end.y-l.start.y<=3 || l.num>=3 && l.end.y-l.start.y<5) && (pl==null || nl==null || pl.endIndex<l.startIndex-1 || nl.startIndex-1>l.endIndex)
+					|| r.type!=0 && r.map!=null && r.num>1 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=1 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=1) && (!isConfirmed(r, 1, tW) || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex))){
+				l.type = Segment.UNKNOWN;
+				r.type = Segment.UNKNOWN;
+			}
 						
 			if (l!=null && lN>0){
 				if (l.type!=UNKNOWN) {
