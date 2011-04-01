@@ -3516,11 +3516,13 @@ public final class Segment {
 				if (s.map!=null) {
 					int sr = (tp==0) ? MAX_RADIUS-1 : (int)Math.round(r+tp*which*tW);
 					if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-					if (s.map[sr]==0 && s.appearedRads!=null){
-						s.appearedRads[s.radCount++] = sr;
-						s.opp.radCount++;
+					if (sr>=0){
+						if (s.map[sr]==0 && s.appearedRads!=null){
+							s.appearedRads[s.radCount++] = sr;
+							s.opp.radCount++;
+						}
+						s.map[sr]+=map[er];
 					}
-					s.map[sr]+=map[er];
 				}
 			} else if (rs!=null){
 				int max = map[er];
@@ -4156,11 +4158,13 @@ public final class Segment {
 				if (s.map!=null) {
 					int sr = (tp==0) ? MAX_RADIUS-1 : (int)Math.round(r+tp*which*tW);
 					if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-					if (s.map[sr]==0){
-						s.appearedRads[s.radCount++] = sr;
-						s.opp.radCount++;
+					if (sr>=0){
+						if (s.map[sr]==0){
+							s.appearedRads[s.radCount++] = sr;
+							s.opp.radCount++;
+						}
+						s.map[sr]+=map[er];
 					}
-					s.map[sr]+=map[er];
 				}
 			} else if (rs!=null){
 				int max = map[er];
@@ -4177,7 +4181,7 @@ public final class Segment {
 				}	
 
 				if (max>1){
-					tp = storage.getType(v, from,to-1);
+					if (to>from) tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0){						
 						if (!isFirst){
 							circle(fst, lst, center.x,center.y, r,center);
