@@ -8018,9 +8018,9 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy<=prev.end.y-0.5) continue;
+							if (ssy<=prev.end.y-0.5 || ssy>startY+0.2) continue;
 						} else if (prev.start.y>endY){
-							if (ssy>=prev.start.y+0.2 ) continue;
+							if (ssy>=prev.start.y+0.2 || ssy<endY-0.5) continue;
 						}
 //						if ((sy<prev.start.y && startY>prev.start.y) || (sy>endY && endY>prev.end.y) || (sy<startY && startY<prev.start.y) || (sy>prev.end.y && prev.end.y>endY)) continue;
 					}
