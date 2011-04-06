@@ -14948,7 +14948,7 @@ public final class Segment {
 			pr = (prev==null) ? null : prev.rightSeg;			
 //			if (pl!=null) pl.updated = false;
 //			if (pr!=null) pr.updated = false;
-			if (i>1 && prev.type!=UNKNOWN){
+			if (i>1 && prev!=null && prev.type!=UNKNOWN){
 				prevLStartIndx = pl.startIndex;
 				prevRStartIndx = pr.startIndex;
 			}
@@ -15070,7 +15070,7 @@ public final class Segment {
 				}
 			}
 			
-			if (i>0 && pl.type!=UNKNOWN){
+			if (i>0 && pl!=null && pl.type!=UNKNOWN){
 				if (i>1 && (pl.startIndex<prevLStartIndx || pr.startIndex<prevRStartIndx)){
 					Segment prPrevL = trArr[ trIndx[i-2] ].leftSeg;
 					Segment prPrevR = prPrevL.opp;
@@ -15109,7 +15109,7 @@ public final class Segment {
 //				nextREndIndx = nr.endIndex;
 //			}
 
-			if (i>0 && pl!=null && l!=null && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
+			if (i>0 && pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
 				pl.end.copy(l.end);
 				pl.endIndex = l.endIndex;
 				pr.end.copy(r.end);
@@ -15144,7 +15144,7 @@ public final class Segment {
 				prev.updated = true;
 				prev.radCount = pl.radCount;
 				continue;
-			} else if (i>0 && pl!=null && nl!=null && pl.type==nl.type && pl.type!=0 && pl.radius==nl.radius && Math.abs(pl.center.y-nl.center.y)<1 ){
+			} else if (i>0 && pl!=null && nl!=null && nl.type!=Segment.UNKNOWN && pl.type==nl.type && pl.type!=0 && pl.radius==nl.radius && Math.abs(pl.center.y-nl.center.y)<1 ){
 				pl.end.copy(nl.end);
 				pl.endIndex = nl.endIndex;
 				pr.end.copy(nr.end);
@@ -15226,6 +15226,7 @@ public final class Segment {
 					if (oldTrSz==trSz)
 						continue;
 					else i -= oldTrSz-trSz;
+					t = prev;
 				} 
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
@@ -15258,8 +15259,8 @@ public final class Segment {
 				} 
 			}			
 
-			Segment firstSeg = trArr[ trIndx[0] ];
-			if (prev!=null && t!= null && t.type!=Segment.UNKNOWN && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center!=null && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius))){
+			Segment firstSeg = (trSz<=0) ? null : trArr[ trIndx[0] ];
+			if (firstSeg!=null && t!= null && t.type!=Segment.UNKNOWN && (prev!=null && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center!=null && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius)))){
 				boolean good = true;
 				if (t.type!=0){
 					for (int j = 0;j<l.startIndex;++j){
