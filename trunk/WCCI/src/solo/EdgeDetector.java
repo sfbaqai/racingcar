@@ -1857,7 +1857,7 @@ public final class EdgeDetector {
 			return os;
 		}
 
-		Segment s;
+		Segment s = null;
 		Segment prev = null;
 		int prevIndex = -1;
 		Vector2D key = null;
@@ -2111,6 +2111,17 @@ public final class EdgeDetector {
 			if (oldEndIndx<os){										 							
 				size = os - oldEndIndx;
 				if (size>0) {
+					Vector2D point = elems[k];
+					p1 = (oldEndIndx>0) ? oldElems[oldEndIndx-1] : null;
+					if (p1!=null && !p1.certain && point.distance(p1)<MINDIST){
+						oldEndIndx--;
+						p1.copy(point);						
+						if (s!=null && s.endIndex>=oldEndIndx-size) {
+							s.endIndex = oldEndIndx-size-1;
+							s.num = s.endIndex-s.startIndex+1;
+						}
+						
+					}
 					for (int ii = size-1;ii>=0;--ii){
 						elems[k+ii].copy(oldElems[oldEndIndx+ii]);
 //						Vector2D src = oldElems[oldEndIndx+ii];
