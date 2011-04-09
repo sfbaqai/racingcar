@@ -235,7 +235,7 @@ public final class Storage {
 	public int getType(Vector2D[] v,int startIndx,int endIndx){
 		int j = (startIndx<<SIZE_N)+endIndx;
 		int indx = mapIndx[j];
-		int[] map = allMaps[indx];
+		int[] map = (indx<0) ? null : allMaps[indx];
 		if (map==null) return -2;		
 		
 		int[] aTypes = allTypes[indx];		
