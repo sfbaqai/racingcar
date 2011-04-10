@@ -14266,7 +14266,25 @@ public final class Segment {
 				return;
 			} else if (s.lower!=null || s.upper!=null){
 				firstIndex = s.startIndex;
-				lastIndex = s.endIndex;				
+				if (s.lower!=null && firstIndex>0){
+					if (s.points!=null){
+						while (firstIndex>0 && s.points[firstIndex-1].y>=s.lower.y) firstIndex--;
+					}
+				} else if (firstIndex>0){
+					if (prev!=null) 
+						firstIndex = prev.endIndex+1;
+					else firstIndex = 0;
+				}
+				lastIndex = s.endIndex;
+				if (s.upper!=null && lastIndex<to-1){
+					if (s.points!=null){
+						while (lastIndex<to-1 && s.points[lastIndex+1].y<=s.upper.y) lastIndex++;
+					}
+				} else if (lastIndex<to-1){
+					if (next!=null){
+						lastIndex = next.startIndex-1;
+					} else lastIndex = to-1;
+				}
 			}
 
 		}
