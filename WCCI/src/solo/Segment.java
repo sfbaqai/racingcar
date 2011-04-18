@@ -9124,19 +9124,27 @@ public final class Segment {
 						}
 
 						if (s.type!=Segment.UNKNOWN) {
-							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);								
-							if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
-								reCalibrate(prev, s, which, tw);							
+							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);		
+							if (s.type!=Segment.UNKNOWN && s.num>1 && os.num>1){
+								if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*(os.points[os.startIndex].x-os.points[os.endIndex].x)<0){
+									s.type = Segment.UNKNOWN;
+									os.type = Segment.UNKNOWN;
+								}
 							}
-							if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
-								reCalibrate(prev, s, which, tw);							
-							}
-							
-							if (next!=null && next.type!=Segment.UNKNOWN && (s.endIndex>next.startIndex || s.end.y>=next.start.y-SMALL_MARGIN)){
-								reCalibrate(s, next, which, tw);
-							} 
-							if (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){								
-								reCalibrate(s, next, which, tw);							
+							if (s.type!=Segment.UNKNOWN){
+								if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
+									reCalibrate(prev, s, which, tw);							
+								}
+								if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
+									reCalibrate(prev, s, which, tw);							
+								}
+								
+								if (next!=null && next.type!=Segment.UNKNOWN && (s.endIndex>next.startIndex || s.end.y>=next.start.y-SMALL_MARGIN)){
+									reCalibrate(s, next, which, tw);
+								} 
+								if (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){								
+									reCalibrate(s, next, which, tw);							
+								}
 							}
 						}	
 						
