@@ -9124,8 +9124,11 @@ public final class Segment {
 						}
 
 						if (s.type!=Segment.UNKNOWN) {
-							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);		
-							if (s.type!=Segment.UNKNOWN && s.num>1 && os.num>1){
+							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);
+							if (s!=null && op!=null && s.type!=Segment.UNKNOWN && os.num>0 && (op.endIndex>=os.startIndex || op.end.y>os.start.y-SMALL_MARGIN)){
+								s.type = Segment.UNKNOWN;
+								os.type = Segment.UNKNOWN;
+							} else if (s.type!=Segment.UNKNOWN && s.num>1 && os.num>1){
 								if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*(os.points[os.startIndex].x-os.points[os.endIndex].x)<0){
 									s.type = Segment.UNKNOWN;
 									os.type = Segment.UNKNOWN;
@@ -14892,7 +14895,8 @@ public final class Segment {
 					os.type = Segment.UNKNOWN;
 				}
 				if (s.type!=Segment.UNKNOWN) 
-					reSynchronize(s, os, 0, otherTo, -which, tw);				
+					reSynchronize(s, os, 0, otherTo, -which, tw);
+				else os.type = Segment.UNKNOWN;
 			} else {
 				int oldTp = prev.type;
 				if (prev.unsafe){
@@ -14921,7 +14925,8 @@ public final class Segment {
 					os.type = Segment.UNKNOWN;
 				}
 				if (os.type!=Segment.UNKNOWN) 
-					reSynchronize(os, s, 0, maxTo, which, tw);				
+					reSynchronize(os, s, 0, maxTo, which, tw);
+				else s.type = Segment.UNKNOWN;
 			} else {
 				int oldTp = prev.type;
 				if (op.unsafe){

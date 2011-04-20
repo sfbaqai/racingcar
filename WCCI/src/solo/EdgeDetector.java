@@ -2114,10 +2114,10 @@ public final class EdgeDetector {
 					Vector2D point = elems[k];
 					p1 = (oldEndIndx>0) ? oldElems[oldEndIndx-1] : null;
 					if (p1!=null && !p1.certain && point.distance(p1)<MINDIST){
-						oldEndIndx--;
+//						oldEndIndx--;
 						p1.copy(point);						
-						if (s!=null && s.endIndex>=oldEndIndx-size) {
-							s.endIndex = oldEndIndx-size-1;
+						if (s!=null) {
+							s.endIndex--;
 							s.num = s.endIndex-s.startIndex+1;
 						}
 						
