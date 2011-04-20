@@ -8555,6 +8555,35 @@ public final class Segment {
 		}
 		if (osz!=oldOsz) ols.size(osz);
 	}//*/
+	
+	public static final int getCircleType(Vector2D first,Vector2D mid,Vector2D last){		
+		boolean isCircle = Geom.getCircle(first, mid,last, tmp1);	
+		if (isCircle){			
+			double r = Math.sqrt(tmp1[2]);							
+			double cx = tmp1[0];
+			double cy = tmp1[1];									
+//			if (r==ignoreRad) continue;
+			
+//			if (inTurn){
+//				tp = allTurn[from][i][endIndx];
+//			} else 
+			if (r<MAX_RADIUS-1){						
+				double ax = first.x-cx;
+				double ay = first.y-cy;
+				double bx = last.x-cx;
+				double by = last.y-cy;
+				double angle = -Math.atan2(by, bx)+Math.atan2(ay, ax);			
+				if (angle<-Math.PI) 
+					angle += 2*Math.PI;
+				else if (angle>Math.PI) 
+					angle -= 2*Math.PI;
+							
+				return (angle<0) ? -1 : 1;
+											
+			} 
+		}
+		return 0;
+	}
 
 	public static final int bestGuess(final Vector2D[] v,int from,int to,double tW,Segment prev,Segment next,Segment[] oalArr,int indx){
 		long ti = System.nanoTime();
@@ -9130,6 +9159,9 @@ public final class Segment {
 								os.type = Segment.UNKNOWN;
 							} else if (s.type!=Segment.UNKNOWN && s.num>1 && os.num>1){
 								if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*(os.points[os.startIndex].x-os.points[os.endIndex].x)<0){
+									s.type = Segment.UNKNOWN;
+									os.type = Segment.UNKNOWN;
+								} else if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*s.type>0 && os.num>2 && s.type*getCircleType(os.points[os.startIndex], os.points[(os.startIndex+os.endIndex)/2], os.points[os.endIndex])<0){
 									s.type = Segment.UNKNOWN;
 									os.type = Segment.UNKNOWN;
 								}
