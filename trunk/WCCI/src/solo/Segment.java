@@ -176,7 +176,7 @@ public final class Segment {
 	public boolean updated = true;
 	private final static String TAB = "    ";
 	private final static char[] buf = new char[300];
-	private static final String[] headers = {"Segment (type = ",TAB+"num = ",TAB+"radius = ",TAB+"length = ",TAB+"start = ",TAB+"end = ",TAB+"center = ",TAB+"dist = "," )"};	
+	private static final String[] headers = {"Segment (type = ",TAB+"num = ",TAB+"radius = ",TAB+"length = ",TAB+"start = ",TAB+"end = ",TAB+"center = ",TAB+"lower = ",TAB+"upper =","  )"};	
 	private static final char[] tpo = headers[0].toCharArray();
 	private static final char[] nm = headers[1].toCharArray();
 	private static final char[] rad = headers[2].toCharArray();
@@ -184,8 +184,9 @@ public final class Segment {
 	private static final char[] strt = headers[4].toCharArray();
 	private static final char[] en = headers[5].toCharArray();	
 	private static final char[] cnt = headers[6].toCharArray();
-	private static final char[] dista = headers[7].toCharArray();			
-	private static final char[] fin = headers[8].toCharArray();
+	private static final char[] lwer = headers[7].toCharArray();
+	private static final char[] uper = headers[8].toCharArray();
+	private static final char[] fin = headers[9].toCharArray();
 	public Segment opp = null;
 	public Segment leftSeg = null;
 	public Segment rightSeg = null;
@@ -2108,7 +2109,10 @@ public final class Segment {
 						s.opp.endIndex = t.opp.endIndex;
 						s.opp.num += t.opp.num;
 					}
-					s.num += t.num;				
+					s.num += t.num;			
+					if (CircleDriver2.time>=76 && s.num>1){
+						circle(s.points[s.startIndex], s.points[s.endIndex], s.center.x,s.center.y, s.radius,s.center);
+					}
 				}
 				
 				if (s.map!=null && t.map!=null){
@@ -4647,7 +4651,7 @@ public final class Segment {
 				}
 			} else {
 				prev.upper = null;
-				s.lower = null;
+				s.lower = null;				
 			}
 			long endTime = (System.nanoTime()-ti)/1000000;
 			if (CircleDriver2.debug || endTime>=1) System.out.println("End connect : "+endTime+"   at "+CircleDriver2.time+" s.");
@@ -14565,14 +14569,32 @@ public final class Segment {
 				Vector2D first = v[i];
 				double startX = first.x;
 				double startY = first.y;
-				if (prev!=null && startY-prev.end.y<=SMALL_MARGIN) continue;
+				if (prev!=null && startY-prev.end.y<=SMALL_MARGIN) continue;				
+				boolean isPrevFTCn = false;
+				boolean ok = true;
 				if (isConfirm){
 					double dx = s.center.x - first.x;
 					double dy = s.center.y - first.y;
 					double d = Math.sqrt(dx*dx+dy*dy);
 					d-=s.radius;
-					if (d<0) d=-d;
-					if (d>EPS || (s.center.y==0 && d>E) ) continue;
+					if (d<0) d=-d;					
+					if (prev!=null && (isConfirmed(prev, which, tw) || prev.upper!=null)){
+						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);
+						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+							ok = false;							
+							tmpSeg.type = Segment.UNKNOWN;
+						} 
+						if (to-1>endIndex && ok){
+							radiusFrom2Points(prev, first, v[to-1], applyTW, tmpSeg);
+							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+								ok = false;
+								isPrevFTCn = true;
+								tmpSeg.type = Segment.UNKNOWN;
+							}
+						}
+					}
+					if (CircleDriver2.time<=77) ok = true; 
+					if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 				}
 				int r_index = i<<SIZE_N;
 				for (int j = to;j>endIndex;--j){
@@ -14585,7 +14607,15 @@ public final class Segment {
 						double d = Math.sqrt(dx*dx+dy*dy);
 						d-=s.radius;
 						if (d<0) d=-d;
-						if (d>EPS || (s.center.y==0 && d>E) ) continue;
+						if (!ok && !isPrevFTCn){
+							radiusFrom2Points(prev, first, last, applyTW, tmpSeg);
+							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+								ok = false;								
+								tmpSeg.type = Segment.UNKNOWN;
+							} else ok = true;
+						}
+						if (CircleDriver2.time<=77) ok = true; 
+						if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 					}
 					
 					int m_indx = r_index + j-1;
@@ -15124,7 +15154,20 @@ public final class Segment {
 					l = t.leftSeg;
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;					
+					nr = (next==null) ? null : next.rightSeg;
+					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
 					while (pl!=null && pl.type==UNKNOWN){
 						if (i>0){
 							occupied[ trIndx[i-1] ] = 0;					
@@ -15145,7 +15188,20 @@ public final class Segment {
 					l = t.leftSeg;
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;				
+					nr = (next==null) ? null : next.rightSeg;
+					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
 					while (pr!=null && pr.type==UNKNOWN){
 						if (i>0){
 							occupied[ trIndx[i-1] ] = 0;					
@@ -15170,9 +15226,22 @@ public final class Segment {
 					t = trArr[ trIndx[i] ];			
 					next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
 					l = t.leftSeg;
-					r = t.rightSeg;	
+					r = t.rightSeg;						
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;					
+					nr = (next==null) ? null : next.rightSeg;
+					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
 					while (pr!=null && pr.type==UNKNOWN){
 						if (i>0){
 							occupied[ trIndx[i-1] ] = 0;					
@@ -15196,9 +15265,22 @@ public final class Segment {
 					t = trArr[ trIndx[i] ];
 					next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
 					l = t.leftSeg;
-					r = t.rightSeg;
+					r = t.rightSeg;					
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;				
+					nr = (next==null) ? null : next.rightSeg;
+					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
 					while (pl!=null && pl.type==UNKNOWN){
 						if (i>0){
 							occupied[ trIndx[i-1] ] = 0;					
@@ -15414,11 +15496,25 @@ public final class Segment {
 				l = t.leftSeg;
 				r = t.rightSeg;
 				nl = (next==null) ? null : next.leftSeg;
-				nr = (next==null) ? null : next.rightSeg;
+				nr = (next==null) ? null : next.rightSeg;				
 			}
 			if (numL>=numR) 
 				reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
 			else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
+			
+			if (CircleDriver2.time>=77 && l!=null && l.type!=Segment.UNKNOWN){
+				if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+					pl.upper = new Vector2D(l.lower);
+					if (r.lower==null)
+						reSynchronize(l, r, 0, rN, 1, tw);
+					pr.upper = new Vector2D(r.lower);																
+				} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+					nl.lower = new Vector2D(l.upper);
+					if (r.upper==null)
+						reSynchronize(l, r, 0, rN, 1, tw);
+					nr.lower = new Vector2D(r.upper);
+				}
+			}
 			
 			if (!CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
@@ -16452,9 +16548,35 @@ public final class Segment {
 		len+=lngth.length;
 		len = double2string(this.length,buf,len);
 
-		System.arraycopy(dista, 0, buf, len, dista.length);
-		len+=dista.length;		
-		len = double2string(this.dist,buf,len);
+		System.arraycopy(lwer, 0, buf, len, lwer.length);
+		len+=lwer.length;
+		if (lower!=null){
+			buf[len++]='(';
+			len = double2string(this.lower.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.lower.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
+		
+		System.arraycopy(uper, 0, buf, len, uper.length);
+		len+=uper.length;
+		if (upper!=null){
+			buf[len++]='(';
+			len = double2string(this.upper.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.upper.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
 
 		System.arraycopy(fin, 0, buf, len, fin.length);
 		len+=fin.length;				
@@ -16522,9 +16644,35 @@ public final class Segment {
 		len+=lngth.length;
 		len = double2string(this.length,buf,len);
 
-		System.arraycopy(dista, 0, buf, len, dista.length);
-		len+=dista.length;		
-		len = double2string(this.dist,buf,len);
+		System.arraycopy(lwer, 0, buf, len, lwer.length);
+		len+=lwer.length;
+		if (lower!=null){
+			buf[len++]='(';
+			len = double2string(this.lower.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.lower.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
+		
+		System.arraycopy(uper, 0, buf, len, uper.length);
+		len+=uper.length;
+		if (upper!=null){
+			buf[len++]='(';
+			len = double2string(this.upper.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.upper.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
 
 		System.arraycopy(fin, 0, buf, len, fin.length);
 		len+=fin.length;				
