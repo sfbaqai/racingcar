@@ -3748,7 +3748,7 @@ public final class CircleDriver2{
 			} else if (!certain && relativeTargetAngle>0) 
 				steer = -turn;			
 			
-			if (!maxTurn )
+			if (!maxTurn && relativeAngle<0)
 				acc = (relativePosMovement>0 || absSpeedY<absLastSpeedY) ? CONSTANT_SPEED_ACC*0.25 : CONSTANT_SPEED_ACC*0.25;
 			else
 			if (dist-W>speedRadius) {
@@ -3756,7 +3756,7 @@ public final class CircleDriver2{
 					acc = dist-W*1.5>speedRadius ? 1 : (absSpeedY>HIGH_SPEEDY && absLastSpeedY>absSpeedY) ? 0
 							: (absSpeedY>10 && toOutterEdge<W) ? 0 
 							: (absSpeedY>=MODERATE_SPEEDY && absLastSpeedY>absSpeedY) 
-								? CONSTANT_SPEED_ACC  : 1;		
+								? INCREASE_ONE  : 1;		
 				} else if (relativeAngleMovement>-0.001 || relativePosMovement>-0.001 || dist-W>speedRadius){
 					acc = INCREASE_ONE;
 					if (relativePosMovement<-0.001 && a>TURNANGLE*0.37 && relativeTargetAngle>=0 && !canGoAtCurrentSpeed && !canGoToLastSeg && steer*turn<0)
