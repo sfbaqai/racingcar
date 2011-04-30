@@ -2110,7 +2110,7 @@ public final class Segment {
 						s.opp.num += t.opp.num;
 					}
 					s.num += t.num;			
-					if (CircleDriver2.time>=76 && s.num>1){
+					if (s.num>1){
 						circle(s.points[s.startIndex], s.points[s.endIndex], s.center.x,s.center.y, s.radius,s.center);
 					}
 				}
@@ -14592,8 +14592,7 @@ public final class Segment {
 								tmpSeg.type = Segment.UNKNOWN;
 							}
 						}
-					}
-					if (CircleDriver2.time<=77) ok = true; 
+					}					
 					if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 				}
 				int r_index = i<<SIZE_N;
@@ -14613,8 +14612,7 @@ public final class Segment {
 								ok = false;								
 								tmpSeg.type = Segment.UNKNOWN;
 							} else ok = true;
-						}
-						if (CircleDriver2.time<=77) ok = true; 
+						}						
 						if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 					}
 					
@@ -15155,7 +15153,7 @@ public final class Segment {
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+					if (l.type!=Segment.UNKNOWN){
 						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
 							pl.upper = new Vector2D(l.lower);
 							if (r.lower==null)
@@ -15189,7 +15187,7 @@ public final class Segment {
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+					if (l.type!=Segment.UNKNOWN){
 						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
 							pl.upper = new Vector2D(l.lower);
 							if (r.lower==null)
@@ -15229,7 +15227,7 @@ public final class Segment {
 					r = t.rightSeg;						
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+					if (l.type!=Segment.UNKNOWN){
 						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
 							pl.upper = new Vector2D(l.lower);
 							if (r.lower==null)
@@ -15268,7 +15266,7 @@ public final class Segment {
 					r = t.rightSeg;					
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					if (CircleDriver2.time>=77 && l.type!=Segment.UNKNOWN){
+					if (l.type!=Segment.UNKNOWN){
 						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
 							pl.upper = new Vector2D(l.lower);
 							if (r.lower==null)
@@ -15502,7 +15500,7 @@ public final class Segment {
 				reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
 			else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
 			
-			if (CircleDriver2.time>=77 && l!=null && l.type!=Segment.UNKNOWN){
+			if (l!=null && l.type!=Segment.UNKNOWN){
 				if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
 					pl.upper = new Vector2D(l.lower);
 					if (r.lower==null)
