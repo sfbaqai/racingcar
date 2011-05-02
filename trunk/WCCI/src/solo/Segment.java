@@ -14579,19 +14579,26 @@ public final class Segment {
 					d-=s.radius;
 					if (d<0) d=-d;					
 					if (prev!=null && (isConfirmed(prev, which, tw) || prev.upper!=null)){
-						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);
+						tmpSeg1.type = Segment.UNKNOWN;
+						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
 						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
 							ok = false;							
 							tmpSeg.type = Segment.UNKNOWN;
 						} 
 						if (to-1>endIndex && ok){
-							radiusFrom2Points(prev, first, v[to-1], applyTW, tmpSeg);
-							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+							radiusFrom2Points(prev, first, v[to-1], applyTW, tmpSeg1);
+							if (tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==s.radius)){
 								ok = false;
-								isPrevFTCn = true;
-								tmpSeg.type = Segment.UNKNOWN;
-							}
+								isPrevFTCn = true;								
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius) && Math.abs(s.radius-tmpSeg1.radius)<=3){
+								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);
+								if (s.radius==tmpSeg.radius){
+									ok = false;
+									isPrevFTCn = true;
+								}
+							}							
 						}
+						tmpSeg.type = Segment.UNKNOWN;
 					}					
 					if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 				}
@@ -14611,6 +14618,12 @@ public final class Segment {
 							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
 								ok = false;								
 								tmpSeg.type = Segment.UNKNOWN;
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius) && Math.abs(s.radius-tmpSeg1.radius)<=3){
+								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);
+								if (s.radius==tmpSeg.radius){
+									ok = false;
+									isPrevFTCn = true;
+								}
 							} else ok = true;
 						}						
 						if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
