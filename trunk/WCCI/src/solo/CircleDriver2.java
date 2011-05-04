@@ -24,7 +24,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 1700.13; 
+	public static final double BREAK_TIME = 4600.76; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+					// [m/s] range [0..10]
@@ -3368,6 +3368,17 @@ public final class CircleDriver2{
 			//			brake = Math.min(brake, 1)*meanSpd;			
 			//			acc = -Math.min(brake, 1);			
 		}			
+		double a = turn*Vector2D.angle(carDirection.x,carDirection.y,mLastX, mLastY);
+		double b = 0,c=0;
+		Segment lastS = (last==null) ? null : (last.type==1) ? last.rightSeg : last.leftSeg;
+		if (trSz>0 && lastS!=null && lastS.type!=0 && lastS.center.length()>lastS.radius){
+			Geom.ptTangentLine(0, 0, lastS.center.x, lastS.center.y, lastS.radius, tmp);
+			double dx = (lastS.type==TURNRIGHT) ? tmp[0] : tmp[2];
+			double dy = (lastS.type==TURNRIGHT) ? tmp[1] : tmp[3];
+			a = turn*Vector2D.angle(carDirection.x, carDirection.y, dx,dy);
+			b = turn*Vector2D.angle(0, 1, dx,dy);
+			c = Math.max(a,b);
+		}
 		double bal = Math.atan2(speedY,speedX);
 		if ((startFlying>0 || flyingHazard || slip>20 ) && speedX<lowestSpeed && (relativeAngle>0 || maxTurn && distToEstCircle>0) && relativeTargetAngle>0) 
 			steer = (relativeAngle>0) ? (relativeAngle>0.1 && absSpeedY>=MODERATE_SPEEDY && relativeAngleMovement>0.001) ? bal : (relativePosMovement<-0.001) ? steer : 0 : steer*0.5;
@@ -3376,7 +3387,7 @@ public final class CircleDriver2{
 			if ((flyingHazard && !landed || startFlying>0 && relativeAngle>0 && relativeAngleMovement>0.001 && steer*turn<0 && speedX<lowestSpeed) && absSpeedY<MODERATE_SPEEDY && relativeTargetAngle>0)
 				steer = (relativePosMovement<-0.001 && relativeAngleMovement<-0.001 && relativeAngle>0) ? steer*0.5 : 0;
 			else if (speedX>lowestSpeed && toOutterEdge>SAFE_EDGE_MARGIN && absSpeedY>10 && relativePosMovement<-0.001 && !flyingHazard)
-				steer = -turn;
+				steer = (relativeAngleMovement>0.01) ? 0 : -turn;
 			else if (relativePosMovement<-0.01 && !flyingHazard)
 				steer = (relativeAngle<0) 
 							? relativeAngleMovement<-0.001 ? -turn : relativeAngleMovement>0.01 ? 0 : steer
@@ -3473,30 +3484,21 @@ public final class CircleDriver2{
 			if (speedX>targetSpeed+FAST_MARGIN && absSpeedY<50){
 				acc = 0;
 				brake = 1;
-				steer = -turn;
+				steer = (relativeAngleMovement>0.01) ? turn : (relativeAngleMovement>0) ? bal : 0;
 			} else if (speedX>targetSpeed+20 && absSpeedY<50){
 				acc = 0;		
-				steer = -turn;
+				steer = (relativeAngleMovement>0.01) ? turn : (relativeAngleMovement>0) ? bal : 0;
 			}
 			else {
 				acc = 1;
 				brake = 0;
+				steer = (relativeAngleMovement>0.01) ? turn : (relativeAngleMovement>0) ? bal : 0;
 			}
 //			steer =0;
 			return steer;
 		}
 		
-		double a = turn*Vector2D.angle(carDirection.x,carDirection.y,mLastX, mLastY);
-		double b = 0,c=0;
-		Segment lastS = (last==null) ? null : (last.type==1) ? last.rightSeg : last.leftSeg;
-		if (trSz>0 && lastS!=null && lastS.type!=0 && lastS.center.length()>lastS.radius){
-			Geom.ptTangentLine(0, 0, lastS.center.x, lastS.center.y, lastS.radius, tmp);
-			double dx = (lastS.type==TURNRIGHT) ? tmp[0] : tmp[2];
-			double dy = (lastS.type==TURNRIGHT) ? tmp[1] : tmp[3];
-			a = turn*Vector2D.angle(carDirection.x, carDirection.y, dx,dy);
-			b = turn*Vector2D.angle(0, 1, dx,dy);
-			c = Math.max(a,b);
-		}
+		
 
 		if (hazard>0) hazard--;
 		if (debug) System.out.println("Max speed  "+targetSpeed+"   Current Speed "+speed);
@@ -4655,9 +4657,10 @@ public final class CircleDriver2{
 			double dd = Geom.ptTangentDist(0, 0, t.center.x, t.center.y, t.radius);
 			drift = dd<15;
 		}
+				
 		
 			if (m<15 && relativePosMovement>=-0.001 && speedX>=lastSpeed+FAST_MARGIN || drift)
-				steer = relativeTargetAngle<-0.001 && relativePosMovement>0.005 || distToEstCircle>0 && relativePosMovement>0.01 ? (relativeAngleMovement>0) ? bal*2 : bal  
+				steer = relativeTargetAngle<-0.001 && relativePosMovement>0.005 || distToEstCircle>0 && relativePosMovement>0.01 ? (relativeAngleMovement>0) ? bal*2 : (relativeAngleMovement<-0.01) ? -turn : bal  
 						: distToEstCircle<0 || relativePosMovement<0.01 && (relativeAngleMovement<0.001 || absSpeedY>MODERATE_SPEEDY) ? -turn : (relativeAngleMovement<-0.01 && steer*turn>0) ? 0 : steer;
 			else if (relativePosMovement>0 && relativeTargetAngle>0 && relativeAngle>0 && relativeAngleMovement>0 && distToEstCircle>-GAP && lastDistToEstCircle<distToEstCircle) {
 				steer = !possibleChangeDirection && canGoToLastSeg && absSpeedY<10 && m>10 ? 0 : steer;
@@ -4674,6 +4677,14 @@ public final class CircleDriver2{
 				steer = -turn;
 			else if (m<5 && steer*turn>0 && relativeAngleMovement<-0.001 && relativeTargetAngle<0)
 				steer = 0;
+			
+			if (relativePosMovement>-0.001 && relativeAngleMovement>0.01 && steer*turn<0 && (distToEstCircle>0 || drift))
+				steer = 0;
+			
+//			if (isSafeToAccel && distToEstCircle<0 && speedX>targetSpeed+25 && m>20 && steer*turn<0 && relativeSpeedY<LOW_SPEEDY){
+//				steer = -turn;
+//				brake = 0;
+//			}
 			
 			if ((inTurn || absSpeedY<absLastSpeedY-1.5) && steer*turn<=0 && relativeAngleMovement<0 && speedY*lastSpeedY>0){
 				if ((relativeSpeedY>0 && (absSpeedY<absLastSpeedY-1.5 || absSpeedY<absLastSpeedY-1.2 && relativePosMovement<0) || relativeSpeedY<0 && absSpeedY>absLastSpeedY+1.5) && relativeTargetAngle>=0) {
@@ -11001,7 +11012,7 @@ public final class CircleDriver2{
 			double fast_speed = faster(targetSpeed,m);
 //			double faster = (targetSpeed<90) ? targetSpeed+15+tW+m : targetSpeed+FAST_MARGIN+tW+m;
 			double faster = targetSpeed+FAST_MARGIN+tW+m;
-			double fastI = (targetSpeed<100) ? targetSpeed+m+25 : (relativePosMovement<-0.001 || absSpeedY>MODERATE_SPEEDY && distToEstCircle<0) ? Math.min(faster, fast_speed) : faster;
+			double fastI = (targetSpeed<100) ? targetSpeed+m+25 : (relativePosMovement<-0.001 || absSpeedY>MODERATE_SPEEDY && distToEstCircle<0 || distToEstCircle<-W) ? Math.min(faster, fast_speed) : faster;
 			//		double ofsDist = Math.abs(relativeTargetAngle-relativeAngle)>0.1 && relativeAngle>=0 && curPos*turn>0.3 ? FAST_MARGIN : tW*3;
 			double ofsDist = FAST_MARGIN;			
 			if (d>FAST_MARGIN || !canGoToLastSeg) d*=0.5;
