@@ -15384,7 +15384,7 @@ public final class Segment {
 				} else prev.type = UNKNOWN;
 			}
 			if (prev!=null && pl!=null) prev.radCount = pl.radCount;
-			if (!CircleDriver2.inTurn && trSz>2 && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+			if (!CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
