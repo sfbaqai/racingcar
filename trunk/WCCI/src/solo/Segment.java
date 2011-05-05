@@ -15356,11 +15356,11 @@ public final class Segment {
 //			}
 
 			if (i>0 && pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || pl.center.distance(l.center)<2.5) )){
-				joinSegment(prev, t, tW);
-				int idx = i+1;
+				joinSegment(prev, t, tW);				
 				occupied [ trIndx[i] ] = 0;
-				if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
-				trSz+=i--;												
+				if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz);
+				trSz--;
+				i--;				
 				continue;
 			} else if (i>0 && pl!=null && nl!=null && nl.type!=Segment.UNKNOWN && pl.type==nl.type && pl.type!=0 && pl.radius==nl.radius && pl.center.distance(nl.center)<2.5 ){
 				joinSegment(prev, next, tW);
@@ -15368,7 +15368,7 @@ public final class Segment {
 				occupied[ trIndx[i+1] ] = 0;
 				occupied[ trIndx[i] ] = 0;
 				if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
-				trSz+=i--;								
+				trSz+=i--;				
 				continue;
 			} 
 			if (i>0 && l!=null && nl!=null && l.type!=Segment.UNKNOWN && l.type==nl.type && l.type!=0 && isSameSegment(l, nl)){
@@ -15376,7 +15376,8 @@ public final class Segment {
 				occupied[ trIndx[i+1] ] = 0;
 				if (trSz>i+2) System.arraycopy(trIndx, i+2, trIndx, i+1, trSz-i-2);
 				trSz--;	
-				prev = t;
+//				prev = trArr[trIndx[i]];
+				prev = trArr[trIndx[i]];
 				continue;
 			}
 
@@ -15418,9 +15419,10 @@ public final class Segment {
 					trSz+=i;					
 					if (oldTrSz==trSz){
 						i--;	//*/
+						prev = trArr[trIndx[i]];
 						continue;
-					} else i -= oldTrSz-trSz;
-					t = prev;
+					} else i -= oldTrSz-trSz;					
+					t = (i>=0) ? trArr[trIndx[i]] : null;
 				} 
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
@@ -15448,8 +15450,10 @@ public final class Segment {
 					trSz+=i;
 					if (oldTrSz==trSz){
 						i--;	//*/
+						prev = trArr[trIndx[i]];
 						continue;
 					} else i -= oldTrSz-trSz;
+					t = (i>=0) ? trArr[trIndx[i]] : null;
 				} 
 			}			
 
