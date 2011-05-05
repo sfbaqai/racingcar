@@ -15375,7 +15375,8 @@ public final class Segment {
 				joinSegment(t, next, tW);
 				occupied[ trIndx[i+1] ] = 0;
 				if (trSz>i+2) System.arraycopy(trIndx, i+2, trIndx, i+1, trSz-i-2);
-				trSz--;								
+				trSz--;	
+				prev = t;
 				continue;
 			}
 
