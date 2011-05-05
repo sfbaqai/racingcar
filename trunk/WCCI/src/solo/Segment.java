@@ -9240,9 +9240,13 @@ public final class Segment {
 						circle(start, end, cx,cy, r,center);
 					} else s.center = center;
 									
-					if (check(v, from, from+i+1, center, r)>=0) {																						
-						s.start.copy(start);										
-						s.end.copy(end);										
+					if (check(v, from, from+i+1, center, r)>=0 && s!=null) {																						
+						if (s.start!=null) 
+							s.start.copy(start);
+						else s.start = new Vector2D(start);
+						if (s.end!=null) 
+							s.end.copy(end);
+						else s.end = new Vector2D(end);
 						s.type = tp;
 						s.radius = r;
 						s.startIndex = from;
