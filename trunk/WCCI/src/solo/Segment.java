@@ -15067,6 +15067,19 @@ public final class Segment {
 		return reUpdate(trArr, sz, tW,0);
 	}
 	
+	private static boolean reject3(Segment pr,Segment r,Segment nr,Segment pl,Segment l,Segment nl,int edge,double tW){		
+		if (CircleDriver2.inTurn && r!=null && pr!=null && r.type!=0 &&  !isConfirmed(r, edge, tW) && r.num<=2 && l.num<=2 
+				 && pr.type!=r.type && (r.startIndex>pr.endIndex+1 || l.startIndex>pl.endIndex+1)){
+			Vector2D v = (l.points==null) ? null : r.startIndex>pr.endIndex+1 ? r.points[r.startIndex-1] : l.points[l.startIndex-1];
+			Vector2D pv = (v==null) ? null : r.startIndex>pr.endIndex+1 ? pr.end : pl.end;
+			if (v!=null){
+				return (v.x-pv.x)*l.type<0;
+			}
+		}
+		return false;	
+			
+	}
+	
 	private static boolean reject2(Segment pr,Segment r,Segment nr,int edge,int rN,Vector2D[] rV,double tW){		
 		if (r.type==0){
 			if (pr!=null && pr.type==0 || nr!=null && nr.type==0) return false;
@@ -15077,7 +15090,7 @@ public final class Segment {
 		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (!isConfirmed(r, edge, tW) || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex))
 			return true;
 		if (r.num>=3 && !isConfirmed(r, edge, tW) && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
-		if (r.num>=3 && !isConfirmed(r, edge, tW) && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=1)) return true;
+		if (r.num>=3 && !isConfirmed(r, edge, tW) && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)) return true;
 		return false;
 	}
 
@@ -15376,7 +15389,7 @@ public final class Segment {
 				occupied[ trIndx[i+1] ] = 0;
 				if (trSz>i+2) System.arraycopy(trIndx, i+2, trIndx, i+1, trSz-i-2);
 				trSz--;	
-				prev = t;	
+				prev = t;
 				continue;
 			}
 
@@ -15389,7 +15402,7 @@ public final class Segment {
 				} else prev.type = UNKNOWN;
 			}
 			if (prev!=null && pl!=null) prev.radCount = pl.radCount;
-			if (!CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
@@ -15420,7 +15433,7 @@ public final class Segment {
 						i--;	//*/
 						continue;
 					} else i -= oldTrSz-trSz;
-					t = (i>=0) ? trArr[ trIndx[i] ] : null;
+					t = prev;
 				} 
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
@@ -15450,7 +15463,6 @@ public final class Segment {
 						i--;	//*/
 						continue;
 					} else i -= oldTrSz-trSz;
-					t = (i>=0) ? trArr[ trIndx[i] ] : null;
 				} 
 			}			
 
@@ -15533,7 +15545,7 @@ public final class Segment {
 				}
 			}
 			
-			if (!CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
