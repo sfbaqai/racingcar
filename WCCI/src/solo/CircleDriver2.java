@@ -4698,7 +4698,7 @@ public final class CircleDriver2{
 			if ((isSafeToAccel || m>20) && (brake==1 || speedX>targetSpeed+20) && steer*turn<=0 && distToEstCircle<lastDistToEstCircle && relativeAngleMovement<0.01 && (relativeAngleMovement<0.001 || relativeAngleMovement<lastRelativeAngleMovement)){
 				steer=-turn;
 				if (relativeAngleMovement<0.001)
-					brake = (relativeAngleMovement>-0.01) ? 0 : (speed*speed-targetSpeed*targetSpeed)/(speed*speed);;
+					brake = (relativeAngleMovement>-0.01 && (speedX<targetSpeed+25 && absSpeedY<HIGH_SPEEDY)) ? 0 : (speed*speed-targetSpeed*targetSpeed)/(speed*speed);;
 			} else if (relativePosMovement>-0.001 && relativeAngleMovement>0.01 && steer*turn<0 && (distToEstCircle>0 || drift))
 				steer = 0;
 			else if (isSafeToAccel && distToEstCircle>0 && distToEstCircle<W*1.5 && b>TURNANGLE*0.75 && (speedX>targetSpeed+25 && m>30 || speedX>targetSpeed+5 && m>40 || speedX>targetSpeed && m>45 || brake==1 && m>15) && (relativeAngleMovement<0.01 || distToEstCircle<lastDistToEstCircle)){
