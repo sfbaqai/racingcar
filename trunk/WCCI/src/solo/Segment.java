@@ -1682,6 +1682,63 @@ public final class Segment {
 		}
 		return s;
 	}
+	
+	public static final void mapPoint(Vector2D p,Segment seg ,int which,double tW,Vector2D q){
+		double t = (seg.type==0) ? 2*tW*which : -2*tW*which*seg.type;
+		if (seg.type==0 && Math.abs(seg.start.x-seg.end.x)<=TrackSegment.EPSILON){
+			q.x = p.x+t;
+			q.y = p.y;
+		} else if (seg.type==0){
+			double sx = seg.start.x;
+			double sy = seg.start.y;
+			double ex = seg.end.x;
+			double ey = seg.end.y;
+			double nx = sy-ey;
+			double ny = ex-sx;
+			double d = -t/Math.sqrt(nx*nx+ny*ny);
+			nx*=d;
+			ny*=d;
+			q.x = p.x+nx;
+			q.y = p.y+ny;
+		} else {
+			double rad = seg.radius + t;
+			Vector2D center = seg.center;
+			double ox = center.x;
+			double oy = center.y;
+			double d = rad/seg.radius;
+			Vector2D first = seg.start;
+			Vector2D last = seg.end;
+			if (oy!=0){
+				double cx = center.x;
+				double cy = center.y;
+				ox = (first.x+last.x)*0.5;
+				oy = (first.y+last.y)*0.5;
+				double dx = ox - first.x;
+				double dy = oy - first.y;
+				double dd = dx*dx+dy*dy;
+
+				double nx = -dy;
+				double ny = dx;		
+				double dn = nx*nx+ny*ny;
+
+				cx -= ox;
+				cy -= oy;
+				if (nx*cx+ny*cy<0) {
+					nx = -nx;
+					ny = -ny;
+				}
+				double r = seg.radius;				
+				double dt = Math.sqrt((r*r-dd)/dn);
+				ox += nx * dt;
+				oy += ny * dt;					
+
+			}
+			double nsx = p.x - ox;
+			double nsy = p.y - oy;				
+			q.x = ox+nsx*d;
+			q.y = oy+nsy*d;
+		}
+	}
 
 	public static final void toSideSegment(Segment seg,Segment s,int which,double tW){
 		if (seg!=null && seg.type==Segment.UNKNOWN) return;
@@ -4557,7 +4614,7 @@ public final class Segment {
 			} 
 			return false;
 		} else {
-			if (pOk && !isConfirmed(s, which, tw) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw)){
+			if (pOk && !isConfirmed(s, which, tW) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw)){
 				prev.copy(tmpPrev);
 				prev.opp = op;
 				prev.updated = true;
@@ -4573,7 +4630,7 @@ public final class Segment {
 				}
 				s.type = Segment.UNKNOWN;		
 				os.type = Segment.UNKNOWN;
-			} else if (sOk && !isConfirmed(prev, which, tw) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw)){
+			} else if (sOk && !isConfirmed(prev, which, tW) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw)){
 				s.copy(tmpSeg);
 				s.opp = os;
 				int sr = (s.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*which*tw);
@@ -8761,6 +8818,7 @@ public final class Segment {
 				if ((os.type!=0 && (os.radius<=REJECT_VALUE || os.end.y-os.start.y>=x+os.radius || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
 					return indx;
 				}
+								
 				if (s.type==0){ 
 					if (s.end.y-s.start.y<3 || os.end.y-os.start.y<3) return indx;
 					double total = 0;
@@ -8773,6 +8831,7 @@ public final class Segment {
 				}
 				s.done = true;
 				os.unsafe = false;
+				
 				return 1+indx;
 			} 
 			return indx;
@@ -14563,7 +14622,8 @@ public final class Segment {
 			Segment rs = new Segment();
 			int endIndex = s.endIndex;
 			if (endIndex<=s.startIndex) endIndex = s.startIndex;
-			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tw);
+			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tW);
+			boolean isPrevConfirm = prev!=null && isConfirmed(prev, which, tW);
 			bkupS.copy(s);
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
@@ -14582,7 +14642,7 @@ public final class Segment {
 					double d = Math.sqrt(dx*dx+dy*dy);
 					d-=s.radius;
 					if (d<0) d=-d;					
-					if (prev!=null && (isConfirmed(prev, which, tw) || prev.upper!=null)){
+					if (prev!=null && (isPrevConfirm || prev.upper!=null)){
 						tmpSeg1.type = Segment.UNKNOWN;
 						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
 						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
@@ -14837,7 +14897,7 @@ public final class Segment {
 						}
 						
 						if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-							if (isConfirmed(prev, which, tw)){								
+							if (isConfirmed(prev, which, tW)){								
 								Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -14866,7 +14926,7 @@ public final class Segment {
 						}
 						
 						if (on!=null && s.type!=Segment.UNKNOWN && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){
-							if (isConfirmed(next, which, tw)){
+							if (isConfirmed(next, which, tW)){
 								Segment.removeLastPoint(os, s,on.start.y-SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -14964,7 +15024,7 @@ public final class Segment {
 		int otherTo = (which==1) ? edge.lSize : edge.rSize;
 		
 		if (prev!=null && prev.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){				
+			if (isConfirmed(prev, which, tw*0.5)){				
 				if (s.unsafe) 
 					Segment.removeFirstPoint(s, os, prev.end.y+SMALL_MARGIN);
 				else {
@@ -14994,7 +15054,7 @@ public final class Segment {
 		}
 		
 		if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){
+			if (isConfirmed(prev, which, tw*0.5)){
 				if (os.unsafe)
 					Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 				else {
@@ -15071,9 +15131,76 @@ public final class Segment {
 		if (CircleDriver2.inTurn && r!=null && pr!=null && r.type!=0 &&  !isConfirmed(r, edge, tW) && r.num<=2 && l.num<=2 
 				 && pr.type!=r.type && (r.startIndex>pr.endIndex+1 || l.startIndex>pl.endIndex+1)){
 			Vector2D v = (l.points==null) ? null : r.startIndex>pr.endIndex+1 ? r.points[r.startIndex-1] : l.points[l.startIndex-1];
-			Vector2D pv = (v==null) ? null : r.startIndex>pr.endIndex+1 ? pr.end : pl.end;
+//			Vector2D pv = (v==null) ? null : r.startIndex>pr.endIndex+1 ? pr.end : pl.end;
+			
 			if (v!=null){
-				return (v.x-pv.x)*l.type<0;
+				if (true){
+					Vector2D point = new Vector2D();
+					Vector2D[] vs = null,others = null;
+					int num = 0;
+					int otherNum = 0;
+					Segment s = null;
+					Segment prev = null;
+					boolean ok = false;
+					if (isConnected(pr, r, tW, pt)){
+						ok = true;
+						mapPoint(pt, r, -1, tW, point);
+						num = CircleDriver2.edgeDetector.rSize;
+						otherNum = CircleDriver2.edgeDetector.lSize;
+						vs = r.points;
+						others = l.points;
+						s = r;
+						prev = pr;
+					} else if (isConnected(pl, l, tW, pt)){
+						ok  =true;
+						mapPoint(pt, l, 1, tW, point);
+						num = CircleDriver2.edgeDetector.lSize;
+						otherNum = CircleDriver2.edgeDetector.rSize;
+						vs = l.points;
+						others = r.points;
+						s = l;
+						prev = pl;
+					}
+					if (ok){
+						int i = 0;
+						if (num>0){
+							i = binarySearchFromTo(vs, pt.y, 0, num-1);
+							if (i<0) 
+								i = -i-1;
+							else if (pt.y>vs[i].y) i++;
+							if (s.startIndex>i){
+								v = vs[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = vs[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+						
+						if (otherNum>0){
+							i = binarySearchFromTo(others, point.y, 0, otherNum-1);
+							if (i<0) 
+								i = -i-1;
+							else if (point.y>others[i].y) i++;
+							s = s.opp;
+							prev = prev.opp;					
+							if (s.startIndex>i){
+								v = others[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = others[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+					}
+				}
+//				return (v.x-pv.x)*l.type<0;
 			}
 		}
 		return false;	
