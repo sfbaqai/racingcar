@@ -6588,7 +6588,7 @@ public final class Segment {
 			}
 		} else if (s.map!=null){
 			int score = 1;
-			if (tp==s.type || s.type==0 || tp==0){
+			if (rr>=0 && (tp==s.type || s.type==0 || tp==0)){
 				if (s.map[rr]==0) {
 					s.appearedRads[s.radCount++] = rr;
 					if (s.opp!=null) s.opp.radCount = s.radCount;
@@ -6648,7 +6648,7 @@ public final class Segment {
 				s.radius = r;
 				s.type = tp;
 				s.reCalLength();					
-			} else if (s.map!=null && nr<=s.map[rr] && rr>=MAX_RADIUS-1){				
+			} else if (s.map!=null && rr>=0 && rr>=MAX_RADIUS-1 && nr<=s.map[rr] ){				
 				//				s.start = new Vector2D(first);
 				//				s.end = new Vector2D(last);
 				s.type = 0;
