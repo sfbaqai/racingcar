@@ -3421,7 +3421,7 @@ public final class CircleDriver2{
 					
 //			steer = 0;
 //			if (relativePosMovement<0 || absSpeedY>MODERATE_SPEEDY) smoothSteering();
-			acc = (!mustSlowDown && slip>10 && Math.abs(a)<0.5) ? 1 : (!maxTurn && relativeAngle<0 || Math.abs(a)>0.5) ? CONSTANT_SPEED_ACC*0.25 : !flyingHazard && startFlying==0 && mustSlowDown ? 0.25*CONSTANT_SPEED_ACC: 1;
+			acc = (!mustSlowDown && slip>10 && Math.abs(a)<0.5 && absSpeedY<HIGH_SPEEDY) ? 1 : (!maxTurn && relativeAngle<0 || Math.abs(a)>0.5) ? CONSTANT_SPEED_ACC*0.25 : !flyingHazard && startFlying==0 && mustSlowDown ? 0.25*CONSTANT_SPEED_ACC: 1;
 			brake = 0;
 			return acc;
 		}
@@ -9738,8 +9738,8 @@ public final class CircleDriver2{
 	}
 	
 	private static double faster(double targetSpeed,double m) {
-//		if (targetSpeed<90) 			
-//			return (m>40) ? targetSpeed+15+tW+1.5*m : (m>30) ? targetSpeed+15+tW+m : (m>15) ? targetSpeed+15+tW+0.5*m : targetSpeed+15+tW+0.35*m;
+		if (targetSpeed<90) 			
+			return (m>40) ? targetSpeed+15+tW+1.5*m : (m>30) ? targetSpeed+15+tW+m : targetSpeed+15+tW+0.35*m;
 		return (m>40) ? targetSpeed+FAST_MARGIN+tW+1.5*m : (m>30) ? targetSpeed+FAST_MARGIN+tW+m : targetSpeed+FAST_MARGIN+tW+0.35*m;
 	}
 	
