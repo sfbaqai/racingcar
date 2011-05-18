@@ -6,6 +6,7 @@ package solo;
 
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.awt.BasicStroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -14,6 +15,8 @@ import javax.imageio.ImageIO;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -510,6 +513,19 @@ public final class EdgeDetector {
 		currentPointAhead.y = 0;
 		firstIndexMax = -1;
 		double ll = 0;
+		
+		if (CircleDriver2.time>=CircleDriver2.BREAK_TIME){
+			double[] px = new double[19];
+			double[] py = new double[19];
+			for (int i =0 ; i<19;++i){
+				double l = tracks[i];
+				angle = Math.PI-ANGLE_LK[i];
+				px[i] = l* Math.cos(angle);
+				py[i] = l* Math.sin(angle);
+			}
+			drawEdge(px, py, "Track sensor");
+		}
+		
 
 		for (int i=startIndex;i<endIndex;++i){			
 			angle = Math.PI-ANGLE_LK[i]-curAngle;
@@ -2808,14 +2824,15 @@ public final class EdgeDetector {
 
 
 	public void drawEdge(double[] x,double[] y,final String title){			
-		XYSeries series = new XYSeries("Curve");
+		XYSeries series = new XYSeries("Curve",false,true);
 
 		//		for (int i=0;i<numPointLeft;++i){
 		//		series.add(leftEgdeX[i], leftEgdeY[i]);
 		//		}
 
 		for (int i=0;i<x.length;++i){			
-			series.add(x[i],y[i]);
+			series.add(x[i],y[i]);	
+			if (i<x.length-1) series.add(0,0);
 		}
 
 		//		for (int i=0;i<numPointRight;++i){
@@ -2825,16 +2842,45 @@ public final class EdgeDetector {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
-		chart.getXYPlot().getDomainAxis().setRange(-20.0,90.0);
-		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
+		final JFreeChart chart = ChartFactory.createXYLineChart("", "x", "y", xyDataset, PlotOrientation.VERTICAL, false, false, false );
+//		Shape[] shapes = new Shape[x.length];
+//		for (int i = 0;i<shapes.length;++i){
+//			shapes[i] = new Line2D.Double(0, 0, x[i], y[i]);
+//		}
+//		final DrawingSupplier supplier = new DefaultDrawingSupplier(
+//	            DefaultDrawingSupplier.DEFAULT_PAINT_SEQUENCE,
+//	            DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
+//	            DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+//	            DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+//	            shapes
+//	        );
+		XYPlot xyPlot = chart.getXYPlot();
+		xyPlot.getDomainAxis().setRange(-60.0,60.0);
+		xyPlot.getRangeAxis().setRange(-10.0,110.0);
+//		xyPlot.setDrawingSupplier(supplier);
+		final XYLineAndShapeRenderer renderer= (XYLineAndShapeRenderer)xyPlot.getRenderer();
+//		renderer.setDrawSeriesLineAsPath(true);
+		renderer.setSeriesStroke(
+			    0, 
+			    new BasicStroke(
+			        2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+			        1.0f, new float[] {2.0f, 10.0f}, 0.0f
+			    ));
+		
+		renderer.setBaseShapesVisible(true);
+        renderer.setBaseShapesFilled (true);
+		 // customise the renderer...
+        
+//        renderer.setDrawShapes(true);        
+  //      renderer.setLabelGenerator(new StandardCategoryLabelGenerator());
+
 
 		Thread p = new Thread(new Runnable(){
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				try{
-					BufferedImage image = chart.createBufferedImage(600, 400);
+					BufferedImage image = chart.createBufferedImage(500, 500);
 					ImageIO.write(image, "png", new File(title+".png"));
 				} catch (Exception e) {
 					// TODO: handle exception
@@ -2864,7 +2910,7 @@ public final class EdgeDetector {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );
 		//	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		//	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
@@ -2897,7 +2943,7 @@ public final class EdgeDetector {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );
 		//	chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		//	chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
@@ -2939,7 +2985,7 @@ public final class EdgeDetector {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );
 		chart.getXYPlot().getDomainAxis().setRange(-50.0,50.0);
 		chart.getXYPlot().getRangeAxis().setRange(-20.0,100.0);
 
@@ -2964,7 +3010,7 @@ public final class EdgeDetector {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
 		//	chart.getXYPlot().getDomainAxis().setRange(-200.0,200.0);
 		//	chart.getXYPlot().getRangeAxis().setRange(-200.0,200.0);
 		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);

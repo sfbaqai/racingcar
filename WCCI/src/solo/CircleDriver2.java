@@ -7,12 +7,27 @@ package solo;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.io.File;
+import java.awt.image.BufferedImage;
 import java.text.NumberFormat;
+import javax.imageio.ImageIO;
 import java.util.List;
 
 import net.sourceforge.jFuzzyLogic.rule.FuzzyRuleSet;
 
+import org.jfree.chart.annotations.XYShapeAnnotation;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import com.graphbuilder.geom.Geom;
 
@@ -24,7 +39,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 1500.55; 
+	public static final double BREAK_TIME = 1000.00; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+					// [m/s] range [0..10]
@@ -242,7 +257,7 @@ public final class CircleDriver2{
 	private static final TrackSegment[] trackDataArr = new TrackSegment[100];
 	private static final TrackSegment[] trackEArr = new TrackSegment[2000];
 	private static final TrackSegment[] trackMidArr = new TrackSegment[100];
-	private static final ObjectArrayList<TrackSegment> trackData = ObjectArrayList.wrap(trackDataArr, 0);
+	public static final ObjectArrayList<TrackSegment> trackData = ObjectArrayList.wrap(trackDataArr, 0);
 	//	private static double[] ar = new double[1000];
 	private final static Vector2D trackDirection = new Vector2D(0,1);
 	private static final ObjectArrayList<TrackSegment> trackE = ObjectArrayList.wrap(trackEArr, 0);
@@ -3495,15 +3510,19 @@ public final class CircleDriver2{
 			if (speedX>targetSpeed+FAST_MARGIN && absSpeedY<50){
 				acc = 0;
 				brake = 1;
-				steer =  (relativeAngleMovement>0.001) ? bal : 0;
+				steer =  relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.001) ? bal : 0;
 			} else if (speedX>targetSpeed+20 && absSpeedY<50){
 				acc = 0;		
-				steer = (relativeAngleMovement>0.001) ? bal : 0;
+				brake = 1;
+				steer = relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.001) ? bal : 0;				
 			}
 			else {
-				acc = 1;
+				acc = 0;
+//				acc = (speedX>targetSpeed) ? CONSTANT_SPEED_ACC*0.25 : 1;
 				brake = 0;
-				steer = (relativeAngleMovement>0.001) ? bal : 0;
+//				if (speedX>targetSpeed) gear = 1;
+				steer = relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.001) ? bal : 0;
+//				steer = turn;
 			}
 //			steer =0;
 			return steer;
@@ -3538,11 +3557,11 @@ public final class CircleDriver2{
 				acc = 1;
 			else if (absSpeedY>absLastSpeedY) 
 				acc = CONSTANT_SPEED_ACC*0.25;
-			else acc = CONSTANT_SPEED_ACC*0.15;
-			if (acc>0) brake = 0;
-			if (relativeTargetAngle>0)
-				steer *= 0.5;
-			else steer = (a>0) ? 0 :steer;
+			else acc = 0;
+			if (acc>0) 
+				brake = 0;
+			else if (speedX>targetSpeed+15) brake = 1;
+			steer = relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.01) ? bal : -turn;
 			return acc;
 		}
 
@@ -4684,7 +4703,10 @@ public final class CircleDriver2{
 			double dd = Geom.ptTangentDist(0, 0, t.center.x, t.center.y, t.radius);
 			drift = dd<15;
 		}
-				
+			
+		
+		if (time>=60 && speedX>targetSpeed+35)
+			gear = 1;
 		
 			if (m<15 && relativePosMovement>=-0.001 &&  speedX>=lastSpeed+FAST_MARGIN || drift)
 				steer = relativeTargetAngle<-0.001 && relativePosMovement>0.005 || distToEstCircle>0 && relativePosMovement>0.01 ? (relativeAngleMovement>0) ? (a>0.05)  ? steer*turn<0 ? steer*0.5 : 0 : bal*2 : (relativeAngleMovement<-0.01 && a>0.05) ? -turn : bal  
@@ -4798,7 +4820,7 @@ public final class CircleDriver2{
 			if (acc==0 && brake==0  && steer*turn<0)
 				acc = (relativePosMovement>0 || absSpeedY<absLastSpeedY) ? CONSTANT_SPEED_ACC*0.25 : CONSTANT_SPEED_ACC*0.25;
 			else if (acc==0 && brake==0 && relativePosMovement<0 && steer*turn<0 && absSpeedY>10 && absSpeedY<absLastSpeedY && relativeAngleMovement<0)
-				acc = CONSTANT_SPEED_ACC*0.5;
+				acc = CONSTANT_SPEED_ACC*0.25;
 
 			
 			if (inTurn && relativeAngleMovement<-0.001 && relativePosMovement<-0.001 && distToEstCircle<-W && distToEstCircle<lastDistToEstCircle && speedX>lowestSpeed) {
@@ -8161,8 +8183,8 @@ public final class CircleDriver2{
 			NumberFormat nf = NumberFormat.getInstance();
 			nf.setMinimumFractionDigits(2);
 			nf.setMaximumFractionDigits(2);
-			TrackSegment.drawTrack(trackData,"E "+nf.format(time)+" a");
-			TrackSegment.drawTrack(trackE,"E "+nf.format(time)+" b");
+			TrackSegment.drawTrack(trackData,"E "+nf.format(time)+" a",true);
+			TrackSegment.drawTrack(trackE,"E "+nf.format(time)+" b",false);
 			TrackSegment ts;
 			/*for (int i = 0;i<trSz;++i){
 				Segment t = trArr[ trIndx[i] ];
@@ -8189,6 +8211,225 @@ public final class CircleDriver2{
 		} catch (Exception e){
 			e.printStackTrace();
 		}
+	}
+
+	
+	public static void drawEndpoint(final String title){
+		XYSeries series = new XYSeries("Curve");		
+//		for (int i=0;i<numPointLeft;++i){
+//		series.add(leftEgdeX[i], leftEgdeY[i]);
+//		}
+
+		/*for (int i = 0;i<trSz;++i){
+			Segment t = trArr[ trIndx[i] ];
+			t = t.leftSeg;
+			series.add(t.start.x,t.start.y);
+			series.add(t.end.x,t.end.y);
+			t = t.opp;
+			series.add(t.start.x,t.start.y);
+			series.add(t.end.x,t.end.y);
+		}//*/
+
+
+
+//		for (int i=0;i<numPointRight;++i){
+//		series.add(rightEgdeX[i], rightEgdeY[i]);
+//		}
+		
+		double Ax = -20;
+		double Ay = 0;
+		double Bx = -20.001;
+		double By = 10;
+		
+		double Cx = -15;
+		double Cy = 32;		
+		double Dx = -10;
+		double Dy = 35;
+		
+		double[] rs = new double[6];
+		Geom.getLineLineIntersection(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy, rs);
+		double Ex = rs[0];
+		double Ey = rs[1];
+		series.add(Cx,Cy);
+		series.add(Dx,Dy);
+		series.add(Ex,Ey);
+
+		XYDataset xyDataset = new XYSeriesCollection(series);
+
+		// Create plot and show it
+		final JFreeChart chart = ChartFactory.createScatterPlot("", "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		XYPlot xyPlot = chart.getXYPlot();
+		xyPlot.getDomainAxis().setRange(-30.0,20.0);
+		xyPlot.getRangeAxis().setRange(-10.0,40.0);
+		BasicStroke bs = new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 
+              1.0f, new float[] {2.0f, 10.0f}, 0.0f);
+		TrackSegment.drawLine(xyPlot, Ax, Ay, Bx, By);
+		
+		TrackSegment.drawLine(xyPlot, Cx, Cy, Dx, Dy,bs);
+		TrackSegment.drawLine(xyPlot, Cx, Cy, Ex, Ey,bs);
+		
+		TrackSegment.drawLine(xyPlot, Bx, By, Ex, Ey,bs);
+		
+		Geom.getCircle2(Cx, Cy, Dx, Dy,Ax, Ay, Bx, By, rs);
+		double cnx = rs[0];
+		double cny = rs[1];
+		double r = Math.sqrt(rs[2]);
+		
+		Geom.getLineLineIntersection(cnx, cny, cnx-1, cny, Ax, Ay, Bx, By, rs);
+		double Mx = rs[0];
+		double My = rs[1];
+		
+		TrackSegment.drawLine(xyPlot, Mx, My, cnx, cny+0.001,bs);
+		TrackSegment.drawText(xyPlot, "r", (cnx+Mx)*0.5, My+1, 14);
+		TrackSegment.drawText(xyPlot, "O", Ex, Ey+1, 14);
+		TrackSegment.drawText(xyPlot, "p", Ax-1, (Ay+By)*0.5, 14);
+		TrackSegment.drawCircle(xyPlot, cnx, cny, r);
+		TrackSegment.drawText(xyPlot, "C", Mx-1, My, 14);
+		TrackSegment.drawText(xyPlot, "A", Cx, Cy+1, 14);
+		TrackSegment.drawText(xyPlot, "B", Dx, Dy+1,14);
+		TrackSegment.drawArrowLabel(xyPlot, "start ", Ax, Ay, 0.75*Math.PI, 14);
+		TrackSegment.drawArrowLabel(xyPlot, "end ", Bx, By, -0.75*Math.PI, 14);
+		series.add(cnx,cny);
+		
+		/*for (int i = 0;i<trSz;++i){
+			Segment t = trArr[ trIndx[i] ];
+			
+			if (i==1){
+				Segment prev = trArr[ trIndx[i-1] ];
+				Vector2D point = new Vector2D();
+				series.add(prev.center.x,prev.center.y);
+				if (Segment.isConnected(prev, t, tW, point)){
+					TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, point.x, point.y,bs);
+					Line2D line = new Line2D.Double(point.x, point.y, t.end.x, t.end.y);
+					XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line,bs,Color.GRAY);
+					xyPlot.addAnnotation(lineAnnotation);
+//					TrackSegment.drawArc(xyPlot, t.center.x, t.center.y, t.radius, point.x, point.y,t.end.x,t.end.y,bs);
+				}
+			}
+			t = t.leftSeg;
+//			if (t.type==0){
+////				line(t.startX, t.startY, t.endX, t.endY, series);
+//				Line2D line = new Line2D.Double(t.start.x, t.start.y, t.end.x, t.end.y);
+//				XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line,bs,Color.GRAY);
+//				xyPlot.addAnnotation(lineAnnotation);			
+//				
+//			} 
+			if (i==1){					
+
+//				Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+//				XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle,bs,Color.GRAY);
+//				xyPlot.addAnnotation(arcAnnotation);
+				if (i==1){
+					Segment prev = trArr[ trIndx[i-1] ].leftSeg;
+					Vector2D point = new Vector2D();
+					if (Segment.isConnected(prev, t, tW, point)){
+						TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, point.x, point.y);
+						Line2D line = new Line2D.Double(point.x, point.y, t.end.x, t.end.y);
+						XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line);
+						xyPlot.addAnnotation(lineAnnotation);
+//						TrackSegment.drawArc(xyPlot, cnx, cny, t.radius, point.x, point.y,t.end.x,t.end.y);
+					} else TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, prev.end.x, prev.end.y);
+//					series.add(t.start.x,t.start.y);
+//					series.add(t.end.x,t.end.y);
+				} 
+//				else {
+//					series.add(cnx-t.type*w,0);
+//				}
+			}
+			
+			t = t.opp;
+//			if (t.type==0){
+////				line(t.startX, t.startY, t.endX, t.endY, series);
+//				Line2D line = new Line2D.Double(t.start.x, t.start.y, t.end.x, t.end.y);
+//				XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line,bs,Color.GRAY);
+//				xyPlot.addAnnotation(lineAnnotation);					
+//			}
+			if (i==1){					
+					
+					if (i>0){
+						Segment prev = trArr[ trIndx[i-1] ].rightSeg;
+						Vector2D point = new Vector2D();
+						if (Segment.isConnected(prev, t, tW, point)){
+							TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, point.x, point.y);
+							Line2D line = new Line2D.Double(point.x, point.y, t.end.x, t.end.y);
+							XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line);
+							xyPlot.addAnnotation(lineAnnotation);
+//							TrackSegment.drawArc(xyPlot, cnx, cny, t.radius, point.x, point.y,t.end.x,t.end.y);
+						} else TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, prev.end.x, prev.end.y);
+//						series.add(t.start.x,t.start.y);
+//						series.add(t.end.x,t.end.y);
+					}
+//					Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+//					XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle,bs,Color.GRAY);
+//					xyPlot.addAnnotation(arcAnnotation);
+//					if (i>0){
+//						Segment prev = trArr[ trIndx[i-1] ].rightSeg;
+//						Vector2D point = new Vector2D();
+//						if (Segment.isConnected(prev, t, tW, point)){
+//							TrackSegment.drawArc(xyPlot, prev.center.x, prev.center.y, prev.radius, prev.start.x, prev.start.y, point.x, point.y);
+//							series.add(point.x,point.y);
+//						}
+////						series.add(t.start.x,t.start.y);
+//						series.add(t.end.x,t.end.y);
+//					} else {
+//						series.add(cnx-t.type*w,0);
+//					}
+			}
+		}
+		
+		TrackSegment.addEdge(xyPlot, trackData);
+
+		
+		Segment first = trArr[trIndx[0]];
+		/*double cnx = first.center.x;
+		double cny = first.center.y;
+		double r = first.radius;
+		bs = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 
+	              1.0f, new float[] {2.0f, 2.0f}, 0.0f);
+		TrackSegment.drawLine(xyPlot, px, py, cnx, cny, bs);
+		
+		double[] rs = new double[6];
+		Geom.getLineSegCircleIntersection(px, py, cnx, cny, cnx, cny, r,rs);
+		double mx = rs[0];
+		double my = rs[1];
+		double rad = Geom.distance(cnx, cny, px, py);
+		TrackSegment.drawArc(xyPlot, cnx, cny, rad , px, py, cnx+rad, 0,bs);
+		
+		bs = new BasicStroke(3);
+		TrackSegment.drawLine(xyPlot, 0, 0, cnx+rad, 0.0001,bs);
+		
+		Geom.getLineSegCircleIntersection((toMiddle+px)*0.5, py*0.5, cnx, cny, cnx, cny, r,rs);
+		
+		TrackSegment.drawArrowLabel(xyPlot, " Origin ", 0, 0, -0.5*Math.PI,9);
+		
+		TrackSegment.drawArrowLabel(xyPlot, "Center of turn", cnx, cny, -0.25*Math.PI,9);
+		
+		TrackSegment.drawArrowLabel(xyPlot, "Track line", -20, 32.5, -0.35*Math.PI,9);
+		
+		TrackSegment.drawText(xyPlot, " Op ", px, py+1,14);
+		
+		TrackSegment.drawArrowLabel(xyPlot, " \u03B4 ", rs[0], rs[1], Math.PI,14);
+		TrackSegment.drawArrowLabel(xyPlot, " \u03B8 ", (cnx+rad)*0.5, 0, -Math.PI*0.25,14);		
+		TrackSegment.drawArc(xyPlot, cnx, cny, r, mx, my, toMiddle, 0,bs);
+		series.add(0,0);//*/
+
+		Thread p = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try{
+					BufferedImage image = chart.createBufferedImage(500, 500);
+					ImageIO.write(image, "png", new File(title+".png"));
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+			}
+		});
+
+		p.start();
+
+
 	}
 
 
@@ -11937,6 +12178,7 @@ public final class CircleDriver2{
 			estimatePath(hh);
 			if (draw || (time>=BREAK_TIME)){
 				draw=true;			
+//				drawEndpoint("geCircle");
 				//			draw = false;
 				if (draw) {
 					store();
