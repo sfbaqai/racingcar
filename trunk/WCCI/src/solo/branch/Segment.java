@@ -1682,6 +1682,63 @@ public final class Segment {
 		}
 		return s;
 	}
+	
+	public static final void mapPoint(Vector2D p,Segment seg ,int which,double tW,Vector2D q){
+		double t = (seg.type==0) ? 2*tW*which : -2*tW*which*seg.type;
+		if (seg.type==0 && Math.abs(seg.start.x-seg.end.x)<=TrackSegment.EPSILON){
+			q.x = p.x+t;
+			q.y = p.y;
+		} else if (seg.type==0){
+			double sx = seg.start.x;
+			double sy = seg.start.y;
+			double ex = seg.end.x;
+			double ey = seg.end.y;
+			double nx = sy-ey;
+			double ny = ex-sx;
+			double d = -t/Math.sqrt(nx*nx+ny*ny);
+			nx*=d;
+			ny*=d;
+			q.x = p.x+nx;
+			q.y = p.y+ny;
+		} else {
+			double rad = seg.radius + t;
+			Vector2D center = seg.center;
+			double ox = center.x;
+			double oy = center.y;
+			double d = rad/seg.radius;
+			Vector2D first = seg.start;
+			Vector2D last = seg.end;
+			if (oy!=0){
+				double cx = center.x;
+				double cy = center.y;
+				ox = (first.x+last.x)*0.5;
+				oy = (first.y+last.y)*0.5;
+				double dx = ox - first.x;
+				double dy = oy - first.y;
+				double dd = dx*dx+dy*dy;
+
+				double nx = -dy;
+				double ny = dx;		
+				double dn = nx*nx+ny*ny;
+
+				cx -= ox;
+				cy -= oy;
+				if (nx*cx+ny*cy<0) {
+					nx = -nx;
+					ny = -ny;
+				}
+				double r = seg.radius;				
+				double dt = Math.sqrt((r*r-dd)/dn);
+				ox += nx * dt;
+				oy += ny * dt;					
+
+			}
+			double nsx = p.x - ox;
+			double nsy = p.y - oy;				
+			q.x = ox+nsx*d;
+			q.y = oy+nsy*d;
+		}
+	}
 
 	public static final void toSideSegment(Segment seg,Segment s,int which,double tW){
 		if (seg!=null && seg.type==Segment.UNKNOWN) return;
@@ -2689,7 +2746,7 @@ public final class Segment {
 		}
 	}//*/	
 
-	private static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
+	public static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
 		if (s==null || last==null || s.type==Segment.UNKNOWN || last.type==Segment.UNKNOWN) return false;
 		double[] temp = new double[6];
 		isPrevNextConnected = false;
@@ -6591,7 +6648,7 @@ public final class Segment {
 				s.radius = r;
 				s.type = tp;
 				s.reCalLength();					
-			} else if (s.map!=null && nr<=s.map[rr] && rr>=MAX_RADIUS-1){				
+			} else if (s.map!=null && rr>=0 && rr>=MAX_RADIUS-1 && nr<=s.map[rr] ){				
 				//				s.start = new Vector2D(first);
 				//				s.end = new Vector2D(last);
 				s.type = 0;
@@ -9240,9 +9297,13 @@ public final class Segment {
 						circle(start, end, cx,cy, r,center);
 					} else s.center = center;
 									
-					if (check(v, from, from+i+1, center, r)>=0) {																						
-						s.start.copy(start);										
-						s.end.copy(end);										
+					if (check(v, from, from+i+1, center, r)>=0 && s!=null) {																						
+						if (s.start!=null) 
+							s.start.copy(start);
+						else s.start = new Vector2D(start);
+						if (s.end!=null) 
+							s.end.copy(end);
+						else s.end = new Vector2D(end);
 						s.type = tp;
 						s.radius = r;
 						s.startIndex = from;
@@ -14960,7 +15021,7 @@ public final class Segment {
 		int otherTo = (which==1) ? edge.lSize : edge.rSize;
 		
 		if (prev!=null && prev.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){				
+			if (isConfirmed(prev, which, tw*0.5)){				
 				if (s.unsafe) 
 					Segment.removeFirstPoint(s, os, prev.end.y+SMALL_MARGIN);
 				else {
@@ -14990,7 +15051,7 @@ public final class Segment {
 		}
 		
 		if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){
+			if (isConfirmed(prev, which, tw*0.5)){
 				if (os.unsafe)
 					Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 				else {
