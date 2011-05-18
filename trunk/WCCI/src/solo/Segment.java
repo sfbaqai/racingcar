@@ -2746,7 +2746,7 @@ public final class Segment {
 		}
 	}//*/	
 
-	private static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
+	public static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
 		if (s==null || last==null || s.type==Segment.UNKNOWN || last.type==Segment.UNKNOWN) return false;
 		double[] temp = new double[6];
 		isPrevNextConnected = false;

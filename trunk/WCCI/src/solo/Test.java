@@ -156,6 +156,8 @@ public class Test {
     public static void main(String[] args) throws Exception {
     	System.gc();
         System.out.println("Starting");
+//        CircleDriver2.drawEndpoint("geCircle");
+//        if (true) return;
         init();
 //        double ox = 0;
 //        double oy = 4;
