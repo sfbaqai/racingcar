@@ -60,8 +60,8 @@ public final class NewCarState extends CarState implements Serializable{
 		"allEYL",
 	"allEYR"};
 	private static final int numKeys = keys.length;
-	private static final  double[][] table = new double[numKeys][];
-	private static final  int[][] tableInt = new int[numKeys][];
+	private static final  double[][] table = new double[numKeys+10][];
+	private static final  int[][] tableInt = new int[numKeys+10][];
 //	private static final char infinity[] = { 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y' };
 //	private static final char notANumber[] = { 'N', 'a', 'N' };
 	//	private static final char zero[] = { '0', '0', '0', '0', '0', '0', '0', '0' };
@@ -514,6 +514,12 @@ public final class NewCarState extends CarState implements Serializable{
 	public void fromString(int[] chars,int len){
 		double[] allX = NewCarState.aX;	
 		double[] allY = NewCarState.aY;
+//		if (CircleDriver2.time>=19.5)
+//		for (int i =0;i<len;++i){
+//			System.out.print((char)(chars[i]));
+//			
+//		}
+//		System.out.println();
 
 
 		final double[][] table = NewCarState.table;
@@ -523,21 +529,39 @@ public final class NewCarState extends CarState implements Serializable{
 	
 		int c;		
 		int num = 0;		
+		if (CircleDriver2.time>=CircleDriver2.BREAK_TIME)
+		{
+			for (int i = 0;i<len;++i)
+				System.out.print((char)chars[i]);
+			System.out.println();
+		}
 
 		for (int i = 0;i<len;++i){			
 			if (chars[i]=='(')															
-				for (++i;(c = chars[i])!=DELIM && c!=TERMINATE;++i);												
+				for (++i;i<len && (c = chars[i])!=DELIM && c!=TERMINATE;++i);												
 			i++;			
-			if (i==len) break;
+			if (i>=len) break;
 			switch (num){
 			case 6:
 			case 9:
 			case 37:
-				int[] tmp = tableInt[num++];					
+				if (num>=tableInt.length){
+					while (chars[i]!=DELIM || chars[i]!=TERMINATE) i++;
+					break;
+				}
+				int[] tmp = (num<tableInt.length) ? tableInt[num++] : null;
+				if (num>=tableInt.length || tmp==null){
+					while (i<len && (chars[i]!=DELIM || chars[i]!=TERMINATE)) i++;
+					break;
+				}
 				i = toIntArray(chars, i, DELIM, TERMINATE, tmp);					
 				break;
-			default:
-				double[] tmp0 = table[num++];				
+			default:				
+				double[] tmp0 = (num<table.length) ?  table[num++] : null;
+				if (num>=table.length || tmp0==null){
+					while (i<len && (chars[i]!=DELIM || chars[i]!=TERMINATE)) i++;
+					break;
+				}
 				i = toDoubleArray(chars, i, DELIM, TERMINATE, tmp0);				
 				break;
 			}
@@ -652,7 +676,13 @@ public final class NewCarState extends CarState implements Serializable{
 					result -= digit;
 				}
 			}
+			while (num>=tmp.length){
+				int[] temp = new int[tmp.length<<1];
+				System.arraycopy(tmp, 0, temp, 0, tmp.length);
+				tmp = temp;
+			}
 			tmp[num++] = (!negative) ? - result : result;
+			if (num>=tmp.length) break;
 		}
 
 		NewCarState.sz = num;
@@ -795,7 +825,7 @@ public final class NewCarState extends CarState implements Serializable{
 		//		parseNumber:			
 		// throws NullPointerException if null
 		c = in[from];
-		if ( c == TERMINATE) throw new NumberFormatException("empty String");
+		if ( c == TERMINATE) return 0;
 
 		int i = from;				
 		while (c!=TERMINATE){
@@ -1035,6 +1065,9 @@ public final class NewCarState extends CarState implements Serializable{
 				//						// this is not allowed.
 				//						break parseNumber; // go throw exception
 				//					}
+				while (num>=tmp.length){
+					tmp = new double[tmp.length<<1];
+				}
 				tmp[num++] = 0;
 				while (c!=TERMINATE && c!=DELIMITER) c=in[++i];
 				if (c==TERMINATE) break;					
@@ -1166,6 +1199,11 @@ public final class NewCarState extends CarState implements Serializable{
 				 * will always end up here
 				 */
 				if (exp == 0 || dValue == 0.0){
+					while (num>=tmp.length){
+						double[] temp = new double[tmp.length<<1];
+						System.arraycopy(tmp, 0, temp, 0, tmp.length);
+						tmp = temp;
+					}
 					tmp[num++] = (isNegative)? -dValue : dValue; // small floating integer
 					while (c!=TERMINATE && c!=DELIMITER) c=in[++i];
 					if (c==TERMINATE) break;					
@@ -1179,6 +1217,11 @@ public final class NewCarState extends CarState implements Serializable{
 						 */
 						rValue = dValue * small10pow[exp];
 						if ( mustSetRoundDir ){
+						}
+						while (num>=tmp.length){
+							double[] temp = new double[tmp.length<<1];
+							System.arraycopy(tmp, 0, temp, 0, tmp.length);
+							tmp = temp;
 						}
 						tmp[num++] = (isNegative)? -rValue : rValue;
 						while (c!=TERMINATE && c!=DELIMITER) c=in[++i];
@@ -1216,6 +1259,7 @@ public final class NewCarState extends CarState implements Serializable{
 						rValue = dValue / small10pow[-exp];
 						if ( mustSetRoundDir ){
 						}
+						if (num>=tmp.length) return i;
 						tmp[num++] = (isNegative)? -rValue : rValue;
 						while (c!=TERMINATE && c!=DELIMITER) c=in[++i];					
 						if (c==TERMINATE) break;
@@ -1242,6 +1286,11 @@ public final class NewCarState extends CarState implements Serializable{
 					 * Lets face it. This is going to be
 					 * Infinity. Cut to the chase.
 					 */
+					while (num>=tmp.length){
+						double[] temp = new double[tmp.length<<1];
+						System.arraycopy(tmp, 0, temp, 0, tmp.length);
+						tmp = temp;
+					}
 					tmp[num++] = (isNegative)? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 					while (c!=TERMINATE && c!=DELIMITER) c=in[++i];
 					if (c==TERMINATE) break;					
