@@ -123,6 +123,7 @@ public final class EdgeDetector {
 	//		}
 
 	Vector2D currentPointAhead = new Vector2D();
+	Vector2D originalHighest = new Vector2D();
 	ControlPath cp=null;
 	private static double[] tracks;
 
@@ -852,6 +853,8 @@ public final class EdgeDetector {
 				dest.y = dy;
 			}
 		}
+		
+		originalHighest.copy(highestPoint);
 		
 		if (whichEdgeAhead==0 && pointAheadIndx>=0){
 			if (lsz>0 && binarySearchFromTo(left, currentPointAhead, 0, lsz-1)>=0) 
