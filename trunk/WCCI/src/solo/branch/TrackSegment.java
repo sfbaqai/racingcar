@@ -3,6 +3,16 @@ package solo;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
@@ -11,10 +21,16 @@ import javax.imageio.ImageIO;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYDrawableAnnotation;
+import org.jfree.chart.annotations.XYPointerAnnotation;
+import org.jfree.chart.annotations.XYShapeAnnotation;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.util.Rotation;
 
 import com.graphbuilder.geom.Geom;
 
@@ -958,7 +974,7 @@ public class TrackSegment {
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
+		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
 		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
 		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
 
@@ -981,38 +997,277 @@ public class TrackSegment {
 
 	}
 
+	public static double cnvAngle(double angle){
+		return -angle;
+	}
 	
+	
+	public static void addEdgeCircle(XYPlot xyPlot,ObjectList<TrackSegment> ts){
+//		BasicStroke bs = new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 
+//                1.0f, new float[] {2.0f, 10.0f}, 0.0f);
+		for (TrackSegment t : ts){										
+			if (t.type==STRT){
+//				line(t.startX, t.startY, t.endX, t.endY, series);
+				Line2D line = new Line2D.Double(t.startX, t.startY, t.endX, t.endY);
+				XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line);
+				xyPlot.addAnnotation(lineAnnotation);			
+			} else if (t.arc!=0 && t.radius>0){					
+					double cnx = t.centerx;
+					double cny = t.centery;
+					double w = t.radius;
+					Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+					XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle);
+					xyPlot.addAnnotation(arcAnnotation);					
+//					arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
+//					series.add(t.centerx,t.centery);				
+			}
+		}//*/
+	}
+	
+	public static void drawArrowLabel(XYPlot xyPlot,String text,double x, double y,double angle,int fontsize){
+//		 final CircleDrawer cd = new CircleDrawer(Color.red, new BasicStroke(1.0f), null);	       	       
+	       final XYPointerAnnotation pointer = new XYPointerAnnotation(text, x, y,
+	                                                              angle);
+	       pointer.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, fontsize));
+	       xyPlot.addAnnotation(pointer);
+	}
+	
+	public static void drawText(XYPlot xyPlot,String text,double x, double y,int fontsize){
+//		 final CircleDrawer cd = new CircleDrawer(Color.red, new BasicStroke(1.0f), null);	       	       
+	       final XYTextAnnotation pointer = new XYTextAnnotation(text,x,y);
+	       pointer.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, fontsize));
+	       xyPlot.addAnnotation(pointer);
+	}
+	
+	public static void drawText(XYPlot xyPlot,String text,double x, double y,int fontsize,Color col){
+//		 final CircleDrawer cd = new CircleDrawer(Color.red, new BasicStroke(1.0f), null);	       
+		
+	       final XYTextAnnotation pointer = new XYTextAnnotation(text,x,y);
+	       pointer.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, fontsize));
+	       pointer.setPaint(col);
+	       xyPlot.addAnnotation(pointer);
+	}
+	
+	public static void drawLine(XYPlot xyPlot,double startX,double startY,double endX,double endY){						
+		Line2D line = new Line2D.Double(startX, startY, endX, endY);
+		XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line);
+		xyPlot.addAnnotation(lineAnnotation);	
+	}
+	
+	public static void drawLine(XYPlot xyPlot,double startX,double startY,double endX,double endY,Color color){						
+		Line2D line = new Line2D.Double(startX, startY, endX, endY);
+		BasicStroke bs = new BasicStroke();
+		XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line,bs,color);
+		xyPlot.addAnnotation(lineAnnotation);	
+	}
+	
+	public static void drawLine(XYPlot xyPlot,double startX,double startY,double endX,double endY,Stroke bs){						
+		Line2D line = new Line2D.Double(startX, startY, endX, endY);
+		XYShapeAnnotation lineAnnotation = new XYShapeAnnotation(line,bs,Color.GRAY);
+		xyPlot.addAnnotation(lineAnnotation);	
+	}
+	
+	public static void drawRectangle (XYPlot xyPlot,double lx,double ly,double rx,double ry){				
+		Rectangle2D rectangle = new Rectangle2D.Double(lx,ly,rx,ry);
+		XYShapeAnnotation rectangleAnnotation = new XYShapeAnnotation(rectangle);
+		xyPlot.addAnnotation(rectangleAnnotation);			
+	}
+	
+	public static void drawRectangle (XYPlot xyPlot,double lx,double ly,double rx,double ry,double angle,Color color){
+		BasicStroke bs = new BasicStroke();
+		Rectangle2D rectangle = new Rectangle2D.Double(lx,ly,rx,ry);
+		
+		AffineTransform at = AffineTransform.getRotateInstance(angle, lx, ry);
+		Shape newShape = at.createTransformedShape(rectangle);		
+		XYShapeAnnotation rectangleAnnotation = new XYShapeAnnotation(newShape,bs,color,color);	
+		xyPlot.addAnnotation(rectangleAnnotation);			
+	}
+	
+	public static void drawCircle(XYPlot xyPlot,double cnx,double cny,double w){				
+		Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle);
+		xyPlot.addAnnotation(arcAnnotation);			
+	}
+	
+	public static void drawCircle(XYPlot xyPlot,double cnx,double cny,double w,Color color){	
+		BasicStroke bs = new BasicStroke();
+		Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle,bs,color);
+		xyPlot.addAnnotation(arcAnnotation);			
+	}
+	
+	public static void drawCircle(XYPlot xyPlot,double cnx,double cny,double w,Stroke bs){				
+		Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle,bs,Color.GRAY);
+		xyPlot.addAnnotation(arcAnnotation);			
+	}
+	
+	public static void drawCircle(XYPlot xyPlot,double cnx,double cny,double w,Stroke bs,Color color){				
+		Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle,bs,color);
+		xyPlot.addAnnotation(arcAnnotation);			
+	}
+	
+	public static void drawArc(XYPlot xyPlot,double cnx,double cny,double w, double startX,double startY,double endX,double endY){				
+		double startAngle = Math.toDegrees(Math.atan2(startY-cny, startX-cnx));		
+		double angle = Vector2D.angle(startX-cnx,startY-cny,endX-cnx,endY-cny);
+		if (angle<-Math.PI) 
+			angle += 2*Math.PI;
+		else if (angle>Math.PI) 
+			angle -= 2*Math.PI;		
+//		double arc = Math.abs(angle);
+		double arcSz = Math.toDegrees(angle);
+		Arc2D arc =  new Arc2D.Double(cnx-w,cny-w,w*2,w*2,cnvAngle(startAngle),arcSz,Arc2D.OPEN);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(arc);
+		xyPlot.addAnnotation(arcAnnotation);
+	}
+	
+	public static void drawArc(XYPlot xyPlot,double cnx,double cny,double w, double startX,double startY,double endX,double endY,Stroke bs){				
+		double startAngle = Math.toDegrees(Math.atan2(startY-cny, startX-cnx));		
+		double angle = Vector2D.angle(startX-cnx,startY-cny,endX-cnx,endY-cny);
+		if (angle<-Math.PI) 
+			angle += 2*Math.PI;
+		else if (angle>Math.PI) 
+			angle -= 2*Math.PI;		
+//		double arc = Math.abs(angle);
+		double arcSz = Math.toDegrees(angle);
+		Arc2D arc =  new Arc2D.Double(cnx-w,cny-w,w*2,w*2,cnvAngle(startAngle),arcSz,Arc2D.OPEN);
+		XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(arc,bs,Color.GRAY);
+		xyPlot.addAnnotation(arcAnnotation);
+	}
+		
+	public static void addEdge(XYPlot xyPlot,ObjectList<TrackSegment> ts){
+		BasicStroke bs = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 
+                1.0f, new float[] {2.0f, 10.0f}, 0.0f);
+		for (TrackSegment t : ts){										
+			if (t.type==STRT){
+//				line(t.startX, t.startY, t.endX, t.endY, series);
+				drawLine(xyPlot,  t.startX, t.startY, t.endX+0.001, t.endY+0.001);						
+			} else if (t.radius>=0){					
+					double cnx = t.centerx;
+					double cny = t.centery;
+					double w = t.radius;
+//					if (t.type==-1){
+//						Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+//						XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle);
+//						xyPlot.addAnnotation(arcAnnotation);							
+//					} else {
+						drawArc(xyPlot, cnx, cny, w, t.startX, t.startY, t.endX, t.endY);
+//					}
+//					arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
+//					series.add(t.centerx,t.centery);				
+			}
+		}//*/
+	}
+	
+	public static void arrow(XYPlot xyPlot,double x, double y,double angle){
+//		 final CircleDrawer cd = new CircleDrawer(Color.red, new BasicStroke(1.0f), null);	       	       
+	       final XYPointerAnnotation pointer = new XYPointerAnnotation("", x, y,
+	                                                              angle);
+	       pointer.setTipRadius(0);
+	       pointer.setArrowWidth(10);
+	       xyPlot.addAnnotation(pointer);
+	}
+	
+	public static void arrow(XYPlot xyPlot,double x, double y,double angle,double arrowLen){
+//		 final CircleDrawer cd = new CircleDrawer(Color.red, new BasicStroke(1.0f), null);	       	       
+	       final XYPointerAnnotation pointer = new XYPointerAnnotation("", x, y,
+	                                                              angle);
+	       pointer.setTipRadius(0);
+	       pointer.setBaseRadius(arrowLen);
+	       pointer.setArrowWidth(10);	       
+	       xyPlot.addAnnotation(pointer);
+	}
 
-	public static void drawTrack(ObjectList<TrackSegment> ts,final String title){			
+	
+	public static void addEdgeArrow(XYPlot xyPlot,ObjectList<TrackSegment> ts){
+		BasicStroke bs = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 
+                1.0f, new float[] {2.0f, 10.0f}, 0.0f);
+		for (TrackSegment t : ts){										
+			if (t.type==STRT){
+//				line(t.startX, t.startY, t.endX, t.endY, series);
+				drawLine(xyPlot,  t.startX, t.startY, t.endX+0.001, t.endY+0.001);		
+				arrow(xyPlot, t.startX, t.startY, -Math.atan2(t.endY-t.startY, t.endX-t.startX),0.5);
+				arrow(xyPlot, t.endX, t.endY, Math.PI-Math.atan2(t.endY-t.startY, t.endX-t.startX),0.5);
+			} else if (t.radius>=0){					
+					double cnx = t.centerx;
+					double cny = t.centery;
+					double w = t.radius;
+//					if (t.type==-1){
+//						Ellipse2D circle = new Ellipse2D.Double(cnx-w, cny-w, w*2, w*2);
+//						XYShapeAnnotation arcAnnotation = new XYShapeAnnotation(circle);
+//						xyPlot.addAnnotation(arcAnnotation);							
+//					} else {
+					    double offset = Math.PI*0.5*t.type;
+						drawArc(xyPlot, cnx, cny, w, t.startX, t.startY, t.endX, t.endY);						
+						double angle = -Math.atan2(t.startY-t.centery, t.startX-t.centerx)+offset;												
+						arrow(xyPlot,t.startX,t.startY,angle,0.5);												
+						angle = -Math.PI*0.5+Math.atan2(t.endY-t.centerx, t.endX-t.centerx)+offset;
+						arrow(xyPlot,t.endX,t.endY,angle,0.5);						
+//					}
+//					arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
+//					series.add(t.centerx,t.centery);				
+			}
+		}//*/
+	}
+	
+	
+	public static void drawTrack(ObjectList<TrackSegment> ts,final String title,boolean addEdge){			
 		XYSeries series = new XYSeries("Curve");
 		if (ts==null) return;
 //		for (int i=0;i<numPointLeft;++i){
 //		series.add(leftEgdeX[i], leftEgdeY[i]);
 //		}
 
-		for (TrackSegment t : ts){
+		/*for (TrackSegment t : ts){
 			if (t.type==STRT){
 				line(t.startX, t.startY, t.endX, t.endY, series);
 			} else {
 				arc(t.centerx, t.centery, t.radius, t.startX,t.startY,t.arc,series);
 				series.add(t.centerx,t.centery);
 			}
-		}
+		}//*/
 
+//		double toMiddle = CircleDriver2.toMiddle;
+//		series.add(CircleDriver2.toMiddle,0);
+//		series.add(0,0);
+//		
+//		double px = -1;
+//		double py = -6;
+//		series.add(px,py);
 
+		
 
 //		for (int i=0;i<numPointRight;++i){
 //		series.add(rightEgdeX[i], rightEgdeY[i]);
 //		}
+		
+		int nL = CircleDriver2.edgeDetector.nLsz;
+		int nR = CircleDriver2.edgeDetector.nRsz;
+		Vector2D[] left = EdgeDetector.nleft;
+		Vector2D[] right = EdgeDetector.nright;
+		for (int i=0;i<nL;++i){
+			series.add(left[i].x, left[i].y);
+		}
+		
+		for (int i=0;i<nR;++i){
+			series.add(right[i].x, right[i].y);
+		}
+		
+		series.add(CircleDriver2.edgeDetector.originalHighest.x,CircleDriver2.edgeDetector.originalHighest.y);
 
 		XYDataset xyDataset = new XYSeriesCollection(series);
 
 		// Create plot and show it
-		final JFreeChart chart = ChartFactory.createScatterPlot(title, "x", "Membership", xyDataset, PlotOrientation.VERTICAL, false, true, false );		
-		chart.getXYPlot().getDomainAxis().setRange(-60.0,60.0);
-		chart.getXYPlot().getRangeAxis().setRange(-10.0,110.0);
-//		chart.getXYPlot().getDomainAxis().setRange(-5.0,5.0);
-//		chart.getXYPlot().getRangeAxis().setRange(-5.0,5.0);
+		final JFreeChart chart = ChartFactory.createScatterPlot("", "x", "y", xyDataset, PlotOrientation.VERTICAL, false, true, false );
+		XYPlot xyPlot = chart.getXYPlot();
+		xyPlot.getDomainAxis().setRange(-25.0,25.0);
+		xyPlot.getRangeAxis().setRange(-5.0,105.0);
+				
+						
+		if (addEdge)
+			addEdge(xyPlot, CircleDriver2.trackData);		
+				
 
 
 		Thread p = new Thread(new Runnable(){
