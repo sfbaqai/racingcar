@@ -19,9 +19,12 @@ public final class NewCarState extends CarState implements Serializable{
 		"rpm",
 		"speedX",
 		"speedY",
+		"speedZ",//change to fit server2011
 		"track",
 		"trackPos",
 		"wheelSpinVel",
+		"z",//change to fit 2011
+		"focus",//change to fit 2011
 		"posX",
 		"posY",
 		"posZ",
@@ -60,10 +63,10 @@ public final class NewCarState extends CarState implements Serializable{
 		"allEYL",
 	"allEYR"};
 	private static final int numKeys = keys.length;
-	private static final  double[][] table = new double[numKeys+10][];
-	private static final  int[][] tableInt = new int[numKeys+10][];
-//	private static final char infinity[] = { 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y' };
-//	private static final char notANumber[] = { 'N', 'a', 'N' };
+	private static final  double[][] table = new double[numKeys][];
+	private static final  int[][] tableInt = new int[numKeys][];
+	//	private static final char infinity[] = { 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y' };
+	//	private static final char notANumber[] = { 'N', 'a', 'N' };
 	//	private static final char zero[] = { '0', '0', '0', '0', '0', '0', '0', '0' };
 	private static final int	bigDecimalExponent = 324; // i.e. abs(minDecimalExponent)
 	private static final int maxDecimalDigits = 15;
@@ -199,6 +202,9 @@ public final class NewCarState extends CarState implements Serializable{
 	private static final double[] lastLapTi = new double[1];
 	private static final double[] trackP = new double[1];    
 	private static final int[]   raceP = new int[1];
+	private static final double[]   zs = new double[1];
+	private static final double[]   speedZs = new double[1];
+	private static final double[]   focuss = new double[5];
 	private static final double[]   rpmin = new double[1];
 	private static final double[] spX = new double[1];
 	private static final double[] spY = new double[1];
@@ -245,14 +251,15 @@ public final class NewCarState extends CarState implements Serializable{
 			switch (i){
 			case 6:
 			case 9:
-			case 37:				
-			tableInt[i] = (int[])o;					
-			break;
-		default:
-			table[i] = (double[])o;
-			break;
-		}
-			
+//			case 37:
+			case 40://change from 37				
+				tableInt[i] = (int[])o;					
+				break;
+			default:
+				table[i] = (double[])o;
+				break;
+			}
+
 		}				
 	}
 
@@ -278,7 +285,10 @@ public final class NewCarState extends CarState implements Serializable{
 	 */
 
 	private final static Object getObject(String name){		
-		return (name=="allArc") ? NewCarState.arc :
+		return (name=="z") ? NewCarState.zs :
+			(name=="speedZ") ? NewCarState.speedZs :
+			(name=="focus") ? NewCarState.focuss :
+				(name=="allArc") ? NewCarState.arc :
 			(name=="allDist") ? NewCarState.dist :
 				(name=="allEXL") ? NewCarState.eXL :
 					(name=="allEXR") ? NewCarState.eXR :
@@ -336,6 +346,10 @@ public final class NewCarState extends CarState implements Serializable{
 	public NewCarState(NewCarState newCarState) 
 	{
 
+		this.z = newCarState.z;
+		this.focus = newCarState.focus;
+		this.speedZ = newCarState.speedZ;
+		//the first 3 line to fit 2011
 		this.angle = newCarState.angle;
 		this.curLapTime = newCarState.curLapTime;
 		this.damage = newCarState.damage;
@@ -544,7 +558,8 @@ public final class NewCarState extends CarState implements Serializable{
 			switch (num){
 			case 6:
 			case 9:
-			case 37:
+//			case 37:
+			case 40: //change from 37 to 40 matches allTYpes
 				if (num>=tableInt.length){
 					while (chars[i]!=DELIM || chars[i]!=TERMINATE) i++;
 					break;
@@ -1065,8 +1080,10 @@ public final class NewCarState extends CarState implements Serializable{
 				//						// this is not allowed.
 				//						break parseNumber; // go throw exception
 				//					}
-				while (num>=tmp.length){
-					tmp = new double[tmp.length<<1];
+				while (num>=tmp.length){					
+					double[] temp = new double[tmp.length<<1];
+					System.arraycopy(tmp, 0, temp, 0, tmp.length);
+					tmp = temp;
 				}
 				tmp[num++] = 0;
 				while (c!=TERMINATE && c!=DELIMITER) c=in[++i];
