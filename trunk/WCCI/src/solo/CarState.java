@@ -142,6 +142,10 @@ public class CarState implements SensorModel,Serializable{
     double[] track;
     double[] opponents;
     double[] wheelSpinVel;
+    //change to fit 2011 below
+    double z;   
+	double speedZ;
+    double[] focus;
 	/**
 	 * Copy Constructor
 	 *
@@ -480,7 +484,24 @@ public class CarState implements SensorModel,Serializable{
 			return false;
 		return true;
 	}
-    
+	 public double getZ() {
+			return z;
+		}
+		public void setZ(double z) {
+			this.z = z;
+		}
+		public double getSpeedZ() {
+			return speedZ;
+		}
+		public void setSpeedZ(double speedZ) {
+			this.speedZ = speedZ;
+		}
+		public double[] getFocus() {
+			return focus;
+		}
+		public void setFocus(double[] focus) {
+			this.focus = focus;
+		}    
 	
     
 }
