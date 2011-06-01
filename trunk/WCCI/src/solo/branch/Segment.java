@@ -14620,7 +14620,7 @@ public final class Segment {
 			Segment rs = new Segment();
 			int endIndex = s.endIndex;
 			if (endIndex<=s.startIndex) endIndex = s.startIndex;
-			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tw);
+			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tW);
 			bkupS.copy(s);
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
@@ -14639,7 +14639,7 @@ public final class Segment {
 					double d = Math.sqrt(dx*dx+dy*dy);
 					d-=s.radius;
 					if (d<0) d=-d;					
-					if (prev!=null && (isConfirmed(prev, which, tw) || prev.upper!=null)){
+					if (prev!=null && (isConfirmed(prev, which, tW) || prev.upper!=null)){
 						tmpSeg1.type = Segment.UNKNOWN;
 						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
 						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
@@ -14894,7 +14894,7 @@ public final class Segment {
 						}
 						
 						if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-							if (isConfirmed(prev, which, tw)){								
+							if (isConfirmed(prev, which, tW)){								
 								Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -14923,7 +14923,7 @@ public final class Segment {
 						}
 						
 						if (on!=null && s.type!=Segment.UNKNOWN && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){
-							if (isConfirmed(next, which, tw)){
+							if (isConfirmed(next, which, tW)){
 								Segment.removeLastPoint(os, s,on.start.y-SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -15133,8 +15133,9 @@ public final class Segment {
 			return false;
 		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (!isConfirmed(r, edge, tW) || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex))
 			return true;
-		if (r.num>=3 && !isConfirmed(r, edge, tW) && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
-		if (r.num>=3 && !isConfirmed(r, edge, tW) && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=1)) return true;
+		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=1)) return true;
 		return false;
 	}
 
