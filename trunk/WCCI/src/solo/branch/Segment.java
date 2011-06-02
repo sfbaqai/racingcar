@@ -6588,7 +6588,7 @@ public final class Segment {
 			}
 		} else if (s.map!=null){
 			int score = 1;
-			if (tp==s.type || s.type==0 || tp==0){
+			if (rr>=0 && (tp==s.type || s.type==0 || tp==0)){
 				if (s.map[rr]==0) {
 					s.appearedRads[s.radCount++] = rr;
 					if (s.opp!=null) s.opp.radCount = s.radCount;
@@ -14553,7 +14553,7 @@ public final class Segment {
 				if (d<=EPS && Segment.check(v, prev.startIndex, s.endIndex+1, s.center, s.radius)>=0){
 					tmpSeg.type = Segment.UNKNOWN;
 					boolean good = false;
-					if ((good = isBelong(s, v, prev.startIndex, s.endIndex+1, tmpSeg, which, tw)) || tmpSeg.type!=Segment.UNKNOWN){
+					if ((good = isBelong(s, v, prev.startIndex, s.endIndex+1, tmpSeg, which, tW)) || tmpSeg.type!=Segment.UNKNOWN){
 						if (good || (tmpSeg.type==prev.type && tmpSeg.type!=0 && tmpSeg.radius==prev.radius && Math.abs(tmpSeg.center.y-prev.center.y)<1)){
 							Segment.apply(s, applyTW, tmpSeg.type, tmpSeg.start, tmpSeg.end, tmpSeg.center, tmpSeg.radius);
 							if (s.radius==tmpSeg.radius){
@@ -14581,7 +14581,7 @@ public final class Segment {
 				if (d<=EPS && Segment.check(v, s.startIndex, next.endIndex+1, s.center, s.radius)>=0){
 					tmpSeg.type = Segment.UNKNOWN;
 					boolean good = false;
-					if ((good = isBelong(s, v, s.startIndex, next.endIndex+1, tmpSeg, which, tw)) || tmpSeg.type!=Segment.UNKNOWN){
+					if ((good = isBelong(s, v, s.startIndex, next.endIndex+1, tmpSeg, which, tW)) || tmpSeg.type!=Segment.UNKNOWN){
 						if (good || (tmpSeg.type==next.type && tmpSeg.type!=0 && tmpSeg.radius==next.radius && Math.abs(tmpSeg.center.y-next.center.y)<1)){
 							Segment.apply(s, applyTW, tmpSeg.type, tmpSeg.start, tmpSeg.end, tmpSeg.center, tmpSeg.radius);
 							if (s.radius==tmpSeg.radius){
@@ -14621,6 +14621,7 @@ public final class Segment {
 			int endIndex = s.endIndex;
 			if (endIndex<=s.startIndex) endIndex = s.startIndex;
 			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tW);
+			boolean isPrevConfirm = prev!=null && isConfirmed(prev, which, tW);
 			bkupS.copy(s);
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
@@ -14639,7 +14640,7 @@ public final class Segment {
 					double d = Math.sqrt(dx*dx+dy*dy);
 					d-=s.radius;
 					if (d<0) d=-d;					
-					if (prev!=null && (isConfirmed(prev, which, tW) || prev.upper!=null)){
+					if (prev!=null && (isPrevConfirm || prev.upper!=null)){
 						tmpSeg1.type = Segment.UNKNOWN;
 						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
 						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
@@ -15124,6 +15125,86 @@ public final class Segment {
 		return reUpdate(trArr, sz, tW,0);
 	}
 	
+	private static boolean reject3(Segment pr,Segment r,Segment nr,Segment pl,Segment l,Segment nl,int edge,double tW){		
+		if (CircleDriver2.inTurn && r!=null && pr!=null && r.type!=0 &&  !isConfirmed(r, edge, tW) && r.num<=2 && l.num<=2 
+				 && pr.type!=r.type && (r.startIndex>pr.endIndex+1 || l.startIndex>pl.endIndex+1)){
+			Vector2D v = (l.points==null) ? null : r.startIndex>pr.endIndex+1 ? r.points[r.startIndex-1] : l.points[l.startIndex-1];
+//			Vector2D pv = (v==null) ? null : r.startIndex>pr.endIndex+1 ? pr.end : pl.end;
+			
+			if (v!=null){
+				if (true){
+					Vector2D point = new Vector2D();
+					Vector2D[] vs = null,others = null;
+					int num = 0;
+					int otherNum = 0;
+					Segment s = null;
+					Segment prev = null;
+					boolean ok = false;
+					if (isConnected(pr, r, tW, pt)){
+						ok = true;
+						mapPoint(pt, r, -1, tW, point);
+						num = CircleDriver2.edgeDetector.rSize;
+						otherNum = CircleDriver2.edgeDetector.lSize;
+						vs = r.points;
+						others = l.points;
+						s = r;
+						prev = pr;
+					} else if (isConnected(pl, l, tW, pt)){
+						ok  =true;
+						mapPoint(pt, l, 1, tW, point);
+						num = CircleDriver2.edgeDetector.lSize;
+						otherNum = CircleDriver2.edgeDetector.rSize;
+						vs = l.points;
+						others = r.points;
+						s = l;
+						prev = pl;
+					}
+					if (ok){
+						int i = 0;
+						if (num>0){
+							i = binarySearchFromTo(vs, pt.y, 0, num-1);
+							if (i<0) 
+								i = -i-1;
+							else if (pt.y>vs[i].y) i++;
+							if (s.startIndex>i){
+								v = vs[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = vs[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+						
+						if (otherNum>0){
+							i = binarySearchFromTo(others, point.y, 0, otherNum-1);
+							if (i<0) 
+								i = -i-1;
+							else if (point.y>others[i].y) i++;
+							s = s.opp;
+							prev = prev.opp;					
+							if (s.startIndex>i){
+								v = others[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = others[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+					}
+				}
+//				return (v.x-pv.x)*l.type<0;
+			}
+		}
+		return false;	
+			
+	}
+	
 	private static boolean reject2(Segment pr,Segment r,Segment nr,int edge,int rN,Vector2D[] rV,double tW){		
 		if (r.type==0){
 			if (pr!=null && pr.type==0 || nr!=null && nr.type==0) return false;
@@ -15135,7 +15216,7 @@ public final class Segment {
 			return true;
 		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
-		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=1)) return true;
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)) return true;
 		return false;
 	}
 
@@ -15433,7 +15514,8 @@ public final class Segment {
 				joinSegment(t, next, tW);
 				occupied[ trIndx[i+1] ] = 0;
 				if (trSz>i+2) System.arraycopy(trIndx, i+2, trIndx, i+1, trSz-i-2);
-				trSz--;								
+				trSz--;	
+				prev = t;
 				continue;
 			}
 
@@ -15446,7 +15528,7 @@ public final class Segment {
 				} else prev.type = UNKNOWN;
 			}
 			if (prev!=null && pl!=null) prev.radCount = pl.radCount;
-			if (!CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
@@ -15589,7 +15671,7 @@ public final class Segment {
 				}
 			}
 			
-			if (!CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
