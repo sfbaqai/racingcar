@@ -14652,7 +14652,7 @@ public final class Segment {
 							if (tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==s.radius)){
 								ok = false;
 								isPrevFTCn = true;								
-							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius) && Math.abs(s.radius-tmpSeg1.radius)<=3){
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius)){
 								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);
 								if (s.radius==tmpSeg.radius){
 									ok = false;
@@ -14680,7 +14680,7 @@ public final class Segment {
 							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
 								ok = false;								
 								tmpSeg.type = Segment.UNKNOWN;
-							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius) && Math.abs(s.radius-tmpSeg1.radius)<=3){
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius)){
 								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);
 								if (s.radius==tmpSeg.radius){
 									ok = false;
