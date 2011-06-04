@@ -115,7 +115,7 @@ public final class Storage {
 		}
 		int total_N = totalRad_N[j];
 		midIndx-=startIndx;
-		if (midIndx<0 || midIndx>aRads.length || aRads[midIndx]!=0) return;
+		if (midIndx<0 || midIndx>=aRads.length || aRads[midIndx]!=0) return;
 		if (tp==0){
 			for (int i=total_N-1;i>=0;--i)
 				if (aMidIndx[i]==midIndx) return;
