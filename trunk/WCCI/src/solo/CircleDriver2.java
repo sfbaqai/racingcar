@@ -37,7 +37,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 3300.92; 
+	public static final double BREAK_TIME = 1400.01; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+					// [m/s] range [0..10]
@@ -3534,7 +3534,7 @@ public final class CircleDriver2{
 			}
 			else {
 //				acc = 0;
-				acc = (speedX>targetSpeed+15) ? CONSTANT_SPEED_ACC*0.25 : 1;
+				acc = (speedX>targetSpeed+20) ? CONSTANT_SPEED_ACC*0.25 : 1;
 				brake = 0;
 //				if (speedX>targetSpeed) gear = 1;
 				steer = relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.001) ? bal : 0;
@@ -3569,14 +3569,14 @@ public final class CircleDriver2{
 		if (!inTurn && turn==0 && absSpeedY<MODERATE_SPEEDY && Math.abs(curAngle)<0.1) return acc;
 
 		if (absSpeedY>=50){			
-			if (relativeAngle>0 && speedX<targetSpeed) 
+			if (relativeAngle>0 && speedX<targetSpeed+20 && relativePosMovement<-0.001 && toOutterEdge<tW) 
 				acc = 1;
 			else if (absSpeedY>absLastSpeedY) 
 				acc = CONSTANT_SPEED_ACC*0.25;
-			else acc = (speedX<targetSpeed+10) ? 1 : 0;
+			else acc = (speedX<targetSpeed+20) ? 1 : 0;
 			if (acc>0) 
 				brake = 0;
-			else if (speedX>targetSpeed+15) brake = 1;
+			else if (speedX>targetSpeed+20) brake = 1;
 			steer = relativeAngleMovement>0.02 ? turn : (relativeAngleMovement>0.01) ? bal : -turn;
 			return acc;
 		}
@@ -4088,7 +4088,7 @@ public final class CircleDriver2{
 			//			}
 		}
 
-		if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.5){
+		if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.5 && speedX>lowestSpeed-tW*2){
 			acc = 0;
 		}
 
@@ -8418,7 +8418,7 @@ public final class CircleDriver2{
 		if (lastSeg.type!=0) TrackSegment.drawCircle(xyPlot, lastSeg.center.x, lastSeg.center.y, lastSeg.radius,bs);
 		
 		double[] rs = new double[6];
-		Geom.ptTangentLine(0, 0, lastSeg.center.x, lastSeg.center.y, lastSeg.radius,rs);
+		if (lastSeg.type!=0) Geom.ptTangentLine(0, 0, lastSeg.center.x, lastSeg.center.y, lastSeg.radius,rs);
 		double tx = rs[0];
 		double ty = rs[1];
 		TrackSegment.drawText(xyPlot, "Last Segment", lastSeg.end.x, (lastSeg.end.y+lastSeg.start.y)*0.5, 12);
