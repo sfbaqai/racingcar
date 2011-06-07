@@ -12757,13 +12757,12 @@ public final class CircleDriver2{
 							: (relativeAngle>0.15 || relativeAngle>0.1 && relativePosMovement>0 && absSpeedY>=MODERATE_SPEEDY && relativeAngleMovement>0.001) ? bal*0.5 : (relativeAngle<0.05) ? deflect : 0;
 					else if (toInnerEdge<0){
 						if (relativePosMovement<-0.001 && toOutterEdge<=-GAP && relativeAngle<-0.01) acc = (relativePosMovement<-0.01) ? CONSTANT_SPEED_ACC*0.25 : Math.max(CONSTANT_SPEED_ACC*0.5,minAbs(acc, lastAcc)*0.95);
-						steer = (relativeAngle<0.3 && relativeAngleMovement<-0.01 && (relativePosMovement<-0.001 || toOutterEdge<-W)) ? (toOutterEdge<-W*1.2 && relativeAngleMovement>-0.02) ? 0 : Math.signum(deflect) : 
-							(relativeAngle>0.2) 
-								? forceSteer(0)
+						steer = (relativeAngle<0.3 && relativeAngleMovement<-0.01 && (relativePosMovement<-0.001 || toOutterEdge<-W)) ? (toOutterEdge<-W*1.2 && relativeAngleMovement>-0.02) ? 0 : Math.signum(deflect) :
+							(relativeAngle>0.3) ?  -Math.signum(deflect)
+							: (relativeAngle>0.2) 
+								? stableSteer(bal)
 								: (relativeAngle>0.15) 
-									?	(relativeAngleMovement>0.01) ? bal 
-										: (relativeAngleMovement<-0.01) ? Math.signum(deflect)  
-										: (relativePosMovement>0.001 && toOutterEdge>-W) ? toOutterEdge>-GAP ? -Math.signum(deflect) : bal : (relativePosMovement<0.001 || relativeAngleMovement<-0.001 || toOutterEdge<-GAP) ? Math.signum(deflect) : (relativeAngleMovement>0 && relativePosMovement>0.001) ? 0 : deflect 
+									?	stableSteer(bal*0.5) 
 									: (relativeAngleMovement>0.01) ? 0 
 										:(relativePosMovement<0.001 || relativeAngleMovement<-0.001 || toOutterEdge<-GAP) ? Math.signum(deflect) : (relativeAngleMovement<-0.001 && lastSteer*deflect>0) ? maxAbs(deflect, lastSteer) : deflect;
 					} else steer = (relativeAngle<-0.15 && relativeAngleMovement<-0.001) ? -Math.signum(deflect) : (relativeAngle<-0.1) ? bal*0.5 :(relativeAngle<-0.05 || absSpeedY>=MODERATE_SPEEDY && relativeAngle<0) ? 0 : lastSteer*deflect>0 && relativeAngle>=0 ? maxAbs(lastSteer, deflect) : deflect;
