@@ -8948,7 +8948,7 @@ public final class Segment {
 										} else {
 											double cnx = s.center.x;
 											double cny = s.center.y;	
-											double maxE = 0;
+//											double maxE = 0;
 											for (int ii = index;ii<=k;++ii){								
 												Vector2D vv = v[ii];
 												m++;
@@ -8956,10 +8956,10 @@ public final class Segment {
 												double dy = vv.y-cny;			
 												double e = Math.sqrt(dx*dx+dy*dy)-s.radius;
 												if (e<0) e = -e;
-												if (maxE<e) maxE = e;
+//												if (maxE<e) maxE = e;
 												if (e>EPS) {
 													good = false;
-													if (e>1 || num<4) break;
+													break;
 												}
 											}
 //											if (!good && maxE<1 && num>3) storage.store(index, index, k, s.type, s.radius);
@@ -9015,7 +9015,7 @@ public final class Segment {
 										} else {
 											double cnx = s1.center.x;
 											double cny = s1.center.y;		
-											double maxE = 0;
+//											double maxE = 0;
 											for (int ii = index;ii<=k;++ii){
 												m++;
 												Vector2D vv = v[ii];
@@ -9023,10 +9023,10 @@ public final class Segment {
 												double dy = vv.y-cny;			
 												double e = Math.sqrt(dx*dx+dy*dy)-s1.radius;												
 												if (e<0) e = -e;
-												if (maxE<e) maxE = e;
+//												if (maxE<e) maxE = e;
 												if (e>EPS) {
 													good = false;
-													if (e>1 || num<4) break;
+													break;
 												}
 											}
 											
@@ -9442,7 +9442,7 @@ public final class Segment {
 								if (next!=null) {
 									int tmptp = (int)rs[3];
 									double tmpr = rs[2];																
-									if (tmptp!=0 && (lst.y-Math.max(0,fst.y)>=tmpr+1+tW*which*tmptp || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
+									if (tmptp!=0 && (lst.y-Math.max(0,fst.y)>=tmpr+1.5+tW*which*tmptp || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
 									
 									if (s2.start==null){
 										s2.start = new Vector2D(fst);
@@ -9494,7 +9494,7 @@ public final class Segment {
 									if (isReject(os, other, next, tW)) continue;
 									
 									if (s2.type==0){ 
-										if (s2.end.y-s2.start.y<3 || other.end.y-other.start.y<3 || s2.end.y-s2.start.y>=s2.radius+1) continue;
+										if (s2.end.y-s2.start.y<3 || other.end.y-other.start.y<3 || s2.end.y-s2.start.y>=s2.radius+1.5) continue;
 										double total = 0;
 										for (int k = other.startIndex;k<=other.endIndex;++k){
 											Vector2D vv = opoints[k];
@@ -9527,7 +9527,8 @@ public final class Segment {
 				int num = 0;
 				boolean noStraight = true;
 				int[] marks = new int[aNum];
-				for (int i = aNum-1;i>=0;--i){
+				int idx = -1;
+				for (int i = 0;i<aNum;++i){
 					int er = aRadius[i];
 					if (aMap[er]==maxAppear){						
 						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
@@ -9536,17 +9537,18 @@ public final class Segment {
 						if (tp==1) er-=Segment.MAX_RADIUS;
 						Vector2D fst = v[maxFstIndx];
 						Vector2D lst = v[maxLstIndx];
-						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
+						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
 							continue;														
 						}
 						marks[i] = 1;
 						if (noStraight && tp!=0){
 							avg+=er*tp;
 							num++;
+							if (maxAppear==1) break;
 						} else if (tp==0) noStraight = false;
 					}
 				}
-				int idx = -1;
+				
 				if (noStraight && num>0) {
 					avg/=num;
 					double minDist = 100000;
@@ -9558,7 +9560,7 @@ public final class Segment {
 						if (minDist>Math.abs(tp*er-avg)){
 							minDist = Math.abs(tp*er-avg);
 							idx = i;
-							if (num<3) break;
+							if (num<3 || maxAppear==1) break;
 						}							
 					}
 
