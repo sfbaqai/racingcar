@@ -8798,7 +8798,13 @@ public final class Segment {
 			if (last.y-first.y<3 && prev!=null && !CircleDriver2.isFirstSeg(prev)) return indx;
 			
 			if (prev!=null && e>E){				
-				radiusFrom2Points(prev, first, last, tW, s);					 					
+				radiusFrom2Points(prev, first, last, tW, s);		
+//				if (CircleDriver2.time>=CircleDriver2.BREAK_TIME && prev.num>0){
+//					double[] r = new double[6];
+//					Geom.getCircle(first, last, prev.points[prev.endIndex], r);
+//					r[2] = Math.sqrt(r[2]);
+//					System.out.println();
+//				}
 				if (prev.type==0 && s.type==0){										
 					return indx;
 				}
@@ -8845,7 +8851,7 @@ public final class Segment {
 			s1.unsafe = true;
 			Vector2D pt = new Vector2D();
 			final double EPS = EPSILON*3.5;
-			int m = 0;
+			int m = 0;			
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
 			int[] mapIndx = storage.mapIndx;
@@ -9080,13 +9086,16 @@ public final class Segment {
 										aLstIndx[r] = k;
 									}
 									aMap[r]+=map[r];
-									if (r!=maxR && aMap[r]>maxAppear){
+									if (aMap[r]>maxAppear){
 										maxAppear = aMap[r];
-										maxR = r;
-										maxFstIndx = aFstIndx[r];
-										maxLstIndx = aLstIndx[r];
+										if (r!=maxR){
+											maxR = r;
+											maxFstIndx = aFstIndx[r];
+											maxLstIndx = aLstIndx[r];
+										}
 									}
 								}
+								
 							}
 						}
 					}
@@ -9123,6 +9132,7 @@ public final class Segment {
 							aLstIndx[r] = 0;
 							aRadius[i] = 0;
 						}
+						aNum = 0;
 						
 						if (!ok){
 							Vector2D mid = v[from+1];					
@@ -9259,6 +9269,7 @@ public final class Segment {
 							aLstIndx[r] = 0;
 							aRadius[i] = 0;
 						}
+						aNum = 0;
 						
 						if (s!=null && s.type!=Segment.UNKNOWN && s.type==0 && s.end.y-s.start.y<2) return indx;																						
 						if (s.type!=Segment.UNKNOWN)
@@ -9528,9 +9539,11 @@ public final class Segment {
 				boolean noStraight = true;
 				int[] marks = new int[aNum];
 				int idx = -1;
+				boolean found = false;
 				for (int i = 0;i<aNum;++i){
 					int er = aRadius[i];
-					if (aMap[er]==maxAppear){						
+					if (aMap[er]==maxAppear){
+						found = true;
 						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
 						maxFstIndx = aFstIndx[er];
 						maxLstIndx = aLstIndx[er];
@@ -9547,6 +9560,10 @@ public final class Segment {
 							if (maxAppear==1) break;
 						} else if (tp==0) noStraight = false;
 					}
+				}
+				
+				if (noStraight && !found && aNum>3){
+					System.out.println();
 				}
 				
 				if (noStraight && num>0) {
@@ -9624,6 +9641,14 @@ public final class Segment {
 														
 					
 						if (tmpSeg.type!=Segment.UNKNOWN){
+							for (int ii = aNum-1;ii>=0;--ii){
+								int r = aRadius[ii];
+								aMap[r] = 0;
+								aFstIndx[r] = 0;
+								aLstIndx[r] = 0;
+								aRadius[ii] = 0;
+							}
+							aNum = 0;
 							if (maxFstIndx-from>=2){
 								indx = bestGuess(v, from, maxFstIndx, tW, prev, tmpSeg, oalArr, indx);
 							}
@@ -9636,13 +9661,7 @@ public final class Segment {
 								os.done = true;
 							else os.done = false;
 							++indx;
-							for (int ii = aNum-1;ii>=0;--ii){
-								int r = aRadius[ii];
-								aMap[r] = 0;
-								aFstIndx[r] = 0;
-								aLstIndx[r] = 0;
-								aRadius[ii] = 0;
-							}
+							
 							if (to-maxLstIndx-1>=2){
 								return bestGuess(v, maxLstIndx+1, to, tW, s, next, oalArr, indx);
 							}
@@ -9661,6 +9680,7 @@ public final class Segment {
 				aLstIndx[r] = 0;
 				aRadius[i] = 0;
 			}
+			aNum = 0;
 		} else {//end of if			
 			Segment[] tmpStore = new Segment[30];
 			ObjectArrayList<Segment> ols = ObjectArrayList.wrap(tmpStore,0);
