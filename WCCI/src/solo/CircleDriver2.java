@@ -3882,6 +3882,9 @@ public final class CircleDriver2{
 //					acc = (!maxTurn) ? 0 : (absSpeedY<10 && relativeAngle>0 && speedX<lastSpeed) ? acc : Math.min(acc,lastAcc)*INCREASE_ONE;
 				}
 			}
+			if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.5 && speedX>lowestSpeed-tW*2){
+				acc = 0;
+			}
 			if (acc==0) acc = CONSTANT_SPEED_ACC*0.25;
 			return acc;
 		}
