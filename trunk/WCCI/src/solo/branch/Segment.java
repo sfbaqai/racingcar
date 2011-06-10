@@ -8031,6 +8031,13 @@ public final class Segment {
 			d = Math.round(d-tW)+tW;
 			if (d==r){
 				Vector2D center = circle(first, last, ox,oy, r);
+				if (!isStraight){
+					Geom.ptLineDistSq(sx, sy, lx, ly, center.x, center.y, temp);
+//					double nx = temp[0];
+					double ny = temp[1];
+					if (Math.abs(ny-first.y)<1 && first.y>50) return -1;
+					
+				}
 				if (s!=null) apply(s, tW,tp, first, last, center, r);
 //				long endTime = (System.nanoTime()-ti)/1000000;
 //				if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
