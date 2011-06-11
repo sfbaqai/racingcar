@@ -3088,7 +3088,7 @@ public final class Segment {
 				if (s.type!=UNKNOWN){
 					int sr = (s.type==0) ? 0 : (int)Math.round(s.radius+s.type*which*tW);
 					if (s.type==1) sr+=Segment.MAX_RADIUS;
-					if (map[mr]>1 && (sr==mr || map!=null && map[sr]>0 && map[sr]>=map[mr])){
+					if (mr<map.length && mr>=0 && map[mr]>1 && (sr==mr || map!=null && sr<map.length && map[sr]>0 && map[sr]>=map[mr])){
 						rs.type = s.type;
 						if (rs.start==null) 
 							rs.start = new Vector2D(fst);
@@ -5261,8 +5261,9 @@ public final class Segment {
 			if (l<1) return sz; 
 			s = rsArr[l-1];
 			int sR = (s==null || s.type==UNKNOWN) ? 0 : (s.type==0) ? MAX_RADIUS-1 : (int)Math.round(s.radius-s.type*tW);
+			if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 			boolean ok = false;
-			if (s!=null && (s.type==Segment.UNKNOWN || (ok = (s.num<=3 && (s.map==null || s.map[sR]<3))) ) && last.type!=Segment.UNKNOWN){									
+			if (s!=null && (s.type==Segment.UNKNOWN || (ok = (s.num<=3 && (s.map==null || sR>=0 && s.map[sR]<3))) ) && last.type!=Segment.UNKNOWN){									
 				int len = s.num;
 				int startIndex = s.startIndex; 
 				int index = startIndex+len-1;
@@ -5944,6 +5945,7 @@ public final class Segment {
 								int indx = tmpI[k];
 								if (s.map==null) s.map = new int[MAX_RADIUS];
 								int sR = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)(s.radius-s.type*tW);
+								if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 								if (!s.reCalculate(v, indx, j, tW)) continue;
 								s.map[sR]++;																								
 								s.num = j-indx;
@@ -6016,7 +6018,8 @@ public final class Segment {
 					}
 					if (ty==0 || radius==rr){
 						Segment s = new Segment(x1, y1, xx, yy,tx, ty, radius,tW);
-						int sR = (rr>=MAX_RADIUS-1) ? MAX_RADIUS : (int)(rr-s.type*tW);						
+						int sR = (rr>=MAX_RADIUS-1) ? MAX_RADIUS : (int)(rr-s.type*tW);
+						if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 						s.map[sR]++;
 						s.startIndex = i;
 						s.endIndex = j-1;
@@ -8035,7 +8038,7 @@ public final class Segment {
 					Geom.ptLineDistSq(sx, sy, lx, ly, center.x, center.y, temp);
 //					double nx = temp[0];
 					double ny = temp[1];
-					if (Math.abs(ny-first.y)<1 && first.y>50) return -1;
+					if (Math.abs(ny-first.y)<1) return -1;
 					
 				}
 				if (s!=null) apply(s, tW,tp, first, last, center, r);
@@ -9559,6 +9562,18 @@ public final class Segment {
 						Vector2D lst = v[maxLstIndx];
 						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
 							continue;														
+						}
+						if (tp*(lst.x-fst.x)<0 && maxLstIndx-maxFstIndx>=3){
+							boolean anyConflict = false;
+							for (int j=i+1;j<aNum;++j){
+								int ner = aRadius[j];
+								int ntp = ner==0 ? 0: ner<Segment.MAX_RADIUS ? -1: 1;
+								if (ntp*tp<0){
+									anyConflict = true;
+									break;
+								}
+							}
+							if (anyConflict) continue;
 						}
 						marks[i] = 1;
 						if (noStraight && tp!=0){
