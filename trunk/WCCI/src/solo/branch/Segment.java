@@ -8089,9 +8089,9 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy<=prev.end.y-0.5 || ssy>startY+0.2) continue;
+							if (ssy<=prev.end.y-0.5 || ssy>startY+0.2 || Math.abs(ssy-startY)<1) continue;
 						} else if (prev.start.y>endY){
-							if (ssy>=prev.start.y+0.2 || ssy<endY-0.5) continue;
+							if (ssy>=prev.start.y+0.2 || ssy<endY-0.5 || Math.abs(ssy-prev.start.y)<1) continue;
 						}
 //						if ((sy<prev.start.y && startY>prev.start.y) || (sy>endY && endY>prev.end.y) || (sy<startY && startY<prev.start.y) || (sy>prev.end.y && prev.end.y>endY)) continue;
 					}
@@ -8655,6 +8655,34 @@ public final class Segment {
 		}
 		return 0;
 	}
+	
+	private static final boolean reject4(Segment s,Segment os,double tW){
+		if (s.type==0 || s.type==2 || s.center==null) return false;
+			if (tW<0) tW = -tW;
+			double R = Math.max(s.radius, os.radius);
+			double r = Math.min(s.radius, os.radius);
+			double xx = 2*Math.sqrt(R*2*tW)*r/R;
+			Vector2D first = s.start;
+			Vector2D last = s.end;
+			double diff = last.y-first.y;
+//			if (diff<xx) return false;
+			double dd = s.center.length();
+			if (dd>R){
+				double[] tmp =new double[6];
+				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, R,tmp);
+//				double lx = tmp[0];
+				double ly = tmp[1];
+				if (ly>first.y+1) 
+					return true;
+//				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, rm,tmp);
+//				double llx = tmp[0];
+//				double lly = tmp[1];
+//				Geom.getLineCircleIntersection(0, 0, llx, lly, s.center.x, s.center.y, r,tmp);
+//				double mx = tmp[0];
+//				double my = tmp[1];		
+			}		
+		return false;
+	}
 
 	public static final int bestGuess(final Vector2D[] v,int from,int to,double tW,Segment prev,Segment next,Segment[] oalArr,int indx){
 		long ti = System.nanoTime();
@@ -8833,7 +8861,7 @@ public final class Segment {
 				reSynchronize(s, os, 0, otherTo, -which, tw);				
 				if ((os.type!=0 && ((os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
 					return indx;
-				}
+				}				
 				if (s.type==0){ 
 					if (s.end.y-s.start.y<3 || os.end.y-os.start.y<3) return indx;
 					double total = 0;
@@ -8843,7 +8871,8 @@ public final class Segment {
 					}
 					total /= (double)os.num;
 					if (total>=0.1) return indx;
-				}
+				} else if (reject4(s, os, tw)) return indx;
+				
 				s.done = true;
 				os.unsafe = false;
 				return 1+indx;
@@ -9185,7 +9214,8 @@ public final class Segment {
 								} else {
 									s.type = 0;
 									s.radius = 0;
-								}								
+								}
+								
 								s.num = 3;
 							}
 						}
@@ -9281,7 +9311,8 @@ public final class Segment {
 						}
 						aNum = 0;
 						
-						if (s!=null && s.type!=Segment.UNKNOWN && s.type==0 && s.end.y-s.start.y<2) return indx;																						
+						if (s!=null && s.type!=Segment.UNKNOWN && s.type==0 && s.end.y-s.start.y<2) return indx;	
+						if (reject4(s, os, tw)) return indx;
 						if (s.type!=Segment.UNKNOWN)
 							indx++;								
 
@@ -9682,6 +9713,7 @@ public final class Segment {
 							if (os.num==0) 
 								os.done = true;
 							else os.done = false;
+							if (reject4(s, os, tw)) continue;
 							++indx;
 							
 							if (to-maxLstIndx-1>=2){
