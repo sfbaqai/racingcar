@@ -11227,6 +11227,8 @@ public final class Segment {
 			else fst++;
 			if (fst>=0 && fst<s.endIndex && vv[fst].y<=pointy+SMALL_MARGIN) fst++;
 		}
+		
+		if (fst<0) return;
 
 		s.startIndex = fst;			
 		s.updated = true;
@@ -11235,7 +11237,7 @@ public final class Segment {
 			s.num = 0;
 			s.endIndex = fst-1;
 		}
-		Vector2D v = (s.num>0) ? s.points[s.startIndex] : s.start;
+		Vector2D v = (s.num>0) ? s.points[fst] : s.start;
 		if (s.num>0 && v.y>s.end.y+SMALL_MARGIN){
 			s.type = Segment.UNKNOWN;
 			s.opp.type = Segment.UNKNOWN;
