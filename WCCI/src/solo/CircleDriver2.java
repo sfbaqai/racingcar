@@ -37,7 +37,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 4800.72; 
+	public static final double BREAK_TIME = 1500.41; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+				-	// [m/s] range [0..10]
@@ -6269,7 +6269,7 @@ public final class CircleDriver2{
 				else if (edge!=null && r==edge.radius && (k-rIdx>=3 || j-lIdx>=3) && map[eR]==0) current = false;
 				nums[i] = j+k-2-lIdx-rIdx;
 			}
-			if (ok && nums[i]>0){
+			if (ok && (nums[i]>0 || indx==1)){
 				selections[sz++] = i;
 				//				System.out.println(r+"    "+first+"    "+last+"   "+oFirst+"    "+oLast);
 			}
