@@ -12672,8 +12672,8 @@ public final class CircleDriver2{
 								? relativeAngleMovement<lastRelativeAngleMovement ? signD : (absSpeedY>0) ? 0 : bal 
 								: bal 
 						:  signD 
-				: relativeAngleMovement>lastRelativeAngleMovement ? 0 
-						:(relativeAngle>0.25) ? bal*0.5 : (relativeAngle>0.2 || absSpeedY>HIGH_SPEEDY && relativeAngle>0) ? 0 : (relativeAngle>0.15) ? 0 : (relativeAngle<0.05) ? deflect : signD  							
+				: relativeAngleMovement>lastRelativeAngleMovement ? (relativeAngle>0.15) ? 0 : relativeAngle>0.005 ? deflect : signD 
+						:(relativeAngle>0.25) ? bal*0.5 : (relativeAngle>0.2 || absSpeedY>HIGH_SPEEDY && relativeAngle>0) ? 0 : (relativeAngle>0.15) ? 0 : (relativeAngle>0.05) ? deflect : signD  							
 		: (relativeAngle>0.25) 								
 			? relativeAngleMovement>0.01 
 				? toOutterEdge<-GAP ? lastRelativeAngleMovement<0.01 || relativeAngleMovement<lastRelativeAngleMovement ? 0 : bal*0.5 : relativeAngleMovement<lastRelativeAngleMovement ? bal*0.5 : -signD
@@ -12701,7 +12701,7 @@ public final class CircleDriver2{
 						:  toOutterEdge<-GAP ? (lastRelativeAngleMovement<0.01 || relativeAngleMovement>0.001 && relativeAngleMovement<lastRelativeAngleMovement || relativeAngleMovement<0) 
 								? (absSpeedY>MODERATE_SPEEDY && relativeAngleMovement<0.001) ? signD : deflect 
 								: (absSpeedY>MODERATE_SPEEDY) ? deflect : 0 
-							: relativeAngleMovement<-0.001 ? bal : -signD  
+							: relativeAngleMovement<-0.001 || relativeAngleMovement<lastRelativeAngleMovement ? 0 : bal*0.5  
 				: (relativeAngleMovement>0.03 && relativeAngle>0) ? -signD : (relativeAngleMovement>0.02 && relativeAngle>0 && toOutterEdge<-GAP) 
 						? relativeAngleMovement<lastRelativeAngleMovement ? 0 : bal*0.5 
 						: (relativeAngleMovement>0.01)
@@ -12872,7 +12872,10 @@ public final class CircleDriver2{
 					if (speedX<=maxSpeed-1.5)
 						acc = 1;
 					else acc = 2/(1+Math.exp(speedX - maxSpeed-1)) - 1;
-					if (relativeAngle<0 && (relativePosMovement<-0.02 || relativePosMovement<-0.01 && relativeAngleMovement<-0.001)) acc = 0;					
+					if (relativeAngle<0 && relativePosMovement<-0.01 && relativeAngleMovement<-0.001 || turn!=0 && turn!=2 && (toOutterEdge<0 && relativeAngle<0.1 && relativePosMovement<-0.02 || relativePosMovement<-0.03 || relativePosMovement>0.03)) 
+						acc = 0;
+					else if (acc>0 && relativePosMovement<0.001 && relativePosMovement<lastRelativeAngleMovement && toOutterEdge<0 && relativeAngle>0 && relativeAngleMovement>0)
+						acc *= CONSTANT_SPEED_ACC;
 					brake = 0;
 				} else if (speed>maxSpeed+tW || absSpeedY>HIGH_SPEEDY){
 					if (maxSpeed<0){
@@ -12966,6 +12969,7 @@ public final class CircleDriver2{
 
 			if (absSpeedY>=MODERATE_SPEEDY || absSpeedY>Math.abs(lastSpeedY)+4){
 				acc = (relativeAngle>0) ? (relativePosMovement<-0.01) ? 1 : (relativePosMovement<-0.001 || toOutterEdge<-GAP) && relativeAngleMovement<-0.001 ? CONSTANT_SPEED_ACC*0.5 : 1 : CONSTANT_SPEED_ACC*0.25;
+				if (relativePosMovement<-0.02) acc = 0;
 				if (absSpeedY>HIGH_SPEEDY || absSpeedY>Math.abs(lastSpeedY)+4) 
 					steer = absSpeedY>VERY_HIGH_SPEEDY && relativeAngle>0 && relativeAngleMovement>0.001 && relativePosMovement<-0.02 ? -signD 
 							:(relativeAngle>0.3) ? forceSteer(-signD ) 
