@@ -8671,8 +8671,8 @@ public final class Segment {
 				double[] tmp =new double[6];
 				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, R,tmp);
 //				double lx = tmp[0];
-				double ly = tmp[1];
-				if (ly>first.y+1) 
+				double ly = (s.type==CircleDriver2.TURNRIGHT) ? tmp[1] : tmp[3];
+				if (ly>Math.max(first.y,0)+1) 
 					return true;
 //				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, rm,tmp);
 //				double llx = tmp[0];
@@ -15771,85 +15771,94 @@ public final class Segment {
 		if (trSz>0 && fromSeg<trSz) 
 			prev = trArr[ trIndx[ trSz-1] ];						
 		
-		pl = (prev==null) ? null : prev.leftSeg;
-		pr = (prev==null) ? null : prev.rightSeg;
-		int numL = (pl==null) ? lN : lN - pl.endIndex-1;
-		int numR = (pr==null) ? rN : rN - pr.endIndex-1;
 		
-		if (trSz==0 || fromSeg==trSz || numL>=2 || numR>=2 ){			
-			int currentIndx = (trSz==0) ? 0 : trSz;			
-			if (numL>=numR)
-				reCheckSegment(pl, null, null, -1, tW,trArr,currentIndx);
-			else reCheckSegment(pr, null, null, 1, tW,trArr,currentIndx);
-			Segment t = null;
-			Segment l = null;
-			Segment r = null;
-			Segment nl = null;
-			Segment nr = null; 
-			if (currentIndx<trSz){
-				t = trArr[ trIndx[currentIndx] ];
-				next = (currentIndx<trSz-1) ? trArr[  trIndx[currentIndx+1] ] : null;
-				l = t.leftSeg;
-				r = t.rightSeg;
-				nl = (next==null) ? null : next.leftSeg;
-				nr = (next==null) ? null : next.rightSeg;				
-			}
-			if (numL>=numR) 
-				reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
-			else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
-			
-			if (l!=null && l.type!=Segment.UNKNOWN){
-				if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
-					pl.upper = new Vector2D(l.lower);
-					if (r.lower==null)
-						reSynchronize(l, r, 0, rN, 1, tw);
-					pr.upper = new Vector2D(r.lower);																
-				} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
-					nl.lower = new Vector2D(l.upper);
-					if (r.upper==null)
-						reSynchronize(l, r, 0, rN, 1, tw);
-					nr.lower = new Vector2D(r.upper);
+		
+		while (true){
+			pl = (prev==null) ? null : prev.leftSeg;
+			pr = (prev==null) ? null : prev.rightSeg;
+			int numL = (pl==null) ? lN : lN - pl.endIndex-1;
+			int numR = (pr==null) ? rN : rN - pr.endIndex-1;
+			int lastTrsz = trSz; 
+			if (trSz==0 || fromSeg==trSz || numL>=2 || numR>=2 ){			
+				int currentIndx = (trSz==0) ? 0 : trSz;			
+				if (numL>=numR)
+					reCheckSegment(pl, null, null, -1, tW,trArr,currentIndx);
+				else reCheckSegment(pr, null, null, 1, tW,trArr,currentIndx);
+				Segment t = null;
+				Segment l = null;
+				Segment r = null;
+				Segment nl = null;
+				Segment nr = null; 
+				if (currentIndx<trSz){
+					t = trArr[ trIndx[currentIndx] ];
+					next = (currentIndx<trSz-1) ? trArr[  trIndx[currentIndx+1] ] : null;
+					l = t.leftSeg;
+					r = t.rightSeg;
+					nl = (next==null) ? null : next.leftSeg;
+					nr = (next==null) ? null : next.rightSeg;				
 				}
-			}
-			
-			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
-					|| reject2(pr, r, nr, 1,rN, rV, tW))){
-				l.type = Segment.UNKNOWN;
-				r.type = Segment.UNKNOWN;
-			}
-			
-			if (pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
-				joinSegment(prev, t, tW);		
-				occupied [ trIndx[trSz-1] ] = 0;
-//				if (trSz>0) System.arraycopy(trIndx, trSz-1, trIndx, trSz-2, 1);
-				trSz--;								
-			}
-			
-			if (trSz>0){
-				int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
-				for (int i = trSz-1;i>=minSeg;--i){					
-					t = trArr[ trIndx[i] ];	
-					Segment s = t.leftSeg;
-					if (s.type==Segment.UNKNOWN){
-						occupied[ trIndx[i] ] = 0;
-						if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
-						trSz--;
+				if (numL>=numR) 
+					reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
+				else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
+				
+				if (l!=null && l.type!=Segment.UNKNOWN){
+					if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+						pl.upper = new Vector2D(l.lower);
+						if (r.lower==null)
+							reSynchronize(l, r, 0, rN, 1, tw);
+						pr.upper = new Vector2D(r.lower);																
+					} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+						nl.lower = new Vector2D(l.upper);
+						if (r.upper==null)
+							reSynchronize(l, r, 0, rN, 1, tw);
+						nr.lower = new Vector2D(r.upper);
+					}
+				}
+				
+				if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+						|| reject2(pr, r, nr, 1,rN, rV, tW))){
+					l.type = Segment.UNKNOWN;
+					r.type = Segment.UNKNOWN;
+				}
+				
+				if (pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
+					joinSegment(prev, t, tW);		
+					occupied [ trIndx[trSz-1] ] = 0;
+	//				if (trSz>0) System.arraycopy(trIndx, trSz-1, trIndx, trSz-2, 1);
+					trSz--;								
+				}
+				
+				if (trSz>0){
+					int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
+					for (int i = trSz-1;i>=minSeg;--i){					
+						t = trArr[ trIndx[i] ];	
+						Segment s = t.leftSeg;
+						if (s.type==Segment.UNKNOWN){
+							occupied[ trIndx[i] ] = 0;
+							if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
+							trSz--;
+							continue;
+						}
+						toMiddleSegment(s,t, -1, tW);
+						prev = (i>0) ? trArr[ trIndx[i-1] ].leftSeg : null;
+						
+						if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
+							reCalibrate(prev, s, -1, tw);							
+						}
+						Segment op = (prev==null) ? null : prev.opp;
+						Segment os = (s==null) ? null : s.opp;
+						if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
+							reCalibrate(prev, s, 1, tw);							
+						}
+						t.radCount = s.radCount;
+					}
+					if (lastTrsz<trSz) {
+						prev = trArr[ trIndx[trSz-1] ];
 						continue;
 					}
-					toMiddleSegment(s,t, -1, tW);
-					prev = (i>0) ? trArr[ trIndx[i-1] ].leftSeg : null;
-					
-					if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
-						reCalibrate(prev, s, -1, tw);							
-					}
-					Segment op = (prev==null) ? null : prev.opp;
-					Segment os = (s==null) ? null : s.opp;
-					if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
-						reCalibrate(prev, s, 1, tw);							
-					}
-					t.radCount = s.radCount;
-				}
-			}
+				}				
+			};
+			break;
 		}		
 		
 		if (CircleDriver2.debug) System.out.println("End reUpdate : "+(System.nanoTime()-CircleDriver2.ti)/1000000);
