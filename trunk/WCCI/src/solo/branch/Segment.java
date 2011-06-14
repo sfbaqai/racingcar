@@ -13194,7 +13194,8 @@ public final class Segment {
 			if (endIndx>size) {
 				int j = 0;
 				for (int i = size;i<endIndx;++i){
-					while (occupied[j]!=0) j++;
+					while (j<occupied.length && occupied[j]!=0) j++;
+					if (j>=occupied.length) return size;
 					trIndx[i] = j;
 					occupied[j] = 1;
 //					Segment t = dest[j];
