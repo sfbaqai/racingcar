@@ -4098,7 +4098,8 @@ public final class CircleDriver2{
 			//			}
 		}
 
-		if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.5 && speedX>lowestSpeed-tW*2 || a<0 && toInnerEdge>-GAP && relativePosMovement>0.001){
+		if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.5 && speedX>lowestSpeed-tW*2 
+				|| a<0 && toInnerEdge>-GAP && relativePosMovement>0.001 || a<0 && relativePosMovement>0.01 && relativeAngleMovement>0.001){
 			acc = 0;
 		}
 
