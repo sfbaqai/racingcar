@@ -10782,7 +10782,8 @@ public final class Segment {
 								s.radCount++;
 								s.opp.radCount++;
 							}
-							s.map[lr] += score;							
+							boolean ignore = (lr==sR && s.type==l.type && s.num==l.num && !s.done);
+							if (!ignore) s.map[lr] += score;							
 							if (s.map!=null){
 								if (changed) {
 									s.num = s.endIndex+1-s.startIndex;
@@ -10800,7 +10801,7 @@ public final class Segment {
 									if (!s.unsafe && (s.num>2 || s.map[lr]>3)) s.unsafe = true;
 									Segment.reSynchronize(s, s.opp, 0,indx+1, -which, tW*2);
 								} else if ((s.map[lr]<3 && s.upper==null && s.lower==null)&& s.num>l.num){
-									s.map[lr]++;																										
+									if (!ignore) s.map[lr]++;																										
 									s.copy(l);									
 									Segment os = s.opp;
 									Segment ol = l.opp;									
