@@ -854,7 +854,7 @@ public final class EdgeDetector {
 			}
 		}
 		
-		originalHighest.copy(highestPoint);
+		if (highestPoint!=null) originalHighest.copy(highestPoint);
 		
 		if (whichEdgeAhead==0 && pointAheadIndx>=0){
 			if (lsz>0 && binarySearchFromTo(left, currentPointAhead, 0, lsz-1)>=0) 

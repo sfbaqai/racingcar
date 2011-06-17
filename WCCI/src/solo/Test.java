@@ -10,7 +10,7 @@ import java.net.InetAddress;
  * Time: 4:56:58 PM
  */
 public class Test {
-
+	private final static String clientID = "championship2011";
     private final static int port = 3001;
     private final static int UDP_CLIENT_TIMEOUT=50;
     private final static int BUFFER_SIZE=8192;
@@ -37,7 +37,7 @@ public class Test {
                 	len = new CarControl().toBytes();
                 else send[len-1] = 1;
                 
-                String toSend = "championship2009";
+                String toSend = clientID;
                 byte[] outBuffer = toSend.getBytes();
                 
                
@@ -156,8 +156,6 @@ public class Test {
     public static void main(String[] args) throws Exception {
     	System.gc();
         System.out.println("Starting");
-//        CircleDriver2.drawEndpoint("geCircle");
-//        if (true) return;
         init();
 //        double ox = 0;
 //        double oy = 4;
@@ -219,7 +217,7 @@ public class Test {
 	            	identify();
 	            	continue;
 	            }	          
-	            long ti = System.nanoTime();	           	            
+	            long ti = System.nanoTime();	            
 	            int numBytes = sd.drive(chars,len);
 	            prevLen = numBytes;	          
 	            
