@@ -4489,7 +4489,7 @@ public final class Segment {
 								if (pr>=Segment.MAX_RADIUS) pr = Segment.MAX_RADIUS-1;
 								if (prev.map!=null){
 									if (prev.map[pr]==0){
-										prev.appearedRads[prev.radCount++] =pr;
+										if (prev.appearedRads!=null) prev.appearedRads[prev.radCount++] =pr;
 										if (prev.opp!=null) prev.opp.radCount = prev.radCount;
 									}
 									prev.map[pr]++;
