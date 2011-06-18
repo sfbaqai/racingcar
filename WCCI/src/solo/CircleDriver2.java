@@ -10512,7 +10512,7 @@ public final class CircleDriver2{
 	}
 	
 	private double simpleSteer(double steer,double absSpeedY,double absLastSpeedY){
-		hazard = 2;
+//		hazard = 2;
 		if (steer*turn<0) return (relativeAngleMovement<-0.01) 
 				? -turn 
 				:(relativeAngleMovement<-0.001) ? steer : (relativeAngleMovement<0.01) ? steer*0.5 : (relativeAngleMovement>0.02) ? 0 : 0;
