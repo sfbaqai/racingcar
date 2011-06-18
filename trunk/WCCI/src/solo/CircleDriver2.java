@@ -37,7 +37,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 8000.83; 
+	public static final double BREAK_TIME = 9000.03; 
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+				-	// [m/s] range [0..10]
@@ -10400,8 +10400,8 @@ public final class CircleDriver2{
 	}
 	
 	private static double faster(double targetSpeed,double m) {
-		if (targetSpeed<90) 			
-			return (m>40) ? targetSpeed+25+tW+1.5*m : (m>30) ? targetSpeed+25+tW+m : targetSpeed+25+tW+0.35*m;
+//		if (targetSpeed<60) 			
+//			return (m>40) ? targetSpeed+25+tW+1.5*m : (m>30) ? targetSpeed+25+tW+m : targetSpeed+25+tW+0.35*m;
 		return (m>40) ? targetSpeed+FAST_MARGIN+tW+1.5*m : (m>30) ? targetSpeed+FAST_MARGIN+tW+m : targetSpeed+FAST_MARGIN+tW+0.35*m;
 	}
 	
@@ -10972,7 +10972,7 @@ public final class CircleDriver2{
 //						if (canGoToLastSeg || canGoAtCurrentSpeed) 
 //							maxSpeed = (m>40) ? lowestSpeed + Math.min(FAST_MARGIN +tW+ m*1.5,100) : lowestSpeed + Math.min(FAST_MARGIN+tW + m,100);
 //						else maxSpeed = (m>40) ? lowestSpeed + Math.min(FAST_MARGIN +tW+ m,100) : lowestSpeed + FAST_MARGIN +tW+ m*0.5;
-						maxSpeed = (m>40 && distToEstCircle>-GAP) ? VERY_FAST(expectedSpeed, m) : (distToEstCircle<-GAP && isDanger || distToEstCircle<-W*1.5) ? MODERATE(expectedSpeed, m) : FAST(expectedSpeed, m);
+						maxSpeed = (m>40 && distToEstCircle>-W) ? VERY_FAST(expectedSpeed, m) : (distToEstCircle<-W && isDanger || distToEstCircle<-W*1.5) ? MODERATE(expectedSpeed, m) : FAST(expectedSpeed, m);
 						if (relativeSpeedY>MODERATE_SPEEDY) maxSpeed = Math.min(maxSpeed, faster(expectedSpeed, m));
 //					}
 											
@@ -11107,7 +11107,7 @@ public final class CircleDriver2{
 //					double r = (lastSeg.radius-GAP);
 //					mLastX = cx + lx*r;
 //					mLastY = cy + ly*r;
-					maxSpeed = (m>40 && distToEstCircle>-GAP) ? VERY_FAST(expectedSpeed, m) : (distToEstCircle<-GAP && isDanger || distToEstCircle<-W*1.5) ? MODERATE(expectedSpeed, m) : FAST(expectedSpeed, m);
+					maxSpeed = (m>40 && distToEstCircle>-W) ? VERY_FAST(expectedSpeed, m) : (distToEstCircle<-W && isDanger || distToEstCircle<-W*1.5) ? MODERATE(expectedSpeed, m) : FAST(expectedSpeed, m);
 					if (relativeSpeedY>MODERATE_SPEEDY) maxSpeed = Math.min(maxSpeed, faster(expectedSpeed, m));
 					mmx = mLastX;
 					mmy = mLastY;					
@@ -11231,9 +11231,9 @@ public final class CircleDriver2{
 					mustPassPoint.y = mLastY;					
 //					maxSpeed = last_speed + FAST_MARGIN + m*0.35;
 					
-					maxSpeed = (m>40 && distToEstCircle>-GAP) ? VERY_FAST(expectedSpeed, m) : 
+					maxSpeed = (m>40 && distToEstCircle>-W) ? VERY_FAST(expectedSpeed, m) : 
 						canGoToLastSeg || canGoAtCurrentSpeed || distToEstCircle>=0 || speedX>FAST(expectedSpeed, m) 
-							|| distToEstCircle>-GAP && (relativeAngleMovement>0.01 || relativeAngleMovement>0.001 && relativeSpeedY<0) ?  FAST(expectedSpeed, m) : MODERATE(expectedSpeed,m);
+							|| distToEstCircle>-W && (relativeAngleMovement>0.01 || relativeAngleMovement>0.001 && relativeSpeedY<0) ?  FAST(expectedSpeed, m) : MODERATE(expectedSpeed,m);
 					if (relativeSpeedY>MODERATE_SPEEDY) maxSpeed = Math.min(maxSpeed, faster(expectedSpeed, m));
 					
 					if (trSz>1 && lastSeg!=null && lastSeg.type!=0 && lastSeg.end.distance(ox,oy)>=rad && isConfirmed(lastSeg) && lastSeg.end.y-lastSeg.start.y>3) maxSpeed = Math.max(maxSpeed,last_speed+lastSeg.end.y-15);
@@ -12019,14 +12019,15 @@ public final class CircleDriver2{
 						
 			
 			double fast_speed = faster(targetSpeed,m);
-			double faster = (targetSpeed<100) ? targetSpeed+25+tW+m*0.5 : targetSpeed+FAST_MARGIN+tW+m*0.5;
+			double faster = targetSpeed+FAST_MARGIN+tW+m*0.5;
 //			double faster = targetSpeed+FAST_MARGIN+tW+m*0.5;
-			double fastI = (targetSpeed<100) ? targetSpeed+m+25 : (relativePosMovement<-0.001 || absSpeedY>MODERATE_SPEEDY && distToEstCircle<0 || distToEstCircle<-W) ? Math.min(faster, fast_speed) : faster;
-			if (targetSpeed<100 && (absSpeedY>=MODERATE_SPEEDY || highestPoint!=null && highestPoint.y<30)){
+//			double fastI = (targetSpeed<60) ? targetSpeed+m+25 : (relativePosMovement<-0.001 || absSpeedY>MODERATE_SPEEDY && distToEstCircle<0 || distToEstCircle<-W) ? Math.min(faster, fast_speed) : faster;
+			double fastI = (relativePosMovement<-0.001 || absSpeedY>MODERATE_SPEEDY && distToEstCircle<0 || distToEstCircle<-W) ? Math.min(faster, fast_speed) : faster;
+			/*if (targetSpeed<100 && (absSpeedY>=MODERATE_SPEEDY || highestPoint!=null && highestPoint.y<30)){
 				fast_speed -= 1.5*tW;
 				faster -= 1.5*tW;
 				fastI -= 1.5*tW;
-			}
+			}//*/
 			//		double ofsDist = Math.abs(relativeTargetAngle-relativeAngle)>0.1 && relativeAngle>=0 && curPos*turn>0.3 ? FAST_MARGIN : tW*3;
 			double ofsDist = FAST_MARGIN;			
 			if (d>FAST_MARGIN || !canGoToLastSeg) d*=0.5;
