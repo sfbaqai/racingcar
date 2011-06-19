@@ -9213,7 +9213,15 @@ public final class Segment {
 									}									
 								} else {
 									s.type = 0;
-									s.radius = 0;
+									s.radius = 0;									
+									if (CircleDriver2.inTurn){
+										double di = Math.sqrt(Geom.ptLineDistSq(first.x, first.y, last.x, last.y, mid.x, mid.y, temp));
+										if (di>0.01){
+											s.type = Segment.UNKNOWN;
+											os.type = Segment.UNKNOWN;
+										}
+									}
+										
 								}
 								
 								s.num = 3;
