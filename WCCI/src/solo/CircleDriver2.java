@@ -6453,23 +6453,26 @@ public final class CircleDriver2{
 				double rr = rads[j];
 				int lNum = lnum[j];
 				int rNum = rnum[j];
-				int total = lNum+rNum+nums[j];				
+				int total = lNum+rNum+nums[j];
+				int mr = (int)Math.round(rr);
+				if (mr>=Segment.MAX_RADIUS) mr = Segment.MAX_RADIUS-1;
+				if (er>=Segment.MAX_RADIUS) er = Segment.MAX_RADIUS-1;
 				if (maxS<total){
 					maxS = total;						
 					r = rr;		
 					idx = j;
 					num = nums[j];
-					er = (int)Math.round(r);
+					er = mr;										
 				} else if (maxS==total) {
 					if (num<nums[j]){
 						num = nums[j];
 						r = rr;
 						idx = j;
-						er = (int)Math.round(r);
-					} else if (map[er]<map[(int)Math.round(rr)] || (map[er]==map[(int)Math.round(rr)] && rr==bestR)){
+						er = mr;
+					} else if (map[er]<map[mr] || (map[er]==map[mr] && rr==bestR)){
 						r = rr;
 						idx = j;
-						er = (int)Math.round(r);
+						er = mr;
 					}
 					//					if (edge!=null && edge.radius==rr){
 					//						r = rr;
