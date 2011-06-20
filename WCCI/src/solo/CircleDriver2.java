@@ -3557,6 +3557,7 @@ public final class CircleDriver2{
 			acc = (!mustSlowDown && slip>15 && Math.abs(a)<0.5 && absSpeedY<HIGH_SPEEDY) ? 1 : (!maxTurn && relativeAngle<0 || Math.abs(a)>0.5) ? CONSTANT_SPEED_ACC*0.25 : !flyingHazard && startFlying==0 && mustSlowDown || speedX>targetSpeed+10 || relativePosMovement<-0.02 && absSpeedY>MODERATE_SPEEDY || speed>targetSpeed-tW && absSpeedY>45 ? 0.25*CONSTANT_SPEED_ACC: 1;
 //			if ((absSpeedY<absLastSpeedY || absSpeedY<HIGH_SPEEDY) && speedX>Math.max(targetSpeed,lastSpeed))
 //				acc = 0;
+			if (acc>CONSTANT_SPEED_ACC && speedX<targetSpeed+10 && relativeAngleMovement<-0.01 && relativePosMovement<0.001) acc = CONSTANT_SPEED_ACC*0.25;
 				
 			brake = 0;
 			return acc;
@@ -4216,6 +4217,7 @@ public final class CircleDriver2{
 				|| a<0 && toInnerEdge>-GAP && relativePosMovement>0.001 || a<-0.1 && relativePosMovement>0.01 && relativeAngleMovement>0.001){
 			acc = 0;
 		}
+		if (acc>CONSTANT_SPEED_ACC && speedX<targetSpeed+10 && relativeAngleMovement<-0.01 && relativePosMovement<0.001) acc = CONSTANT_SPEED_ACC*0.25;
 		if (acc>=CONSTANT_SPEED_ACC &&  slip>15)
 			acc *= CONSTANT_SPEED_ACC;
 		
