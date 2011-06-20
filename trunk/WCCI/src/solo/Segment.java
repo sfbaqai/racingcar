@@ -9602,6 +9602,13 @@ public final class Segment {
 						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
 							continue;														
 						}
+						
+//						if (tp!=0){
+//							Vector2D center = new Vector2D();
+//							Segment.circle(fst, lst, tp, er + tW*tp,center);
+//							if (center.y>lst.y) continue;
+//						}
+						
 						if (tp*(lst.x-fst.x)<0 && maxLstIndx-maxFstIndx>=3){
 							boolean anyConflict = false;
 							for (int j=i+1;j<aNum;++j){
