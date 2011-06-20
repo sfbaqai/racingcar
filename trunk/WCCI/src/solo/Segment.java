@@ -8221,7 +8221,7 @@ public final class Segment {
 		Vector2D first = s.start;
 		Vector2D last = s.end;
 		double r = s.radius;
-		if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || last.y-first.y<=1 || s.end.y>99) || last.y-first.y>=r+2*tW || last.y-Math.max(0,first.y)>=r || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE*0.5))
+		if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || last.y-first.y<=1 || s.end.y>99) || last.y-Math.max(0,first.y)>=r || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE*0.5))
 			return true;
 		
 		if (!CircleDriver2.inTurn && s.type!=0){
