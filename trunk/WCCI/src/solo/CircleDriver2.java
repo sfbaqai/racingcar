@@ -4217,7 +4217,11 @@ public final class CircleDriver2{
 				|| a<0 && toInnerEdge>-GAP && relativePosMovement>0.001 || a<-0.1 && relativePosMovement>0.01 && relativeAngleMovement>0.001){
 			acc = 0;
 		}
-		if (acc>CONSTANT_SPEED_ACC && speedX<targetSpeed+10 && relativeAngleMovement<-0.01 && relativePosMovement<0.001) acc = CONSTANT_SPEED_ACC*0.25;
+		if (acc>CONSTANT_SPEED_ACC && speedX>targetSpeed-10 && speedX>lowestSpeed && relativeAngleMovement<-0.01 && (relativePosMovement<0.001 || distToEstCircle<0)) 
+			acc = CONSTANT_SPEED_ACC*0.25;
+		
+		if (acc>CONSTANT_SPEED_ACC && speedX>highestSpeed && relativePosMovement<-0.001 && distToEstCircle<-W*1.5 && toOutterEdge<(tW+SAFE_EDGE_MARGIN)*0.5 && (highestPoint==null || highestPoint.y<50))
+			acc = CONSTANT_SPEED_ACC*0.25;
 		if (acc>=CONSTANT_SPEED_ACC &&  slip>15)
 			acc *= CONSTANT_SPEED_ACC;
 		
