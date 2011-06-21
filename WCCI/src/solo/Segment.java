@@ -2168,7 +2168,12 @@ public final class Segment {
 					}
 					s.num += t.num;			
 					if (s.num>1){
-						circle(s.points[s.startIndex], s.points[s.endIndex], s.center.x,s.center.y, s.radius,s.center);
+						if (s.center!=null)
+							circle(s.points[s.startIndex], s.points[s.endIndex], s.center.x,s.center.y, s.radius,s.center);
+						else {
+							s.center = new Vector2D();
+							circle(s.points[s.startIndex], s.points[s.endIndex], s.type,s.radius,s.center);
+						}
 					}
 				}
 				
@@ -3554,7 +3559,7 @@ public final class Segment {
 			}//end of if
 
 			if (found || check[er]>0 && (map[er]>2 || (map[er]>1 && maxPossible<=3) ) ){
-				if (rs!=null){
+				if (rs!=null && map[er]==maxPossible){
 					rs.type = tp;
 					if (rs.start==null) 
 						rs.start = new Vector2D(fst);
@@ -4195,7 +4200,7 @@ public final class Segment {
 			}//end of if
 
 			if (found || (map[er]>2 && check[er]>0)){
-				if (rs!=null){
+				if (rs!=null && map[er]==maxPossible){
 					rs.type = tp;
 					if (rs.start==null) 
 						rs.start = new Vector2D(fst);
@@ -4621,7 +4626,7 @@ public final class Segment {
 				int pr = (prev.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(prev.radius+prev.type*which*tw);
 				if (pr>=Segment.MAX_RADIUS) pr = Segment.MAX_RADIUS-1;
 //				if (prev.map==null) prev.map = new int[MAX_RADIUS];
-				if (prev.map!=null){
+				if (prev.map!=null && pr>=0){
 					if (prev.map[pr]==0){
 						prev.appearedRads[prev.radCount++] =pr;
 						if (prev.opp!=null) prev.opp.radCount = prev.radCount;
@@ -4636,9 +4641,9 @@ public final class Segment {
 				int sr = (s.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*which*tw);
 				if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 //				if (s.map==null) s.map = new int[MAX_RADIUS];
-				if (s.map!=null){
+				if (s.map!=null && sr>=0){
 					if (s.map[sr]==0){
-						s.appearedRads[s.radCount++] =sr;
+						if (s.appearedRads!=null) s.appearedRads[s.radCount++] =sr;
 						if (s.opp!=null) s.opp.radCount = s.radCount;
 					}
 					s.map[sr]++;
@@ -9142,7 +9147,7 @@ public final class Segment {
 					if (ok){
 						boolean isPossiblePrevConnected = (s.type!=UNKNOWN && s.type==tmpSeg.type && (s.type==0 || s.radius==tmpSeg.radius));
 						boolean isPossibleNextConnected = (s1.type!=UNKNOWN && s1.type==tmpSeg.type && (s1.type==0 || s1.radius==tmpSeg.radius));
-						if (!isGPN) s.copy(tmpSeg);			
+						if (!isGPN && tmpSeg.type!=Segment.UNKNOWN) s.copy(tmpSeg);			
 						storage.store(index, index, k, s.type, s.radius);
 						if (s.radius>=MAX_RADIUS-1 || os.radius>=MAX_RADIUS-1){
 							s.type = 0;
@@ -14777,7 +14782,7 @@ public final class Segment {
 //			Vector2D pt = new Vector2D();
 			Segment rs = new Segment();
 			int endIndex = s.endIndex;
-			if (endIndex<=s.startIndex) endIndex = s.startIndex;
+//			if (endIndex<=s.startIndex) endIndex = s.startIndex;
 			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tW);
 			boolean isPrevConfirm = prev!=null && isConfirmed(prev, which, tW);
 			bkupS.copy(s);
@@ -14800,12 +14805,14 @@ public final class Segment {
 					if (d<0) d=-d;					
 					if (prev!=null && (isPrevConfirm || prev.upper!=null)){
 						tmpSeg1.type = Segment.UNKNOWN;
-						radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
-						if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
-							ok = false;							
-							tmpSeg.type = Segment.UNKNOWN;
-						} 
-						if (to-1>endIndex && ok){
+						if (endIndex>=0){
+							radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
+							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+								ok = false;							
+								tmpSeg.type = Segment.UNKNOWN;
+							}
+						}
+						if (to>0 && to-1>endIndex && ok){
 							radiusFrom2Points(prev, first, v[to-1], applyTW, tmpSeg1);
 							if (tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==s.radius)){
 								ok = false;
@@ -14824,6 +14831,7 @@ public final class Segment {
 				}
 				int r_index = i<<SIZE_N;
 				for (int j = to;j>endIndex;--j){
+					if (j<=0) break;
 					Vector2D last = v[j-1];
 					double endX = last.x;
 					double endY = last.y;
@@ -17055,13 +17063,13 @@ public final class Segment {
 				rt = digitno;
 				rt++;
 				int c =ivalue%10;       								
-				while ( c == 0 ){
+				while ( c == 0 && digitno>=0){
 					digitno--;
 					rt--;
 					ivalue /= 10;
 					c = ivalue%10;
 				}
-				while ( ivalue != 0){
+				while ( ivalue != 0 && digitno>=0){
 					s[digitno--] = (char)(c+'0');              
 					ivalue /= 10;
 					c = ivalue%10;
