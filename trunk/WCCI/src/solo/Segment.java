@@ -8081,7 +8081,8 @@ public final class Segment {
 					if (rr<=REJECT_VALUE) continue;					
 					Vector2D center = pCntr[prL]; 
 					circle(first, last, temp[3*kk],temp[1+3*kk], rr,center);
-					//					if (CircleDriver2.time>=CircleDriver2.BREAK_TIME){														
+					if (tp*(center.x-startX)<0) continue;
+			
 					double dx = center.x - sx;
 					double dy = center.y - sy;
 					double dl = Math.round(Math.sqrt(dx*dx+dy*dy));
@@ -8158,6 +8159,9 @@ public final class Segment {
 					double d = rr-prev.radius;
 					if (d<0) d=-d;
 					int tp = pTp[i];
+					Vector2D center = pCntr[i];
+					
+					if (tp*(center.x-startX)<0) continue;
 					if (dmin>d) {
 						dmin = d;
 						index = i;
