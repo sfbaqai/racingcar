@@ -3274,6 +3274,7 @@ public final class Segment {
 			return false;
 		} else {	
 			int maxPossible = size-2;
+			int max = 0;
 			//double sx = (s.type==0 || s.center==null) ? 0 : s.center.x;
 			double sy = (s.type==0 || s.center==null) ? 0 : s.center.y;
 			boolean isFirst = (s.type==0 && Math.abs(s.start.x-s.end.x)<=E) || (s.type!=0 && s.type!=Segment.UNKNOWN && s.center!=null && sy==0);
@@ -3412,7 +3413,7 @@ public final class Segment {
 					if (maxPossible==max) return false;
 				}
 				
-			}//*/
+			}//*/			
 
 			if (!found){
 				if (isFirst && (dd==0 || dd1==0)){
@@ -3441,7 +3442,7 @@ public final class Segment {
 					}
 				}
 				double cx = 0;
-				double cy = 0;
+				double cy = 0;				
 				for (int i = from+1;i<endIndx;++i){					
 					Vector2D mid = v[i];
 					n++;
@@ -3503,7 +3504,8 @@ public final class Segment {
 						if (map[er]==0){
 							allRads[count++] = er;
 						}
-						map[er]++;															
+						map[er]++;		
+						max = Math.max(map[er], max);
 					} else {//else !isCircle
 						if (map[0]==0){
 							allRads[count++] = 0;
@@ -3515,7 +3517,7 @@ public final class Segment {
 					if (map[er]>2) {					
 						found = (tp==s.type && r==s.radius && Math.abs(cy-sy)<1);
 						if (found){							
-							double EE = EPSILON*3;
+							final double EE = EPSILON*4;
 							boolean ok = true;
 							for (int ii = from;ii<to;++ii){								
 								Vector2D vv = v[ii];
@@ -3558,8 +3560,8 @@ public final class Segment {
 				}//end of for			
 			}//end of if
 
-			if (found || check[er]>0 && (map[er]>2 || (map[er]>1 && maxPossible<=3) ) ){
-				if (rs!=null && map[er]==maxPossible){
+			if ((map[er]==max || max==0) && (found || check[er]>0 && (map[er]>2 || (map[er]>1 && maxPossible<=3) ) )){
+				if (rs!=null){
 					rs.type = tp;
 					if (rs.start==null) 
 						rs.start = new Vector2D(fst);
@@ -3591,20 +3593,20 @@ public final class Segment {
 					}
 				}
 			} else if (rs!=null){
-				int max = map[er];
+				int maxV = map[er];
 				int maxEr = (int)Math.round(r);
-				if (max+max<maxPossible){
+				if (maxV+maxV<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
-						if (max<map[er]){
-							max = map[er];
+						if (maxV<map[er]){
+							maxV = map[er];
 							maxEr = er;
 							r = (er-Math.round(tW))+tW;
 						}
 					}	
 				}
 
-				if (max>1){
+				if (maxV>1){
 					tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0 ){						
 						if (!isFirst){
@@ -3630,7 +3632,7 @@ public final class Segment {
 								}
 							}
 						}
-						if (ok || max>2){
+						if (ok || maxV>2){
 							rs.type = tp;
 							if (rs.start==null) 
 								rs.start = new Vector2D(fst);
@@ -3895,6 +3897,7 @@ public final class Segment {
 			return false;
 		} else {								
 			int maxPossible = size-2;
+			int maxE = 0;
 			int[] map = tmpAMap;
 			int[] allRads = tmpARads;
 			int[] check = tmpCheck;			
@@ -4144,7 +4147,8 @@ public final class Segment {
 						if (map[er]==0){
 							allRads[count++] = er;
 						}
-						map[er]++;															
+						map[er]++;
+						maxE = Math.max(maxE, map[er]);
 					} else {//else !isCircle
 						if (map[0]==0){
 							allRads[count++] = 0;
@@ -4199,8 +4203,8 @@ public final class Segment {
 				}//end of for
 			}//end of if
 
-			if (found || (map[er]>2 && check[er]>0)){
-				if (rs!=null && map[er]==maxPossible){
+			if ((map[er]==maxE || maxE==0) && (found || (map[er]>2 && check[er]>0))){
+				if (rs!=null){
 					rs.type = tp;
 					if (rs.start==null) 
 						rs.start = new Vector2D(fst);
@@ -4628,7 +4632,7 @@ public final class Segment {
 //				if (prev.map==null) prev.map = new int[MAX_RADIUS];
 				if (prev.map!=null && pr>=0){
 					if (prev.map[pr]==0){
-						prev.appearedRads[prev.radCount++] =pr;
+						if (prev.appearedRads!=null) prev.appearedRads[prev.radCount++] =pr;
 						if (prev.opp!=null) prev.opp.radCount = prev.radCount;
 					}
 					prev.map[pr]++;
