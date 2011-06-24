@@ -169,7 +169,7 @@ public final class CircleDriver2{
 	private static final ObjectArrayList<Segment> lTmp = ObjectArrayList.wrap(new Segment[100], 0);
 	public static double MAX_ANGLE = 0.25;
 	static final int MAX_GEARS = 10;	
-	private static final double MAX_UNSTUCK_ANGLE = 0.3;	// [radians] If the angle of the car on the track is smaller, we assume we are not stuck.
+	private static final double MAX_UNSTUCK_ANGLE = 0.25;	// [radians] If the angle of the car on the track is smaller, we assume we are not stuck.
 	//	private static final double ABS_MINSPEED = 3.0f;					// [m/s] Below this speed the ABS is disabled (numeric, division by small numbers).
 	private static final int  MAX_UNSTUCK_COUNT = 10;
 	//	private static final double UNSTUCK_TIME_LIMIT = 2.0d;				// [s] We try to get unstuck after this time.
@@ -8975,7 +8975,8 @@ public final class CircleDriver2{
 		speedY = cs.speedY;
 		speed = Math.sqrt(speedX*speedX+speedY*speedY);
 		rpm = cs.rpm;
-		if (isStuck(cs) && reserveCount<100){
+		if (debug) System.out.println("**************** E"+time+" "+distRaced+" ****************  "+turn+"      "+edgeDetector.whichE+"     "+canGoToLastSeg);//
+		if (isStuck(cs) && reserveCount<100){			
 			double signPos = (curPos<0) ? -1 :1;
 			relativeAngleMovement = (turn==0 || turn==2) ? -signPos*(curAngle-lastAngle) : (curAngle-lastAngle)*turn;
 			relativeAngle = (turn==0 || turn==2) ? -signPos*curAngle : curAngle*turn;
@@ -8983,26 +8984,29 @@ public final class CircleDriver2{
 			relativePosMovement = (turn==0 || turn==2) ? -signPos*(curPos-lastPos) : (curPos-lastPos)*turn;		
 //			double relativeSteer = (turn==0 || turn==2) ? -steer : -steer*turn;				
 //			double relativeCurPos = (turn==0 || turn==2) ? curPos : curPos*turn;	
-						
+			System.out.println("CurAngle is "+curAngle);
+			System.out.println("LastAngle is "+lastAngle);
+			System.out.println("CurPos is "+curPos);
+			System.out.println("reserveMCount is "+reserveMCount);
+			System.out.println("reserveCount is "+reserveCount);
+			System.out.println("SpeedX is "+speedX);
 			cc.brake = 0;
 			cc.gear = -1;
-			if (Math.abs(curAngle)>PI_2 && reserveMCount<=30 ){
-				steer = Math.signum(curAngle/steerLock);				
-				reserveMCount++;
-				if (Math.abs(curAngle)<Math.abs(lastAngle)) reserveCount--;
-				if (reserveMCount==30) reserveMCount = 60;
+			double absAngle = Math.abs(curAngle);
+			double absLastAngle = Math.abs(lastAngle);
+			double absSpeedX = Math.abs(speedX);
+			if (absAngle>PI_2){
+				steer = -Math.signum(curAngle/steerLock)*0.5;
 			} else {				
 				steer = -Math.signum(curAngle/steerLock);
-				if (Math.abs(curAngle)>PI_2){
-					if (Math.abs(curAngle)<Math.abs(lastAngle)) reserveCount++;
-				} else if (Math.abs(curAngle)>Math.abs(lastAngle)) reserveCount++;
-				reserveMCount--;
-				if (reserveMCount==30) reserveMCount = 0;
+//				if (absAngle>absLastAngle) reserveMCount++;
+//				reserveMCount--;
+//				if (reserveMCount==30) reserveMCount = 0;
 			}
-			cc.accel = (speedX<10) ? 1 : 0.5;
-//			if (speedX<5) {
-//				steer = 0;
-//			}
+			cc.accel = (absSpeedX<10) ? 1 : 0.5;
+			if (absSpeedX<5) {
+				steer *= 0.5;
+			}
 			
 			cc.steer = steer;
 			if (cc.steer<-1) 
@@ -9079,7 +9083,6 @@ public final class CircleDriver2{
 		distRaced = cs.distRaced;
 		//		realRad = cs.radius;
 
-		if (debug) System.out.println("**************** E"+time+" "+distRaced+" ****************  "+turn+"      "+edgeDetector.whichE+"     "+canGoToLastSeg);//
 		if (time>=BREAK_TIME)
 			System.out.println();
 		edgeDetector.init(cs,trackWidth);				
@@ -9294,6 +9297,9 @@ public final class CircleDriver2{
 		if (steer<-1) 
 			steer = -1;
 		else if (steer>1) steer = 1;	
+		
+		if (speedX<0 && Math.abs(curAngle)<PI_2)
+			steer = -steer;
 																						
 		lastRelativeAngle = relativeAngle;
 		lastRelativeAngleMovement = relativeAngleMovement;
@@ -12428,19 +12434,20 @@ public final class CircleDriver2{
 		double speedX = cs.speedX/3.6;
 		double angle = cs.angle;
 		double curPos = cs.trackPos;
-		double absToMiddle = Math.abs(toMiddle);
+		double absToMiddle = Math.abs(toMiddle);		
 		double absAngle = Math.abs(angle); 
-		if (curAngle*curPos>0 && absAngle<PI_2){
+		if (curAngle*curPos>0 && toMiddle*Math.signum(curAngle)>0 && Math.abs(curAngle)<Math.PI*0.75){
 			stuck = 0;
 			return false;
 		} else if (absAngle > MAX_UNSTUCK_ANGLE &&
 				speedX < MAX_UNSTUCK_SPEED &&
-				Math.abs(edgeDetector.toMiddle()) >MIN_UNSTUCK_DIST && absToMiddle>tW-W) {
-			if (stuck > MAX_UNSTUCK_COUNT || speedX<1 && lastAcc==1) {
+				absToMiddle>tW-W*2) {
+			if (stuck > MAX_UNSTUCK_COUNT) {
 				return true;
 			} else {
 				stuck++;
 				if (absToMiddle<tW && absAngle<Math.abs(lastAngle)) stuck--;
+				if (Math.abs(speedX)<2) stuck++;
 				return false;
 			}
 		} else {
