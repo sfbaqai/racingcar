@@ -4480,7 +4480,7 @@ public final class Segment {
 							if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 							if (s.map!=null){
 								if (s.map[sr]==0){
-									s.appearedRads[s.radCount++] =sr;
+									if (s.appearedRads!=null)  s.appearedRads[s.radCount++] =sr;
 									if (s.opp!=null) s.opp.radCount = s.radCount;
 								}
 								s.map[sr]++;
@@ -8098,9 +8098,9 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy<=prev.end.y-0.5 || ssy>startY+0.2 || Math.abs(ssy-startY)<1) continue;
+							if (ssy<=prev.end.y-0.5 || Math.abs(ssy-startY)<1) continue;
 						} else if (prev.start.y>endY){
-							if (ssy>=prev.start.y+0.2 || ssy<endY-0.5 || Math.abs(ssy-prev.start.y)<1) continue;
+							if (ssy<endY-0.5 || Math.abs(ssy-prev.start.y)<1) continue;
 						}
 //						if ((sy<prev.start.y && startY>prev.start.y) || (sy>endY && endY>prev.end.y) || (sy<startY && startY<prev.start.y) || (sy>prev.end.y && prev.end.y>endY)) continue;
 					}
