@@ -245,7 +245,7 @@ public final class Storage {
 		int total_N = totalRad_N[j];
 		int tp = -2;
 		for (int i=total_N-1;i>=0;--i){
-			if (aRads[i]==rad) {
+			if (aRads[i+startIndx]==rad) {
 				tp = aTypes[i];
 				break;
 			}

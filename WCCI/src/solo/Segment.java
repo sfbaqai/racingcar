@@ -44,6 +44,7 @@ public final class Segment {
 	private static final double[] rs = new double[3];	
 	private static final double E = (CircleDriver2.inTurn) ? 0.1*TrackSegment.EPSILON : TrackSegment.EPSILON*0.1;
 	private static final int tmpL = 2002;
+	public static boolean careful = false;
 //	private static final double[] tmpR = new double [tmpL];
 	public static final int[] tmpAppear = new int[tmpL];
 	private static Segment p = new Segment();
@@ -3594,6 +3595,7 @@ public final class Segment {
 			} else if (rs!=null){
 				int maxV = map[er];
 				int maxEr = (int)Math.round(r);
+				found = false;
 				if (maxV+maxV<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
@@ -3609,7 +3611,8 @@ public final class Segment {
 					tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0 ){						
 						if (!isFirst){
-							circle(fst, lst, center.x,center.y, r,center);
+//							circle(fst, lst, center.x,center.y, r,center);
+							circle(fst, lst, tp, r, center);
 						} else {
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
@@ -3651,6 +3654,7 @@ public final class Segment {
 							}
 							rs.startIndex = from;
 							rs.endIndex = to-1;		
+							found = true;
 						}
 					}
 				}
@@ -4237,13 +4241,14 @@ public final class Segment {
 			} else if (rs!=null){
 				int max = map[er];
 				int maxEr = (int)Math.round(r);
+				found = false;				
 				if (max+max<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
 						if (max<map[er]){
 							max = map[er];
 							maxEr = er;
-							r = (er-Math.round(tW))+tW;
+							r = (er-Math.round(tW))+tW;							
 						}
 					}	
 				}	
@@ -4252,7 +4257,8 @@ public final class Segment {
 					if (to>from) tp = storage.getType(v, from,to-1);
 					if (maxEr>0 && check[maxEr]<0){						
 						if (!isFirst){
-							circle(fst, lst, center.x,center.y, r,center);
+//							circle(fst, lst, center.x,center.y, r,center);
+							circle(fst, lst, tp, r, center);
 						} else {
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
@@ -4293,7 +4299,8 @@ public final class Segment {
 								else rs.center.copyValue(center);
 							}
 							rs.startIndex = from;
-							rs.endIndex = to-1;															
+							rs.endIndex = to-1;	
+							found = true;
 						}
 					}
 				}
@@ -6410,6 +6417,7 @@ public final class Segment {
 			dy = s.y-cy;			
 			e = Math.sqrt(dx*dx+dy*dy)-r;
 			if (e<0) e = -e;
+			d+=e;
 			if (e>EPSILON) {
 				ok = false;		
 				prevGood = false;
@@ -6419,8 +6427,7 @@ public final class Segment {
 					continue;
 				}
 				break;
-			}
-			d+=e;
+			}			
 			prevGood = true;
 		}
 		return (ok) ? d : -d;
@@ -8160,7 +8167,7 @@ public final class Segment {
 						if (rr<20) continue;
 					}
 					double d = rr-prev.radius;
-					if (d<0) d=-d;
+					if (d<0 && !careful) d=-d;
 					int tp = pTp[i];
 					Vector2D center = pCntr[i];
 					
@@ -8207,7 +8214,7 @@ public final class Segment {
 						};
 					}
 					double d = rr-sr;
-					if (d<0) d =-d;
+					if (d<0 && !careful) d =-d;
 					if (dmin>d) {
 						dmin = d;
 						index = i;
@@ -9593,47 +9600,55 @@ public final class Segment {
 				boolean noStraight = true;
 				int[] marks = new int[aNum];
 				int idx = -1;
+				if (maxAppear<3 && aNum>5) maxAppear = 1;
 //				boolean found = false;
-				for (int i = 0;i<aNum;++i){
-					int er = aRadius[i];
-					if (aMap[er]==maxAppear){
-//						found = true;
-						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
-						maxFstIndx = aFstIndx[er];
-						maxLstIndx = aLstIndx[er];
-						if (tp==1) er-=Segment.MAX_RADIUS;
-						Vector2D fst = v[maxFstIndx];
-						Vector2D lst = v[maxLstIndx];
-						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
-							continue;														
-						}
-						
-//						if (tp!=0){
-//							Vector2D center = new Vector2D();
-//							Segment.circle(fst, lst, tp, er + tW*tp,center);
-//							if (center.y>lst.y) continue;
-//						}
-						
-						if (tp*(lst.x-fst.x)<0 && maxLstIndx-maxFstIndx>=3){
-							boolean anyConflict = false;
-							for (int j=i+1;j<aNum;++j){
-								int ner = aRadius[j];
-								int ntp = ner==0 ? 0: ner<Segment.MAX_RADIUS ? -1: 1;
-								if (ntp*tp<0){
-									anyConflict = true;
-									break;
-								}
+				while (num==0 && aNum>0 && maxAppear>0){
+					for (int i = 0;i<aNum;++i){
+						int er = aRadius[i];
+						if (aMap[er]==maxAppear || maxAppear<3){
+	//						found = true;
+							int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
+							maxFstIndx = aFstIndx[er];
+							maxLstIndx = aLstIndx[er];
+							if (tp==1) er-=Segment.MAX_RADIUS;
+							Vector2D fst = v[maxFstIndx];
+							Vector2D lst = v[maxLstIndx];
+							if (tp==0){ 
+								noStraight = false;
+								continue;
+							} else if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
+								continue;														
 							}
-							if (anyConflict) continue;
+							
+	//						if (tp!=0){
+	//							Vector2D center = new Vector2D();
+	//							Segment.circle(fst, lst, tp, er + tW*tp,center);
+	//							if (center.y>lst.y) continue;
+	//						}
+							
+							if (tp*(lst.x-fst.x)<0 && maxLstIndx-maxFstIndx>=3){
+								boolean anyConflict = false;
+								for (int j=i+1;j<aNum;++j){
+									int ner = aRadius[j];
+									int ntp = ner==0 ? 0: ner<Segment.MAX_RADIUS ? -1: 1;
+									if (ntp*tp<0){
+										anyConflict = true;
+										break;
+									}
+								}
+								if (anyConflict) continue;
+							}
+							marks[i] = 1;
+							if (noStraight && tp!=0){
+								avg+=er*tp;
+								num++;
+								if (maxAppear==1) break;
+							} else if (tp==0) noStraight = false;
 						}
-						marks[i] = 1;
-						if (noStraight && tp!=0){
-							avg+=er*tp;
-							num++;
-							if (maxAppear==1) break;
-						} else if (tp==0) noStraight = false;
 					}
-				}								
+					if (num>0) break; 
+					maxAppear--;
+				}
 				
 				if (noStraight && num>0) {
 					avg/=num;
@@ -9650,13 +9665,22 @@ public final class Segment {
 						}							
 					}
 
+				} else if (!noStraight && aNum>0 && num==0){
+					for (int i = 0;i<aNum;++i){
+						int er = aRadius[i];
+						if (aMap[er]==maxAppear || maxAppear<3){
+	//						found = true;
+							int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;							
+							if (tp==0) marks[i] = 1;							
+						}
+					}
 				}
 			
 				for (int i = 0;i<aNum;++i){
 					if (marks[i]==0) continue;
 					if (noStraight && num>0 && idx!=-1 && i!=idx) continue;
 					int er = aRadius[i];
-					if (aMap[er]==maxAppear){						
+					if (true){						
 						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
 						maxFstIndx = aFstIndx[er];
 						maxLstIndx = aLstIndx[er];
@@ -10874,7 +10898,7 @@ public final class Segment {
 						}
 						s.map[lr] += score;									
 					} else if (s.map[sr]>0) s.map[sr]--;					
-					if (s.type==0 && s.map!=null && s.map[sr]>1) s.map[sr]--;
+					if (s.map!=null && (s.type==0 || s.map[sr]<=3) && s.map[sr]>1) s.map[sr]--;
 					if (s.map!=null && s.map[sr]==0){
 						for (int ii = s.radCount-1;ii>=0;--ii){
 							int rads = s.appearedRads[ii];
@@ -13272,13 +13296,13 @@ public final class Segment {
 							int[] appearedRads = seg.appearedRads;								
 							for (int k = seg.radCount-1;k>=0;--k){
 								int rr = appearedRads[k];
-								map[rr] = 0;
+								if (rr>=0) map[rr] = 0;
 								appearedRads[k] = 0;
 							}
 							if (s.map!=null){
 								for (int k = s.radCount-1;k>=0;--k){
 									int rr = s.appearedRads[k];
-									map[rr] = s.map[rr];
+									if (rr>=0) map[rr] = s.map[rr];
 									appearedRads[k] = s.appearedRads[k];
 								}					
 							}
@@ -13347,13 +13371,13 @@ public final class Segment {
 				int[] appearedRads = seg.appearedRads;								
 				for (int j = seg.radCount-1;j>=0;--j){
 					int rr = seg.appearedRads[j];
-					seg.map[rr] = 0;
+					if (rr>=0) seg.map[rr] = 0;
 					seg.appearedRads[j] = 0;
 				}
 				if (s.map!=null){
 					for (int j = s.radCount-1;j>=0;--j){
 						int rr = s.appearedRads[j];
-						map[rr] = s.map[rr];
+						if (rr>=0) map[rr] = s.map[rr];
 						appearedRads[j] = s.appearedRads[j];
 					}					
 				}
@@ -14548,7 +14572,7 @@ public final class Segment {
 				firstIndex = s.startIndex;
 				if (s.lower!=null && firstIndex>0){
 					if (s.points!=null){
-						while (firstIndex>0 && s.points[firstIndex-1].y>=s.lower.y) firstIndex--;
+						while (firstIndex>0 && s.points[firstIndex-1].y>=s.lower.y)  firstIndex--;
 					}
 				} else if (firstIndex>0){
 					if (prev!=null) 
@@ -15405,6 +15429,15 @@ public final class Segment {
 		int prevRStartIndx = 0;
 //		int nextLEndIndx = 0;
 //		int nextREndIndx = 0;
+		if (edge!=null && edge.highestPoint!=null){
+			Vector2D h = edge.highestPoint;
+			double hl = h.length();
+			double rl = (rN<1) ? 0 : rV[rN-1].length();
+			double ll = (lN<1) ? 0 : lV[lN-1].length();
+			careful =  h.y<30 || CircleDriver2.turn==1 &&  rN>0 && hl-rl>0 && hl-rl<30 || CircleDriver2.turn==-1 && lN>0 &&  hl-ll>0 && hl-ll<30;
+//			if (trSz>0 && trArr[trIndx[trSz-1]].type!=0 && trArr[trIndx[trSz-1]].radius<80 &&  (CircleDriver2.turn==-1 && lN>0 && hl-ll>tW*2 && hl-ll<tW*4 || CircleDriver2.turn==1 && rN>0 && hl-rl>tW*2 && hl-rl<tW*4) )
+//				System.out.println();
+		}
 		double tw = tW+tW;
 		for (int i = fromSeg;i<trSz;++i){			
 			if (i<0) continue;
