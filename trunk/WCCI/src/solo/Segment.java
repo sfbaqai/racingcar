@@ -3478,7 +3478,7 @@ public final class Segment {
 						circle(fst, lst, cx,cy, r,center);
 						cx = center.x;
 						cy = center.y;
-						if (r<=REJECT_VALUE || r+tp*which*tW*2<=REJECT_VALUE) continue;
+						if (r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
@@ -3609,7 +3609,7 @@ public final class Segment {
 
 				if (maxV>1){
 					tp = storage.getType(v, from,to-1);
-					if (maxEr>0 && check[maxEr]<0 ){						
+					if (maxEr>0 && check[maxEr]<0 || maxEr>2){						
 						if (!isFirst){
 //							circle(fst, lst, center.x,center.y, r,center);
 							circle(fst, lst, tp, r, center);
@@ -4122,7 +4122,7 @@ public final class Segment {
 						circle(fst, lst, cx,cy, r,center);
 						cx = center.x;
 						cy = center.y;
-						if (r<=REJECT_VALUE || r+tp*which*tW*2<=REJECT_VALUE) continue;
+						if (r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
@@ -4255,7 +4255,7 @@ public final class Segment {
 
 				if (max>1){
 					if (to>from) tp = storage.getType(v, from,to-1);
-					if (maxEr>0 && check[maxEr]<0){						
+					if (maxEr>0 && check[maxEr]<0 || maxEr>2){						
 						if (!isFirst){
 //							circle(fst, lst, center.x,center.y, r,center);
 							circle(fst, lst, tp, r, center);
