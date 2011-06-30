@@ -202,6 +202,7 @@ public final class Storage {
 		
 		int[] aTypes = allTypes[indx];		
 		int[] aRads = allRadius[indx];
+		int[] aMidIndx = allMidIndx[indx];
 		s.startIndex = startIndx;
 		s.endIndex = endIndx;
 		s.num = endIndx+1-startIndx;
@@ -217,8 +218,9 @@ public final class Storage {
 		int total_N = totalRad_N[j];
 		int tp = -2;
 		for (int i=total_N-1;i>=0;--i){
-			if (aRads[i]==rad) {
-				tp = aTypes[i];
+			int midIndx = aMidIndx[i];
+			if (aRads[midIndx]==rad) {
+				tp = aTypes[midIndx];
 				break;
 			}
 		}
@@ -239,14 +241,16 @@ public final class Storage {
 		if (map==null) return -2;		
 		
 		int[] aTypes = allTypes[indx];		
-		int[] aRads = allRadius[indx];		
+		int[] aRads = allRadius[indx];	
+		int[] aMidIndx = allMidIndx[indx];
 		
 		int rad = maxRad[j];
 		int total_N = totalRad_N[j];
 		int tp = -2;
 		for (int i=total_N-1;i>=0;--i){
-			if (aRads[i+startIndx]==rad) {
-				tp = aTypes[i];
+			int midIndx = aMidIndx[i];
+			if (aRads[midIndx]==rad) {
+				tp = aTypes[midIndx];
 				break;
 			}
 		}
