@@ -47,6 +47,8 @@ public final class EdgeDetector {
 	private static final double PRECISION = 1000000.0d;
 	private static final double PI_2 = Math.PI/2;
 	final static double EPS = 0.02;
+	private static int avgNum = 0;
+	private static double avgTotal = 0;
 	public int whichE = 0;//highest point belong to which edge,0 = unknown
 	public int whichEdgeAhead = 0;
 	final static double[] SIN_LK = new double[]{0.0d,
@@ -470,7 +472,10 @@ public final class EdgeDetector {
 		int startIndex = 0;
 		int endIndex = 19;		
 		if (Math.abs(curAngle)<0.01){
+			avgNum++;
 			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(curAngle));
+			avgTotal += trackWidth;
+			trackWidth = Math.round(avgTotal/avgNum);
 			if (trackWidth>0 && trkWidth>0 && trackWidth!=trkWidth) {
 				trackWidth = trkWidth;
 				startIndex = 1;
