@@ -4255,8 +4255,8 @@ public final class Segment {
 
 				if (max>1){
 					if (to>from) tp = storage.getType(v, from,to-1);
-					if (tp==-2)
-						System.out.println();
+//					if (tp==-2)
+//						System.out.println();
 					if (maxEr>0 && check[maxEr]<0 || maxEr>2){						
 						if (!isFirst){
 //							circle(fst, lst, center.x,center.y, r,center);
@@ -8903,7 +8903,7 @@ public final class Segment {
 		int numb = 0;		
 		int index = 0;
 
-		if (prev!=null || next!=null){			
+		if (prev!=null || next!=null || true){			
 			Segment tmpSeg = new Segment();	
 //			int n = 0;
 			Segment s1 = oalArr[indx+1];
@@ -8952,7 +8952,7 @@ public final class Segment {
 							int tp = aTypes[0];
 							if (tp>Segment.UNKNOWN){
 								int rad = aRads[0];
-								if (map[rad]>1) isFound = true;
+								if (rad>=0 && map[rad]>1) isFound = true;
 							}
 						}
 					}
@@ -9614,11 +9614,51 @@ public final class Segment {
 							maxLstIndx = aLstIndx[er];
 							if (tp==1) er-=Segment.MAX_RADIUS;
 							Vector2D fst = v[maxFstIndx];
-							Vector2D lst = v[maxLstIndx];
+							Vector2D lst = v[maxLstIndx];							
+							tmpSeg.type = tp;
+							tmpSeg.startIndex = maxFstIndx;
+							tmpSeg.endIndex = maxLstIndx;
+							tmpSeg.num = maxLstIndx-maxFstIndx+1;
+							if (tmpSeg.start==null) 
+								tmpSeg.start = new Vector2D(fst);
+							else tmpSeg.start.copy(fst);
+							if (tmpSeg.end==null) 
+								tmpSeg.end = new Vector2D(lst);
+							else tmpSeg.end.copy(lst);
+							
+							tmpSeg.radius = er + tW*tp;				
+							if (tmpSeg.type!=0){
+								if (tmpSeg.center==null) tmpSeg.center = new Vector2D();
+								Segment.circle(tmpSeg.start, tmpSeg.end, tp, tmpSeg.radius, tmpSeg.center);
+							}
+											
+							Segment tmpSegOp = tmpSeg.opp;
+							if (tmpSegOp==null) {
+								tmpSegOp = new Segment();
+								tmpSeg.opp = tmpSegOp;
+							}
+							tmpSegOp.points = opoints;
+							tmpSeg.points = v;
+							reSynchronize(tmpSeg,tmpSegOp,0,otherTo,-which,tw);
+							
+							if (tmpSeg.type!=Segment.UNKNOWN && tmpSeg.num>1 && tmpSegOp.num>1){
+								if ((v[maxFstIndx].x-v[maxLstIndx].x)*(opoints[tmpSegOp.startIndex].x-opoints[tmpSegOp.endIndex].x)<0){
+									tmpSeg.type = Segment.UNKNOWN;
+									tmpSegOp.type = Segment.UNKNOWN;
+								} else if ((v[maxFstIndx].x-v[maxLstIndx].x)*tmpSeg.type>0 && tmpSegOp.num>2 && tmpSeg.type*getCircleType(opoints[tmpSegOp.startIndex], opoints[(tmpSegOp.startIndex+tmpSegOp.endIndex)/2], opoints[tmpSegOp.endIndex])<0){
+									tmpSeg.type = Segment.UNKNOWN;
+									tmpSegOp.type = Segment.UNKNOWN;
+								}
+							}
+							
 							if (tp==0){ 
 								noStraight = false;
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
 								continue;
 							} else if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
 								continue;														
 							}
 							
