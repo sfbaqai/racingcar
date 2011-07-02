@@ -34,6 +34,8 @@ public final class EdgeDetector {
 	//	public static ObjectArrayList<Vector2D> newRight = ObjectArrayList.wrap(new Vector2D[20], 0);
 	//	private static IntArrayList lIndx = IntArrayList.wrap(new int[20], 0);	
 	//	private static IntArrayList rIndx = IntArrayList.wrap(new int[20], 0);
+	public static boolean isNoisy = false;
+	public static boolean isConfirmedTW = false;
 	private static final int[] out = new int[]{0,0};
 	private static final int UPPER_LIM = 16;
 	private static final int LOWER_LIM = 6;	
@@ -51,6 +53,9 @@ public final class EdgeDetector {
 	private static double avgTotal = 0;
 	public int whichE = 0;//highest point belong to which edge,0 = unknown
 	public int whichEdgeAhead = 0;
+	
+	private static final int[] twMap = new int[100];
+	
 	final static double[] SIN_LK = new double[]{0.0d,
 		0.17364817766693041,0.3420201433256688,0.5d,0.6427876096865394,
 		0.766044443118978,0.8660254037844386,0.9396926207859083,0.984807753012208,1.0,
@@ -471,15 +476,27 @@ public final class EdgeDetector {
 		distRaced = Math.round(cs.distRaced*PRECISION)/PRECISION;		
 		int startIndex = 0;
 		int endIndex = 19;		
-		if (Math.abs(curAngle)<0.01){
+		if (Math.abs(curAngle)<0.01 && !isConfirmedTW){
 			avgNum++;
 			trackWidth = Math.round((tracks[0]+tracks[18])*Math.cos(curAngle));
 			avgTotal += trackWidth;
 			trackWidth = Math.round(avgTotal/avgNum);
-			if (trackWidth>0 && trkWidth>0 && trackWidth!=trkWidth) {
-				trackWidth = trkWidth;
-				startIndex = 1;
+//			if (trackWidth>0 && trkWidth>0 && trackWidth!=trkWidth) {
+//				trackWidth = trkWidth;
+//				startIndex = 1;
+//			}
+			twMap[(int)trackWidth]++;
+			if (trackWidth>0 && trackWidth!=trkWidth) {
+				if (trkWidth<0)
+					trkWidth = trackWidth;
+				else if (twMap[(int)trackWidth]>twMap[(int)trkWidth]){
+					trkWidth = trackWidth;
+					isNoisy = true;
+					if (twMap[(int)trackWidth]>100) isConfirmedTW = true;
+				} else trackWidth = trkWidth;
 			}
+//			if (trackWidth!=15)
+//				System.out.println();
 		}
 		if (trackWidth<=0)
 			trackWidth = trkWidth;
