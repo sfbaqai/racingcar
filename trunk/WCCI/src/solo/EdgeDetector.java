@@ -486,13 +486,13 @@ public final class EdgeDetector {
 //				startIndex = 1;
 //			}
 			twMap[(int)trackWidth]++;
+			if (twMap[(int)trackWidth]>100 && trackWidth==trkWidth) isConfirmedTW = true;
 			if (trackWidth>0 && trackWidth!=trkWidth) {
 				if (trkWidth<0)
 					trkWidth = trackWidth;
 				else if (twMap[(int)trackWidth]>twMap[(int)trkWidth]){
 					trkWidth = trackWidth;
-					isNoisy = true;
-					if (twMap[(int)trackWidth]>100) isConfirmedTW = true;
+					isNoisy = true;					
 				} else trackWidth = trkWidth;
 			}
 //			if (trackWidth!=15)
