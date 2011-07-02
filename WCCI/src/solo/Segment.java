@@ -15487,7 +15487,8 @@ public final class Segment {
 			double hl = h.length();
 			double rl = (rN<1) ? 0 : rV[rN-1].length();
 			double ll = (lN<1) ? 0 : lV[lN-1].length();
-			careful =  h.y<60 && CircleDriver2.speedX>=200 || h.y<30 || CircleDriver2.turn==1 &&  rN>0 && hl-rl>0 && hl-rl<30 || CircleDriver2.turn==-1 && lN>0 &&  hl-ll>0 && hl-ll<30;
+//			|| edge.currentPointAhead!=null && edge.currentPointAhead.y<55
+			careful =  CircleDriver2.speedX>=200 && h.y<60 || h.y<30 || CircleDriver2.turn==1 &&  rN>0 && hl-rl>0 && hl-rl<30 || CircleDriver2.turn==-1 && lN>0 &&  hl-ll>0 && hl-ll<30;
 			if (trSz>0 && trArr[trIndx[trSz-1]].type!=0 && trArr[trIndx[trSz-1]].radius<80 &&  (CircleDriver2.turn==-1 && lN>0 && hl-ll>tW*2 && hl-ll<50 || CircleDriver2.turn==1 && rN>0 && hl-rl>tW*2 && hl-rl<50) )
 				System.out.println();
 		}
