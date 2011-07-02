@@ -6405,6 +6405,7 @@ public final class Segment {
 		double e = Math.sqrt(dx*dx+dy*dy)-r;
 		if (e<0) e = -e;
 		if (e>EPSILON) return -1;
+		if (to<=0) return 0;
 		s = tmp[to-1];
 		dx = s.x-cx;
 		dy = s.y-cy;			
