@@ -537,7 +537,7 @@ public final class EdgeDetector {
 		firstIndexMax = -1;
 		double ll = 0;
 		
-		if (CircleDriver2.time>=CircleDriver2.BREAK_TIME){
+		/*if (CircleDriver2.time>=CircleDriver2.BREAK_TIME){
 			double[] px = new double[19];
 			double[] py = new double[19];
 			for (int i =0 ; i<19;++i){
@@ -547,7 +547,7 @@ public final class EdgeDetector {
 				py[i] = l* Math.sin(angle);
 			}
 			drawEdge(px, py, "Track sensor");
-		}
+		}//*/
 		
 
 		for (int i=startIndex;i<endIndex;++i){			

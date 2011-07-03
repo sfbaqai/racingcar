@@ -275,13 +275,13 @@ public final class Storage {
 		if (indx>=0 && appearRad_N[j]>0){
 			int mr = maxRad[j];
 			int[] map = allMaps[indx];
-			if (map!=null && (map[mr]>2 || map[mr]>1 && endIndx-startIndx<3)) return true;
+			if (map!=null && mr>=0 && (map[mr]>2 || map[mr]>1 && endIndx-startIndx<3)) return true;
 			int[] aTypes = allTypes[indx];
 			int[] aRads = allRadius[indx];
 			int tp = aTypes[0];
 			if (tp>Segment.UNKNOWN){
 				int rad = aRads[0];
-				if (map[rad]>1) return true;
+				if (rad>=0 && map[rad]>1) return true;
 			}
 		}
 		return false;

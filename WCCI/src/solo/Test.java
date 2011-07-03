@@ -217,14 +217,14 @@ public class Test {
 	            	identify();
 	            	continue;
 	            }	          
-	            long ti = System.nanoTime();	            
+	            long ti = (CircleDriver2.debug) ? System.nanoTime() : 0;	            
 	            int numBytes = sd.drive(chars,len);
 	            prevLen = numBytes;	          
 	            
 	            outPacket.setLength(numBytes);	            
 	            socket.send(outPacket);
 	            
-	            ti = (System.nanoTime()-ti)/1000000;	            
+	            if (CircleDriver2.debug) ti = (System.nanoTime()-ti)/1000000;	            
 	            
 	            if (maxTime<ti) {
 	            	maxTime = ti;

@@ -14751,7 +14751,7 @@ public final class Segment {
 	}
 	
 	private static final void reExpand(Segment prev,Segment s,Segment next,int which, double tW){
-		long ti = System.nanoTime();
+		long ti = (CircleDriver2.debug) ? System.nanoTime() : 0;
 		int n = 0;
 		if (CircleDriver2.debug) System.out.println("Start reExpand : "+(System.nanoTime()-ti)/1000000);		
 		int from = (prev==null) ? 0 : prev.endIndex+1;
@@ -15190,7 +15190,7 @@ public final class Segment {
 			s.opp.radCount++;
 			s.map[sr]++;
 		}
-		long endTime = (System.nanoTime()-ti)/1000000;
+		long endTime = (CircleDriver2.debug) ? (System.nanoTime()-ti)/1000000 : 0;
 		if (CircleDriver2.debug && endTime>=1) System.out.println("End reExpand : "+endTime+"   at "+CircleDriver2.time+" s.    "+n);
 	}
 
@@ -15460,7 +15460,7 @@ public final class Segment {
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)) return true;
 		return false;
 	}
-
+		
 	public static final int reUpdate(Segment[] trArr,int sz,double tW,int fromSeg){
 		if (CircleDriver2.debug) System.out.println("Start reUpdate : "+(System.nanoTime()-CircleDriver2.ti)/1000000);
 		int[] trIndx = CircleDriver2.trIndx;
@@ -15788,7 +15788,29 @@ public final class Segment {
 			if (l!=null && lN>0){
 				if (l.type!=UNKNOWN) {
 					toMiddleSegment(l,t, -1, tW);
-					t.radCount = l.radCount;					
+					t.radCount = l.radCount;
+					if (l.type==Segment.UNKNOWN){
+						if (pl!=null) pl.upper = null;
+						if (nl!=null) nl.lower = null;
+						if (pr!=null) pr.upper = null;
+						if (nr!=null) nr.lower = null;
+						if (prev!=null) prev.upper = null;
+						if (next!=null) next.lower = null;
+						if (t.rightSeg!=null) {
+							t.rightSeg.type = Segment.UNKNOWN;
+							t.rightSeg.radius = 0;
+						}				
+						t.radCount = l.radCount;
+						occupied[ trIndx[i] ] = 0;
+						int idx = i+1;					
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
+						trSz+=i;					
+						if (oldTrSz==trSz){
+							i--;	//*/
+							continue;
+						} else i -= oldTrSz-trSz;
+						t = prev;
+					}
 				} else {													
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
@@ -15815,7 +15837,29 @@ public final class Segment {
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
 					toMiddleSegment(r,t, 1, tW);
-					t.radCount = r.radCount;					
+					t.radCount = r.radCount;		
+					if (r.type==Segment.UNKNOWN){
+						if (pl!=null) pl.upper = null;
+						if (nl!=null) nl.lower = null;
+						if (pr!=null) pr.upper = null;
+						if (nr!=null) nr.lower = null;
+						if (prev!=null) prev.upper = null;
+						if (next!=null) next.lower = null;
+						if (t.rightSeg!=null) {
+							t.rightSeg.type = Segment.UNKNOWN;
+							t.rightSeg.radius = 0;
+						}				
+						t.radCount = l.radCount;
+						occupied[ trIndx[i] ] = 0;
+						int idx = i+1;					
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
+						trSz+=i;					
+						if (oldTrSz==trSz){
+							i--;	//*/
+							continue;
+						} else i -= oldTrSz-trSz;
+						t = prev;
+					}
 					//					r.updated = false;
 					//					if (l!=null) l.updated = false;
 					//					t.updated = false;
