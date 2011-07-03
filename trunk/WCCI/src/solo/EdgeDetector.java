@@ -572,7 +572,7 @@ public final class EdgeDetector {
 			
 			double absXX = Math.abs(xx);
 			if (absXX>=40 || (absXX>trackWidth*2 && absXX>Math.abs(yy))){
-				System.out.println("Vo no roi");
+				if (CircleDriver2.debug) System.out.println("Vo no roi");
 				continue;
 			}
 
@@ -1674,7 +1674,7 @@ public final class EdgeDetector {
 					} 
 					
 					if (turnLeft!=0 && turnRight!=0 && turnLeft!=turnRight)
-						System.out.println("Check immediately");
+						if (CircleDriver2.debug) System.out.println("Check immediately");
 					else if (turnLeft!=0 && turnRight!=0 && turnLeft==turnRight)
 						whichL = turnLeft;
 				}
@@ -1778,7 +1778,7 @@ public final class EdgeDetector {
 					} 
 					
 					if (turnLeft!=0 && turnRight!=0 && turnLeft!=turnRight)
-						System.out.println("Check immediately");
+						if (CircleDriver2.debug) System.out.println("Check immediately");
 					else if (turnLeft!=0 && turnRight!=0 && turnLeft==turnRight)
 						whichH = turnLeft;
 				}
@@ -2512,23 +2512,23 @@ public final class EdgeDetector {
 				if (lSeg.num==0) continue;
 				if (lSeg.startIndex>=0 && lSeg.start.y>lSeg.points[lSeg.startIndex].y+SMALL_MARGIN || lSeg.endIndex>=0 && lSeg.end.y<lSeg.points[lSeg.endIndex].y-SMALL_MARGIN){
 					CircleDriver2.inTurn = true;
-					System.out.println();
+					if (CircleDriver2.debug) System.out.println();
 				}
 				if (lSeg.endIndex<lSize-1 && lSeg.end.y>lSeg.points[lSeg.endIndex+1].y+SMALL_MARGIN){
-					System.out.println();
+					if (CircleDriver2.debug) System.out.println();
 					CircleDriver2.inTurn = true;
 				}
 				
 				if (lSeg.startIndex>0 && lSeg.start.y<lSeg.points[lSeg.startIndex-1].y-SMALL_MARGIN ){
-					System.out.println();
+					if (CircleDriver2.debug) System.out.println();
 					CircleDriver2.inTurn = true;
 				}
 			}
 			for (int i=1;i<lSize;++i){
-				if (left[i].y-left[i-1].y==0)
+				if (CircleDriver2.debug && left[i].y-left[i-1].y==0)
 					System.out.println();
 				if (left[i].y<left[i-1].y){
-					System.out.println();
+					if (CircleDriver2.debug) System.out.println();
 					turn = Segment.UNKNOWN;
 					reset();
 					return;
@@ -2544,15 +2544,15 @@ public final class EdgeDetector {
 				Segment rSeg = trArr[ trIndx[i] ].rightSeg;
 				if (rSeg.num==0) continue;
 				if (rSeg.startIndex>=0 && rSeg.start.y>rSeg.points[rSeg.startIndex].y+SMALL_MARGIN || rSeg.endIndex>=0 && rSeg.end.y<rSeg.points[rSeg.endIndex].y-SMALL_MARGIN){
-					System.out.println();
+					if (CircleDriver2.debug)  System.out.println();
 					CircleDriver2.inTurn = true;
 				}
 			}
 			for (int i=1;i<rSize;++i){
-				if (right[i].y-right[i-1].y==0)
+				if (CircleDriver2.debug && right[i].y-right[i-1].y==0)
 					System.out.println();
 				if (right[i].y<right[i-1].y){
-					System.out.println();
+					if (CircleDriver2.debug) System.out.println();
 					reset();
 					return;
 				}
@@ -2572,7 +2572,7 @@ public final class EdgeDetector {
 				int end = l0.endIndex+1;
 				for (int i = l0.startIndex;i<end;++i){
 					double x = left[i].x;
-					if (Math.abs(x-x0)<trackWidth-1)
+					if (CircleDriver2.debug && Math.abs(x-x0)<trackWidth-1)
 						System.out.println();
 					
 					if (left[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
@@ -2587,7 +2587,7 @@ public final class EdgeDetector {
 				if (r0.startIndex>=0){
 					for (int i = r0.startIndex;i<end;++i){
 						double x = right[i].x;
-						if (Math.abs(x-x0)<trackWidth-1)
+						if (CircleDriver2.debug && Math.abs(x-x0)<trackWidth-1)
 							System.out.println();
 						
 						if (right[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
