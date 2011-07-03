@@ -5183,7 +5183,7 @@ public final class Segment {
 						}
 					}
 					if (!s.reCalculate(v, s.startIndex, s.endIndex+1, tW)){
-						System.out.println("Check out reCalculate************************************************************");
+						if (CircleDriver2.debug) System.out.println("Check out reCalculate************************************************************");
 					}
 					if (last.lower!=null && s.lower==null) s.lower = last.lower;
 					if (last.upper!=null) s.upper = last.upper;
@@ -5307,7 +5307,7 @@ public final class Segment {
 				if (s.type!=Segment.UNKNOWN && changed && s.num>0){
 					double oldr = s.radius;
 					if (!s.reCalculate(v,s.startIndex,s.endIndex+1,tW)){
-						System.out.println("Check out reCalculate************************************************************");
+						if (CircleDriver2.debug) System.out.println("Check out reCalculate************************************************************");
 					}
 					if (l-1>=1 && Math.abs(oldr-s.radius)>0.5) sz = checkRs(v,rsArr, l-1,tW,sz);
 				}
@@ -15191,7 +15191,7 @@ public final class Segment {
 			s.map[sr]++;
 		}
 		long endTime = (System.nanoTime()-ti)/1000000;
-		if (CircleDriver2.debug || endTime>=1) System.out.println("End reExpand : "+endTime+"   at "+CircleDriver2.time+" s.    "+n);
+		if (CircleDriver2.debug && endTime>=1) System.out.println("End reExpand : "+endTime+"   at "+CircleDriver2.time+" s.    "+n);
 	}
 
 	/*private static final void reExpand(Segment prev,Segment t,Segment next,double tW){
@@ -15489,8 +15489,8 @@ public final class Segment {
 			double ll = (lN<1) ? 0 : lV[lN-1].length();
 //			|| edge.currentPointAhead!=null && edge.currentPointAhead.y<55
 			careful =  CircleDriver2.speedX>=200 && h.y<60 || h.y<30 || CircleDriver2.turn==1 &&  rN>0 && hl-rl>0 && hl-rl<30 || CircleDriver2.turn==-1 && lN>0 &&  hl-ll>0 && hl-ll<30;
-			if (trSz>0 && trArr[trIndx[trSz-1]].type!=0 && trArr[trIndx[trSz-1]].radius<80 &&  (CircleDriver2.turn==-1 && lN>0 && hl-ll>tW*2 && hl-ll<50 || CircleDriver2.turn==1 && rN>0 && hl-rl>tW*2 && hl-rl<50) )
-				System.out.println();
+//			if (trSz>0 && trArr[trIndx[trSz-1]].type!=0 && trArr[trIndx[trSz-1]].radius<80 &&  (CircleDriver2.turn==-1 && lN>0 && hl-ll>tW*2 && hl-ll<50 || CircleDriver2.turn==1 && rN>0 && hl-rl>tW*2 && hl-rl<50) )
+//				System.out.println();
 		}
 		double tw = tW+tW;
 		for (int i = fromSeg;i<trSz;++i){			
