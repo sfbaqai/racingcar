@@ -150,7 +150,8 @@ public final class TurnDriver extends BaseDriver {
 		msd.drive(cs,cc);
 //		if (cs!=null && cc!=null) System.out.println(cs.getRpm()+"   "+cc.getAccel()+"    "+cc.getGear()+"    "+cs.getDistanceRaced());
 //		if (cc==null) return new CarControl(0,0,0,0,1).toBytes();
-		if (CircleDriver2.debug) System.out.println(cc);
+//		if (CircleDriver2.debug) 
+			System.out.println(cc);
 		return cc.toBytes();
 	}
 
