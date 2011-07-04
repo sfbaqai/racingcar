@@ -217,14 +217,14 @@ public class Test {
 	            	identify();
 	            	continue;
 	            }	          
-	            long ti = (CircleDriver2.debug) ? System.nanoTime() : 0;	            
+	            long ti = System.nanoTime();	            
 	            int numBytes = sd.drive(chars,len);
 	            prevLen = numBytes;	          
 	            
 	            outPacket.setLength(numBytes);	            
 	            socket.send(outPacket);
 	            
-	            if (CircleDriver2.debug) ti = (System.nanoTime()-ti)/1000000;	            
+	            ti = (System.nanoTime()-ti)/1000000;	            
 	            
 	            if (maxTime<ti) {
 	            	maxTime = ti;
@@ -262,6 +262,7 @@ public class Test {
         		System.exit(1);
         	}        	
         }
+        System.out.println("Max processing time : "+maxTime+" at "+atTime+" s.");
         System.out.println("Finished");
     }
 
