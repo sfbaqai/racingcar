@@ -3808,7 +3808,7 @@ public final class CircleDriver2{
 				steer = (relativeAngleMovement>0.01) ? (turn==0 || turn==2) ? Math.signum(bal) : turn : (steering*bal>0) ? maxAbs(steering, bal) : bal;				
 			} else if (lsteer*steer>0){ 
 				steer = minAbs(steer,lsteer);				
-			} else steer = steering;
+			} else steer = (steering+lastSteer)*0.5;
 			smoothSteering();
 //			else steer = steer*0.5;
 			
@@ -3821,7 +3821,7 @@ public final class CircleDriver2{
 				steer = (relativeAngleMovement>-0.01) ? (turn==0 || turn==2) ? Math.signum(bal) : turn : (steering*bal>0) ? maxAbs(steering, bal) : bal;
 			else
 			if (absSpeedY<10 && maxTurn && relativePosMovement>-0.01)
-				steer = steering;
+				steer = (steering+lastSteer)*0.5;
 			else if (steer*steering<=0 || relativePosMovement>0 && relativeAngle>-0.01) 
 				steer = (steering+lastSteer)*0.5;
 			else if (Math.abs(steer)>Math.abs(steering)){
@@ -3838,13 +3838,13 @@ public final class CircleDriver2{
 				steer = (relativeAngleMovement>0.01) ? (turn==0 || turn==2) ? Math.signum(bal) : turn : (steering*bal>0) ? maxAbs(steering, bal) : bal;
 			else
 			if (absSpeedY<10 && maxTurn && relativePosMovement>-0.01)
-				steer = steering;
+				steer = (steering+lastSteer)*0.5;
 			else if (steer*steering<0 && turn*steering>0 || relativePosMovement>0 && relativeAngle>-0.01) 
-				steer = steering;
-			else if (steer*steering>0 && Math.abs(steer)>Math.abs(steering)){
-				if (relativeAngle>0 || relativeAngleMovement<-0.001 && relativeTargetAngle>=0) 
-					steer = (relativeTargetAngle>0.3 || relativeAngleMovement<-0.01) ? steer :  steering;
-			} else if (!canGoToLastSeg && distToEstCircle<0)steer = steering;
+				steer = (steering+lastSteer)*0.5;
+			else  if (Math.abs(steer)>Math.abs(steering)){
+				if (relativeAngle>0 || relativeAngleMovement<-0.001 && relativeTargetAngle>=0)
+					steer = (relativeTargetAngle>0.3 || relativeAngleMovement<-0.01) ? (steer*lastSteer>0) ? maxAbs(steer, lastSteer) : steer :  (steering+lastSteer)*0.5;					
+			} else steer = (steering+lastSteer)*0.5;
 			acc = (relativePosMovement<-0.02 && (!isSafeToAccel || lastSteer*turn<0)) ? CONSTANT_SPEED_ACC*0.25 : 1;
 			smoothSteering();
 			brake = 0;
