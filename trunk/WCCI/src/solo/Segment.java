@@ -6616,8 +6616,8 @@ public final class Segment {
 				}
 				s.map[rr]++;
 				score = s.map[rr];
-			} else if (s.map[rd]>0) s.map[rd]--;
-			if (s.map!=null && s.map[rd]==0 && s.appearedRads!=null){
+			} else if (rd>=0 && s.map[rd]>0) s.map[rd]--;
+			if (s.map!=null && rd>=0 && s.map[rd]==0 && s.appearedRads!=null){
 				for (int i = s.radCount-1;i>=0;--i){
 					int rads = s.appearedRads[i];
 					if (rads==rd){
@@ -6628,7 +6628,7 @@ public final class Segment {
 					}
 				}
 			}
-			int nr = s.map[rd];	
+			int nr = (rd>=0) ? s.map[rd] : 0;	
 																		
 			if (nr<=score && rr<MAX_RADIUS-1 && center!=null ){
 				double cx = center.x;
@@ -6669,7 +6669,7 @@ public final class Segment {
 				s.radius = r;
 				s.type = tp;
 				s.reCalLength();					
-			} else if (s.map!=null && rr>=0 && rr>=MAX_RADIUS-1 && nr<=s.map[rr] ){				
+			} else if (s.map!=null && rr>=MAX_RADIUS-1 && nr<=s.map[rr] ){				
 				//				s.start = new Vector2D(first);
 				//				s.end = new Vector2D(last);
 				s.type = 0;
@@ -9458,7 +9458,7 @@ public final class Segment {
 						else numb = Geom.getCircle5(start, end, prev.center, prev.radius, tmp1);
 						for (int kk =0;kk<numb;++kk){
 							double rr = Math.round(tmp1[2+3*kk]-tp*tW)+tp*tW;						
-							if (tp!=0 && (rr<=REJECT_VALUE || rr-tp*tW<=REJECT_VALUE )) continue;						
+							if (tp!=0 && (rr<=REJECT_VALUE || rr-tp*tW<=REJECT_VALUE || tp*(end.x-start.x)<0)) continue;						
 							if (rr<MAX_RADIUS-1){							
 								double cx = tmp1[3*kk];
 								double cy = tmp1[1+3*kk];
@@ -9517,7 +9517,7 @@ public final class Segment {
 								if (next!=null) {
 									int tmptp = (int)rs[3];
 									double tmpr = rs[2];																
-									if (tmptp!=0 && (lst.y-Math.max(0,fst.y)>=tmpr+1.5+tW*which*tmptp || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
+									if (tmptp!=0 && (tmptp*(lst.x-fst.x)<0 || lst.y-Math.max(0,fst.y)>=tmpr+1.5+tW*which*tmptp || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
 									
 									if (s2.start==null){
 										s2.start = new Vector2D(fst);
