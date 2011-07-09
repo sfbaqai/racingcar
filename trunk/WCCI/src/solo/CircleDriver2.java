@@ -36,7 +36,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 9800.90;
+	public static final double BREAK_TIME =  4600.22;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5281,8 +5281,8 @@ public final class CircleDriver2{
 				hazard = 2;
 				steer = (relativeAngle*relativeAngleMovement<0) ? 0 : curAngle/steerLock;
 			}
-			
-			if (canGoVeryFast) {				
+						
+			if (canGoVeryFast && speedX-lastSpeed<Math.min(100, al*1.5)) {				
 				if (a>0 && b>0 && (al>50 || distToEstCircle>-W && absSpeedY<MODERATE_SPEEDY || distToEstCircle>-GAP && absSpeedY<HIGH_SPEEDY || (distToEstCircle>-W || relativeAngleMovement>0.01) && b>TURNANGLE*0.5 && relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY)) {
 					acc = (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0) ? 1 : acc;
 					brake = 0;
@@ -13698,7 +13698,7 @@ public final class CircleDriver2{
 							: (relativeAngle>0.1)
 								? (relativeAngleMovement>0 && relativePosMovement>0.001) ? 0 : deflect
 								: (relativeAngle<0 && relativeAngleMovement<0.01) ? signD 
-										: (relativeAngleMovement>0.02) ? -signD 
+										: (relativeAngleMovement>0.02) ? (relativeAngle<0.1) ? -signD : bal 
 												: (relativeAngleMovement>0.015) 
 													? bal 
 													: (relativeAngleMovement>0.01) ? (relativeAngleMovement<lastRelativeAngleMovement) ? deflect : 0:  deflect;
@@ -13845,7 +13845,7 @@ public final class CircleDriver2{
 			}
 			//			if (l!=null && l.size()>0) l.size(0);
 			//			if (r!=null && r.size()>0) r.size(0);
-			steer = (absSpeedY>=MODERATE_SPEEDY || relativeAngle>0.15) ? bal : lSteer+deflect;
+			steer = (absSpeedY>=MODERATE_SPEEDY && relativeAngle>0 || relativeAngle>0.15) ? (absSpeedY>MODERATE_SPEEDY && relativeAngle<0.15) ? 0 :  bal*0.5 : lSteer+deflect;
 //			if (Math.abs(steer)<0.01) steer = 0; 
 //			smoothSteering();
 			return steer;
