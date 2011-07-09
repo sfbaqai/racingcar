@@ -1299,6 +1299,7 @@ public final class EdgeDetector {
 				p = elems[start];
 				p.x = v.x;
 				p.y = v.y;
+				p.certain = v.certain;
 //				elems[start] = v;																	 								
 				for (int ii=index+1;ii<trSz;++ii){					
 					Segment ss = (which==-1) ? trArr[ trIndx[ii] ].leftSeg : trArr[ trIndx[ii] ].rightSeg;
@@ -1397,6 +1398,7 @@ public final class EdgeDetector {
 				p = elems[indx];
 				p.x = v.x;
 				p.y = v.y;
+				p.certain = v.certain;
 //				elems[indx] = v;
 				for (int ii=index;ii<trSz;++ii){
 					Segment ss = (which==-1) ? trArr[ trIndx[ii] ].leftSeg : trArr[ trIndx[ii] ].rightSeg;
