@@ -44,6 +44,7 @@ public final class Segment {
 	private static final double[] rs = new double[3];	
 	private static final double E = (CircleDriver2.inTurn) ? 0.1*TrackSegment.EPSILON : TrackSegment.EPSILON*0.1;
 	private static final int tmpL = 2002;
+	private static final Vector2D tmpPoint = new Vector2D();
 	public static boolean careful = false;
 //	private static final double[] tmpR = new double [tmpL];
 	public static final int[] tmpAppear = new int[tmpL];
@@ -8193,7 +8194,7 @@ public final class Segment {
 				double dmin = Double.MAX_VALUE;
 				int index = -1;
 				double sr = s.radius;
-				Vector2D point = new Vector2D();
+//				Vector2D point = new Vector2D();
 				for (int i=prL-1;i>=0;--i){
 					double rr = pr[i];
 					Vector2D center = pCntr[i];
@@ -8207,12 +8208,16 @@ public final class Segment {
 					ns.end = last;
 					ns.num = s.num;
 					ns.radius = rr;					
-					if (isConnected(prev, ns, tW, point)){
+					if (isConnected(prev, ns, tW, tmpPoint)){
 						if (s!=null) {
 							apply(s,tW,ns.type,first,last,center,rr);						
 							if (s.radius==rr){
-								s.lower = point;
-								prev.upper = point;
+								if (s.lower==null)
+									s.lower = new Vector2D(tmpPoint);
+								else s.lower.copy(tmpPoint);
+								if (prev.upper==null)
+									prev.upper = new Vector2D(tmpPoint);
+								else prev.upper.copy(tmpPoint);
 							}							
 						};
 					}
@@ -8855,7 +8860,7 @@ public final class Segment {
 				}				
 			}
 			
-			if (last.y-first.y<3 && prev!=null && !CircleDriver2.isFirstSeg(prev)) return indx;
+//			if (last.y-first.y<3 && prev!=null && !CircleDriver2.isFirstSeg(prev)) return indx;
 			
 			if (prev!=null && e>E){				
 				radiusFrom2Points(prev, first, last, tW, s);		
@@ -15374,7 +15379,7 @@ public final class Segment {
 			
 			if (v!=null){
 				if (true){
-					Vector2D point = new Vector2D();
+//					Vector2D point = new Vector2D();
 					Vector2D[] vs = null,others = null;
 					int num = 0;
 					int otherNum = 0;
@@ -15383,7 +15388,7 @@ public final class Segment {
 					boolean ok = false;
 					if (isConnected(pr, r, tW, pt)){
 						ok = true;
-						mapPoint(pt, r, -1, tW, point);
+						mapPoint(pt, r, -1, tW, tmpPoint);
 						num = CircleDriver2.edgeDetector.rSize;
 						otherNum = CircleDriver2.edgeDetector.lSize;
 						vs = r.points;
@@ -15392,7 +15397,7 @@ public final class Segment {
 						prev = pr;
 					} else if (isConnected(pl, l, tW, pt)){
 						ok  =true;
-						mapPoint(pt, l, 1, tW, point);
+						mapPoint(pt, l, 1, tW, tmpPoint);
 						num = CircleDriver2.edgeDetector.lSize;
 						otherNum = CircleDriver2.edgeDetector.rSize;
 						vs = l.points;
@@ -15420,10 +15425,10 @@ public final class Segment {
 						}
 						
 						if (otherNum>0){
-							i = binarySearchFromTo(others, point.y, 0, otherNum-1);
+							i = binarySearchFromTo(others, tmpPoint.y, 0, otherNum-1);
 							if (i<0) 
 								i = -i-1;
-							else if (point.y>others[i].y) i++;
+							else if (tmpPoint.y>others[i].y) i++;
 							s = s.opp;
 							prev = prev.opp;					
 							if (s.startIndex>i){
@@ -15457,7 +15462,12 @@ public final class Segment {
 			return true;
 		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
-		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)) return true;
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)){
+//			Vector2D point = new Vector2D();
+			if (pr!=null && isConnected(pr, r, tW, tmpPoint))
+				return false;
+			return true;
+		}
 		return false;
 	}
 		

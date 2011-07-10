@@ -2617,7 +2617,23 @@ public final class EdgeDetector {
 		if (whichH==0 || whichL==0){
 			if (lower!=null && higher!=null ) guessHighestPointEdge(lower, whichL, higher, whichH, left, lSize, right, rSize, trackWidth,out);		
 			int newWhichL = out[0];
-			int newWhichH = out[1];			
+			int newWhichH = out[1];		
+			double dd = edH!=null && highestPoint!=null ? edH.distance(highestPoint) : 0;			
+			if (newWhichL==0 && newWhichH==0 && edH!=null && highestPoint!=null && edH.length()<99 && highestPoint.length()<99 && dd<trackWidth-EdgeDetector.CERTAIN_DIST && dd>0.5) {				
+//				if (relativeAngleMovement>0) {
+//					if (highestPoint.y>ph.y) {
+//						whichH = whichL = (highestPoint.x-ph.x)*turn<0 ? -turn : 0;
+//					} else whichH = whichL = (highestPoint.x-ph.x)*turn>0 ? turn : 0;
+//				} else if (highestPoint.y<ph.y) {
+//					whichH = whichL = (highestPoint.x-ph.x)*turn>0 ? turn : 0;
+//				} else whichH = whichL = (highestPoint.x-ph.x)*turn<0 ? -turn : 0;
+				if ((highestPoint.y-edH.y)*(highestPoint.x-edH.x)<0)
+					newWhichH = newWhichL = 1;
+				else newWhichH = newWhichL = -1;
+				if (whichH!=0) turn = -newWhichH;
+				CircleDriver2.edgeDetector.turn = turn;
+				CircleDriver2.guessTurn = false;
+			}
 						
 			if (whichL==0 && newWhichL!=0 && lower!=null){
 				double dx = lower.x - higher.x;
