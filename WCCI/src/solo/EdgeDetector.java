@@ -2607,7 +2607,9 @@ public final class EdgeDetector {
 			edH.x+=ax;
 			edH.y+=-distRaced;
 //			at.transform(edH, edH);
+			edH.certain = false;
 		}
+		
 				
 		
 		Vector2D lower = (highestPoint !=null && edH!=null && highestPoint.y<edH.y) ? highestPoint : (highestPoint==null || edH==null) ? null : edH;	
