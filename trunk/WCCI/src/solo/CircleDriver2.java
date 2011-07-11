@@ -36,7 +36,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME =  22600.02;
+	public static final double BREAK_TIME =  6400.78;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -9238,7 +9238,7 @@ public final class CircleDriver2{
 		rpm = cs.rpm;
 		if (time>=BREAK_TIME)
 			System.out.println();
-//		if (debug) 
+		if (debug) 
 			System.out.println("**************** E"+time+" "+distRaced+" ****************  "+turn+"      "+edgeDetector.whichE+"     "+canGoToLastSeg);//
 		if (isStuck(cs) && reserveCount<100){			
 			double signPos = (curPos<0) ? -1 :1;

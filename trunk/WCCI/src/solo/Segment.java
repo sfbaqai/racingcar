@@ -461,19 +461,23 @@ public final class Segment {
 			}
 		};
 		
-		if (start==null) 
-			start = new Vector2D(s.start);
-		else {
-			start.x = s.start.x;
-			start.y = s.start.y;
+		if (s.start!=null){
+			if (start==null) 
+				start = new Vector2D(s.start);
+			else {
+				start.x = s.start.x;
+				start.y = s.start.y;
+			}
 		}
 		
 		unsafe = s.unsafe;
-		if (end==null) 
-			end = new Vector2D(s.end);
-		else {
-			end.x = s.end.x;
-			end.y = s.end.y;
+		if (s.end!=null){
+			if (end==null) 
+				end = new Vector2D(s.end);
+			else {
+				end.x = s.end.x;
+				end.y = s.end.y;
+			}
 		}
 			
 		if (s.upper!=null){
@@ -4323,7 +4327,7 @@ public final class Segment {
 	}
 
 
-	private final static boolean testConnect(Segment prev,Segment s,Vector2D point,double tW,int cutIndx){
+	private final static boolean testConnect(Segment prev,Segment s,Vector2D point,double tW,int cutIndx,boolean noCheck){
 		int pStartIndx = prev.startIndex;
 		int endIndx = s.endIndex;
 		Segment op = prev.opp;
@@ -4335,7 +4339,7 @@ public final class Segment {
 		Vector2D[] opoints = (which==1) ? CircleDriver2.edgeDetector.left : CircleDriver2.edgeDetector.right;		
 		double tw = tW;
 		if (tw<0) tw = -tw;		
-		int pNum = cutIndx - pStartIndx;
+		int pNum = cutIndx - pStartIndx;		
 		Vector2D pCenter = prev.center;		
 		double px = point.x;
 		double py = point.y;
@@ -4370,7 +4374,7 @@ public final class Segment {
 				if (i-opStartIndx<2) {
 					pOk = false;
 				} else {					
-					pOk = isBelong(op, opoints, opStartIndx, i, tmpPrev, -which, tw);
+					pOk = noCheck && i-opStartIndx==op.num || isBelong(op, opoints, opStartIndx, i, tmpPrev, -which, tw);
 					if (tmpPrev.type!=Segment.UNKNOWN){
 						if (tmpPrev.type!=0){
 							pCenter = tmpPrev.center;
@@ -4401,7 +4405,7 @@ public final class Segment {
 				py = point.y;
 			}
 		} else {					
-			pOk = isBelong(prev, v, pStartIndx, cutIndx, tmpPrev, which, tw);
+			pOk = noCheck && prev.num==cutIndx-pStartIndx || isBelong(prev, v, pStartIndx, cutIndx, tmpPrev, which, tw);
 			if (pOk && isPrevConfirmed && !((tmpPrev.type==0 && Math.abs(tmpPrev.start.x-tmpPrev.end.x)<E) || (tmpPrev.type!=0 && tmpPrev.center!=null && tmpPrev.center.y==0))){
 				pOk = false;
 				return false;
@@ -4440,7 +4444,7 @@ public final class Segment {
 			if (osEndIndx+1-i<2){ 
 				sOk = false;
 			} else {				
-				sOk = isBelong(os, opoints, i, osEndIndx+1, tmpSeg, -which, tw);
+				sOk = noCheck && osEndIndx+1-i==os.num || isBelong(os, opoints, i, osEndIndx+1, tmpSeg, -which, tw);
 				if (tmpSeg.type!=Segment.UNKNOWN){
 					if (tmpSeg.type!=0){
 						sCenter = tmpSeg.center;
@@ -4467,7 +4471,7 @@ public final class Segment {
 				}
 			}
 		} else {			
-			sOk = isBelong(s, v, cutIndx, s.endIndex+1, tmpSeg, which, tw);						
+			sOk = noCheck && s.endIndex+1-cutIndx==s.num || isBelong(s, v, cutIndx, s.endIndex+1, tmpSeg, which, tw);						
 		}		
 		
 		if (tmpPrev!=null && tmpSeg!=null && tmpPrev.type!=Segment.UNKNOWN && tmpSeg.type!=Segment.UNKNOWN){
@@ -4631,7 +4635,7 @@ public final class Segment {
 			} 
 			return false;
 		} else {
-			if (pOk && !isConfirmed(s, which, tw) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw)){
+			if (pOk && !isConfirmed(s, which, tw) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw) && tmpPrev.type==prev.type && (prev.type==0 || prev.radius==tmpPrev.radius)){
 				prev.copy(tmpPrev);
 				prev.opp = op;
 				prev.updated = true;
@@ -4647,7 +4651,7 @@ public final class Segment {
 				}
 				s.type = Segment.UNKNOWN;		
 				os.type = Segment.UNKNOWN;
-			} else if (sOk && !isConfirmed(prev, which, tw) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw)){
+			} else if (sOk && !isConfirmed(prev, which, tw) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw) && tmpSeg.type==s.type && (s.type==0 || s.radius==tmpSeg.radius)){
 				s.copy(tmpSeg);
 				s.opp = os;
 				int sr = (s.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*which*tw);
@@ -4663,11 +4667,12 @@ public final class Segment {
 				prev.type = Segment.UNKNOWN;
 				op.type = Segment.UNKNOWN;
 			}
-		}				
+		}		
+		if (noCheck) return true;
 		return false;
 	}
 
-	private final static void connect(Segment prev,Segment s,Vector2D point,double tW){
+	private final static void connect(Segment prev,Segment s,Vector2D point,double tW,boolean noCheck){
 		//		if (prev.type!=0 && prev.center!=null && prev.center.y==0) return; 
 //		long ti = System.nanoTime();
 		Vector2D pLast = prev.end;
@@ -4705,7 +4710,7 @@ public final class Segment {
 				i = -i-1;
 			else if (yy>v[i].y) i++;
 			//			if (notAllowed && i-1<prev.endIndex) return;
-			if (testConnect(prev, s, point, tW, i)){
+			if (testConnect(prev, s, point, tW, i,noCheck)){
 				reSynchronize(s, os, 0, otherNums, 1, tw);
 				reSynchronize(prev, op, 0, otherNums, 1, tw);
 				boolean isFirstS = (s!=null && s.type!=Segment.UNKNOWN && ((s.type==0 && Math.abs(s.start.x-s.end.x)<E) || (s.type!=0 && s.center.y==0)));
@@ -4732,6 +4737,7 @@ public final class Segment {
 			return;
 		}
 	}
+		
 
 	/*private final static void calibrateConnected(Segment s,int index,Segment last,int lIndex,Vector2D[] v,double tW,int[] startArr,int[] endArr,Vector2D point){
 		double yy = point.y;
@@ -5227,7 +5233,7 @@ public final class Segment {
 					Vector2D start = last.start;
 					double yy = pt.y;
 					if (pLast.y>yy || start.y<yy || s.endIndex+1<last.startIndex)
-						connect(s, last, pt, tW);
+						connect(s, last, pt, tW,true);
 					//					calibrateConnected(s, indx, last, l, v, tW, startArr, endArr, pt);
 					s.upper = pt;
 					last.lower = pt;				
@@ -7983,7 +7989,7 @@ public final class Segment {
 
 	private static double radiusFrom2Points(Segment prev,Vector2D first,Vector2D last,double tW,Segment s){
 //		long ti = System.nanoTime();
-		if (prev==null || prev.type==UNKNOWN || prev.end!=null && prev.end.distance(first)<1) return -1;				
+		if (prev==null || prev.type==UNKNOWN ) return -1;				
 		double r = 0;
 		double tw = tW+tW;
 		double startX = first.x;
@@ -9176,12 +9182,12 @@ public final class Segment {
 						reSynchronize(s,os,0,otherTo,-which,tw);													
 						if (prev!=null && isPossiblePrevConnected && isConnected(prev, s, tW, pt) && pt.y>prev.start.y && pt.y<s.end.y) {																														
 							if ((prev.type!=s.type || prev.radius!=s.radius))				
-								connect(prev, s, pt, tW);
+								connect(prev, s, pt, tW,true);
 						}
 
 						if (next!=null && isPossibleNextConnected && s.type!=Segment.UNKNOWN && next.type!=Segment.UNKNOWN && isConnected(s, next, tW, pt) && pt.y>s.start.y && pt.y<next.end.y) {																														
 							if ((next.type!=s.type || next.radius!=s.radius))				
-								connect(s, next, pt, tW);
+								connect(s, next, pt, tW,true);
 						}						
 					}
 
@@ -9923,14 +9929,14 @@ public final class Segment {
 							reSynchronize(s, os, 0, otherTo, -which, tw);
 							return 1+indx;
 						} else if (next==null && isConnected(prev, s, tW, pt)){
-							connect(prev, s, pt, tW);
+							connect(prev, s, pt, tW,true);
 							if (s.type!=Segment.UNKNOWN && s.startIndex==prev.endIndex+1){
 								reSynchronize(s, os, 0, otherTo, -which, tw);
 								s.done = true;
 								return 1+indx;
 							}														
 						} else if (next!=null){							
-							connect(next, s, pt, tW);
+							connect(next, s, pt, tW,true);
 							if (s.type!=Segment.UNKNOWN && s.endIndex+1==next.startIndex ){
 								reSynchronize(s, os, 0, otherTo, -which, tw);
 								s.done = true;
@@ -15132,12 +15138,13 @@ public final class Segment {
 												
 						if (prev!=null && isPossiblePrevConnected && isConnected(prev, s, applyTW, pt) && pt.y>prev.start.y && pt.y<s.end.y) {																														
 							if ((prev.type!=s.type || prev.radius!=s.radius))				
-								connect(prev, s, pt, applyTW);
+								connect(prev, s, pt, applyTW,true);													
+							
 						}
 
 						if (next!=null && isPossibleNextConnected && s.type!=Segment.UNKNOWN && next.type!=Segment.UNKNOWN && isConnected(s, next, applyTW, pt) && pt.y>s.start.y && pt.y<next.end.y) {																														
 							if ((next.type!=s.type || next.radius!=s.radius))				
-								connect(s, next, pt, applyTW);
+								connect(s, next, pt, applyTW,true);
 						}
 						
 						if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
