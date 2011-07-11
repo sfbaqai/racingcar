@@ -15497,6 +15497,7 @@ public final class Segment {
 		int count = 0;		
 		int prevLStartIndx = 0;
 		int prevRStartIndx = 0;
+		boolean isLastRejected = false;
 //		int nextLEndIndx = 0;
 //		int nextREndIndx = 0;
 		if (edge!=null && edge.highestPoint!=null){
@@ -15800,6 +15801,7 @@ public final class Segment {
 					|| reject2(pr, r, nr, 1,rN, rV, tW))){
 				l.type = Segment.UNKNOWN;
 				r.type = Segment.UNKNOWN;
+				if (i==trSz-1) isLastRejected = true;
 			}
 						
 			if (l!=null && lN>0){
@@ -15944,7 +15946,7 @@ public final class Segment {
 		
 		
 		
-		while (true){
+		while (!isLastRejected){
 			pl = (prev==null) ? null : prev.leftSeg;
 			pr = (prev==null) ? null : prev.rightSeg;
 			int numL = (pl==null) ? lN : lN - pl.endIndex-1;
