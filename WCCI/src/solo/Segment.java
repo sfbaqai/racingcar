@@ -13876,7 +13876,7 @@ public final class Segment {
 		}
 		
 		if (prev!=null && s!=null && prev.type!=Segment.UNKNOWN){
-			if (prev.end.y>=s.start.y-SMALL_MARGIN){		
+			if (prev.end!=null && s.start!=null && prev.end.y>=s.start.y-SMALL_MARGIN){		
 				if (s.unsafe) {
 					Segment.removeFirstPoint(s, os, prev.end.y+SMALL_MARGIN);
 					s.updated = true;
@@ -13895,7 +13895,7 @@ public final class Segment {
 					os = (s==null) ? null : s.opp;
 				}
 				reSynchronize(s,os,0,otherTo,-which,tW*2);
-			} else if (op!=null && op.end.y>=os.start.y-SMALL_MARGIN){
+			} else if (op!=null && op.end!=null && os!=null && os.start!=null && op.end.y>=os.start.y-SMALL_MARGIN){
 				if (os.unsafe) {
 					Segment.removeFirstPoint(os, s,op.end.y+SMALL_MARGIN);
 					s.updated = true;
