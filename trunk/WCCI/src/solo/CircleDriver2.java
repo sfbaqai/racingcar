@@ -3298,7 +3298,7 @@ public final class CircleDriver2{
 			targetSpeed = Math.max(targetSpeed,speed+10);
 			brake = 0;
 		}
-		if (turn==2){
+		/*if (turn==2){
 			acc = 1;
 			return steer;
 		}//*/
@@ -5327,7 +5327,7 @@ public final class CircleDriver2{
 				
 			} else if (canGoModerate && speedX-lastSpeed<Math.min(100, al*1.5)){
 				if (a>0 && b>0){
-					if (brake>0 && absSpeedY<HIGH_SPEEDY) 
+					if (brake>0 && absSpeedY<HIGH_SPEEDY && (inTurn || seenNewSeg)) 
 						brake = 0;					
 					if (relativePosMovement>-0.001 && relativeAngleMovement>-0.001 && distToEstCircle>0 && speedX<lastSpeed+al){
 						acc = 1;
