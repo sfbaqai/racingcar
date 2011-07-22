@@ -8115,7 +8115,7 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy<=prev.end.y-1.5 || Math.abs(ssy-startY)<1) continue;
+							if (ssy<=prev.end.y-1.5 || Math.abs(ssy-startY)<1 || ssy>=startY+1.5) continue;
 						} else if (prev.start.y>endY){
 							if (ssy<endY-1.5 || Math.abs(ssy-prev.start.y)<1) continue;
 						}
