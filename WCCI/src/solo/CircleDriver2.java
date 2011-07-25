@@ -36,8 +36,8 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 4200.90;
-	public static boolean debug = true;
+	public static final double BREAK_TIME = 12700.63;
+	public static boolean debug = false;
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+				-	// [m/s] range [0..10]
@@ -11519,7 +11519,7 @@ public final class CircleDriver2{
 							(distToEstCircle<-W || (distToEstCircle<-GAP || distToEstCircle<0 && lastSteer*turn<0 && relativeAngleMovement<-0.001) && isDanger || b>TURNANGLE && a>TURNANGLE/1.5 && distToEstCircle<-GAP || b>TURNANGLE && isDanger && speedX>maxSpeed+20 && distToEstCircle<0) ? distToEstCircle<lastDistToEstCircle 
 									? (canGoVeryFast) ? lSteer :-turn 
 									: (lastSteer+steer)*0.5
-								: (distToEstCircle<-GAP) 
+								: (distToEstCircle<-GAP || b>TURNANGLE/1.5 && a>TURNANGLE*0.5) 
 									? (canGoVeryFast || canGoModerate) ? -turn : lSteer 
 									: steer;
 					
@@ -11808,7 +11808,9 @@ public final class CircleDriver2{
 							(distToEstCircle<-W || (distToEstCircle<-GAP || distToEstCircle<0 && lastSteer*turn<0 && relativeAngleMovement<-0.001) && isDanger || b>TURNANGLE && a>TURNANGLE/1.5 && distToEstCircle<-GAP || b>TURNANGLE && isDanger && speedX>maxSpeed+20 && distToEstCircle<0) ? distToEstCircle<lastDistToEstCircle 
 									? (canGoVeryFast) ? lSteer :-turn 
 									: (lastSteer+steer)*0.5
-								: (distToEstCircle<-GAP) ? lSteer : steer;
+								: (distToEstCircle<-GAP || b>TURNANGLE/1.5 && a>TURNANGLE*0.5) 
+									? (canGoVeryFast || canGoModerate) ? -turn : lSteer 
+									: steer;
 					} else if (a>TURNANGLE/1.5 && distToEstCircle<0 && steer*turn>0 && speedX<maxSpeed){
 						steer = (distToEstCircle<-GAP || b>TURNANGLE*0.75) ? (lSteer+steer)*0.5 : (a>TURNANGLE*0.75 && relativeAngle<0) ? (steer+relativeAngle*turn/steerLock)*0.5 : 0;
 					}
