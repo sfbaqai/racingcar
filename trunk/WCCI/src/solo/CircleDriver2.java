@@ -36,7 +36,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 12700.63;
+	public static final double BREAK_TIME = 3500.96;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -3172,6 +3172,11 @@ public final class CircleDriver2{
 //					? brake*0.5 
 //					: 1;
 	}
+	
+	private double safeDist(double al,double hl){
+		if (relativeTargetAngle<0) return Math.min(100, hl);  
+		return Math.min(100, al);
+	}
 
 	/**
 	 * @param cs
@@ -3887,7 +3892,8 @@ public final class CircleDriver2{
 					steer = (speedX<lowestSpeed || distToEstCircle>GAP) ? (steer+lastSteer)*0.5 
 							: (distToEstCircle<-GAP)
 								? (speedX<lastSpeed-15) ? steering 
-										: (turn*steering>0) ? steering : maxAbs(-turn*relativeTargetAngle*0.5/steerLock,steering)
+										: (turn*steering>0) ? steering : -turn 
+//											maxAbs(-turn*relativeTargetAngle*0.5/steerLock,steering)
 //								? (a>0 && steer*turn<0 && (relativePosMovement<-0.001 || distToEstCircle<-W) && relativeAngleMovement<-0.001 && speedX>lowestSpeed) ? (steer*0.5+steering)*0.5 : steering 
 								: (steering+lastSteer)*0.5;
 //					smoothSteering();
@@ -4734,7 +4740,7 @@ public final class CircleDriver2{
 //								if ((targetSpeed<110 || distToEstCircle>0 || distToEstCircle>-GAP && relativeAngleMovement>0.001) && relativePosMovement>0 && absSpeedY<MODERATE_SPEEDY && distToEstCircle>-GAP && relativeAngleMovement<-0.01)
 //									brake = 1;
 							} else if (isSafeToAccel && mLen>15 && toInnerEdge<-W*1.5){
-								brake = (distToEstCircle>0 && relativeAngleMovement>0.01 && absSpeedY<MODERATE_SPEEDY) ? 1 : (isSafeToAccel && steer*turn<0 || absSpeedY>=MODERATE_SPEEDY || relativeAngleMovement<-0.01) ? brake : 1;								
+								brake = (distToEstCircle>0 && relativeAngleMovement>0.01 && absSpeedY<MODERATE_SPEEDY || isSafeToAccel && steer*turn>=0 && distToEstCircle>GAP) ? 1 : (isSafeToAccel && steer*turn<0 || absSpeedY>=MODERATE_SPEEDY || relativeAngleMovement<-0.01) ? brake : 1;								
 							} else if (isSafeToAccel && mLen<15|| steer*turn>0 && toInnerEdge<-W*1.5) 
 								brake *= 1;
 							else if (!canGoToLastSeg && relativePosMovement>=0 && !canGoAtCurrentSpeed) {
@@ -5191,8 +5197,8 @@ public final class CircleDriver2{
 									: minAbs(steer,bal) 
 							: (relativeAngleMovement<-0.01 && a>0.05 || distToEstCircle<GAP*0.5 && distToEstCircle<lastDistToEstCircle) 
 								? (relativePosMovement>0.01) ? steer*turn<0 || a<0 ? steer : -turn : -turn 
-									: steer*turn<0 ? (relativeAngleMovement<-0.001) ? steer 
-											: bal*0.5 
+									: steer*turn<0 ? (relativeAngleMovement<0.001) ? steer 
+											: (a>0.05) ? 0 : bal*0.5 
 											: (relativeAngleMovement<-0.001) 
 												? a<0 ? steer : minAbs(bal,steer)*0.5 
 												: a<0 ? maxAbs(bal,steer) :  minAbs(bal,steer)  
@@ -5319,22 +5325,25 @@ public final class CircleDriver2{
 				hazard = 2;
 				steer = (relativeAngle*relativeAngleMovement<0) ? 0 : curAngle/steerLock;
 			}
-						
-			if (canGoVeryFast && speedX-lastSpeed<Math.min(100, al*1.5)) {				
+				
+			
+			double dl = safeDist(al, hl);
+			if (canGoVeryFast && speedX-lastSpeed<dl*1.5) {				
 				if (a>0 && b>0 && (al>50 || distToEstCircle>-W && absSpeedY<MODERATE_SPEEDY || distToEstCircle>-GAP && absSpeedY<HIGH_SPEEDY || (distToEstCircle>-W || relativeAngleMovement>0.01) && b>TURNANGLE*0.5 && relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY)) {
-					acc = (distToEstCircle<0 && speedX>lastSpeed+al ) ? acc : (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0) ? 1 : acc;
-					if (relativeAngleMovement>-0.01 && speedX<aheadSpeed+al) brake = 0;
+					acc = (distToEstCircle<0 && speedX>lastSpeed+dl ) ? acc : (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0) ? 1 : acc;
+					if (relativeAngleMovement>-0.01 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5)) brake = 0;
 				} else if (a>0 && b>0 && absSpeedY<HIGH_SPEEDY && relativePosMovement>-0.001 && relativeAngleMovement>0.001) brake = 0;
 				if (acc<=CONSTANT_SPEED_ACC*0.25 && brake==0 && relativeAngleMovement>0.001 && speedX<lowestSpeed || acc>CONSTANT_SPEED_ACC && relativeAngleMovement<-0.01 && distToEstCircle<-GAP) acc = CONSTANT_SPEED_ACC;
-			} else if (speed-lowestSpeed<Math.min(100, al) && absSpeedY<HIGH_SPEEDY && distToEstCircle>-GAP){
-				if (relativeAngleMovement>-0.01 && speedX<aheadSpeed+al && (absSpeedY<MODERATE_SPEEDY || relativeAngleMovement>0.001 && canGoModerate) ) brake = 0;
+			} else if (speed-lowestSpeed<dl && absSpeedY<HIGH_SPEEDY && (distToEstCircle>0 && !isSafeToAccel|| distToEstCircle>-GAP && speed-lowestSpeed<dl*1.5) ){
+				
+				if (relativeAngleMovement>-0.01 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5) && (absSpeedY<MODERATE_SPEEDY || relativeAngleMovement>0.001 && canGoModerate || distToEstCircle>0) ) brake = 0;
 //				if (speedX<aheadSpeed+al*0.5 && (absSpeedY<MODERATE_SPEEDY || a<=0|| relativeAngleMovement>0.01) ) acc = 1;
 				
-			} else if (canGoModerate && speed-lastSpeed<Math.min(100, al*1.5)){
+			} else if (canGoModerate && speed-lastSpeed<Math.min(100, dl*1.5)){
 				if (a>0 && b>0){
 					if (brake>0 && absSpeedY<HIGH_SPEEDY && (inTurn || seenNewSeg)) 
 						brake = 0;					
-					if (relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY && relativeAngleMovement>-0.001 && distToEstCircle>0 && speed<lastSpeed+al){
+					if (relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY && relativeAngleMovement>-0.001 && distToEstCircle>0 && speed<lastSpeed+dl){
 						acc = 1;
 						brake = 0;
 					}
@@ -5345,7 +5354,7 @@ public final class CircleDriver2{
 				brake = 0;
 			}//*/
 			
-			if (a>0 && b>0 && !canGoModerate && speed<Math.min(lastSpeed,aheadSpeed)+al && brake>0 && absSpeedY<MODERATE_SPEEDY && relativeAngleMovement>-0.01 && (relativePosMovement>-0.001 && distToEstCircle>-W|| distToEstCircle>-GAP)){				
+			if (a>0 && b>0 && !canGoModerate && brake>0 && absSpeedY<MODERATE_SPEEDY && (speed<Math.min(lastSpeed,aheadSpeed)+dl && distToEstCircle<0 || distToEstCircle>0 && speed<Math.min(lastSpeed,aheadSpeed)+dl*1.5 && !isSafeToAccel) && relativeAngleMovement>-0.01 && (relativePosMovement>-0.001 && distToEstCircle>-W|| distToEstCircle>-GAP)){				
 				brake = 0;
 			}//*/
 			
@@ -11707,7 +11716,7 @@ public final class CircleDriver2{
 												: c>TURNANGLE || absSpeedY>=MODERATE_SPEEDY && speedX>last_speed && b>TURNANGLE? maxAbs(steer,lSteer*0.5) : steer;
 						else steer = speedX>faster(last_speed,m) 
 								? speedX>faster(last_speed,m)+10 && toInnerEdge<-GAP && b>TURNANGLE*0.75 && a>0 && m>10 || distToEstCircle<-GAP && b>TURNANGLE/1.5 || distToEstCircle<0 && isDanger 
-										? (steer*lSteer>0) ? maxAbs(steer, lSteer) : lSteer 
+										? (steer*lSteer>0) ? maxAbs(steer, lSteer) : (distToEstCircle>-GAP) ? lSteer : -turn 
 										: (distToEstCircle>0) 
 											? (relativeAngleMovement>0.015 || relativeAngleMovement>0.01 && relativeAngleMovement>lastRelativeAngleMovement) ? turn : steer*turn>0 ? steer : 0
 											: (distToEstCircle>-GAP) ? 0 : lSteer
@@ -11715,7 +11724,7 @@ public final class CircleDriver2{
 									? 0 
 									: (b>TURNANGLE/1.5) 
 										? (distToEstCircle<0) 
-												? (speedX<lowestSpeed && distToEstCircle>-tW) ? lSteer*0.5 : (distToEstCircle>-W) ? lSteer : -turn 
+												? (speedX<lowestSpeed && distToEstCircle>-tW) ? lSteer*0.5 : (distToEstCircle>-GAP) ? lSteer : -turn 
 												: (steer+lSteer)*0.5 
 										: (speedX<lowestSpeed) 
 											? 0  
@@ -12931,6 +12940,7 @@ public final class CircleDriver2{
 					speedX<245 && hl>50 && hl>al && (al>50 || relativePosMovement>-0.001) ||
 //					speedX<220 && hl>60 && (al>55 || relativePosMovement>-0.001) ||
 					speedX<220 && hl>50 && hl>al && (al>50 || relativePosMovement>-0.001) ||
+					speedX<220 && hl>60 && (al>60 || relativePosMovement>-0.001) ||
 					speedX<200 && hl>50 && hl>al && (al>45 || relativePosMovement>-0.001) ||
 					speedX<195 && hl>48 && hl>al && (al>45 || relativePosMovement>-0.001) ||
 					speedX<145 && hl>45 && hl>al && (al>35 || relativePosMovement>-0.001) 

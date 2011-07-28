@@ -10787,7 +10787,8 @@ public final class Segment {
 					if (score<0) continue;
 //					if (j-startIndex<0 || score>MAX_RADIUS-1 || score<0)
 //						System.out.println();
-					mark[j-startIndex] = (s.map!=null) ? s.map[score] : 1;
+					if (j-startIndex<size)
+						mark[j-startIndex] = (s.map!=null) ? s.map[score] : 1;
 				}
 		}
 
