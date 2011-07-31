@@ -6595,6 +6595,7 @@ public final class Segment {
 			return;
 		}
 		int rd = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)Math.round(s.radius-s.type*tW);
+		if (rd>=MAX_RADIUS) rd = MAX_RADIUS-1;
 		double rad = s.radius;
 
 		if (Math.abs(r-rad)<0.5 || (s.type==0 && (rr>=MAX_RADIUS-1 || center==null || r==0)) || (rr>=MAX_RADIUS-1 && rd>=MAX_RADIUS-1)){

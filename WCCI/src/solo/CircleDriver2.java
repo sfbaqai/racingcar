@@ -36,7 +36,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 9300.57;
+	public static final double BREAK_TIME = 3200.08;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -11516,7 +11516,7 @@ public final class CircleDriver2{
 								: (distToEstCircle<-W || distToEstCircle<-GAP && distToEstCircle<lastDistToEstCircle || distToEstCircle<0 && m<20) && ((a>TURNANGLE || isDanger && a>TURNANGLE*0.5) && b>TURNANGLE*0.75) ? lSteer : 
 							(b>TURNANGLE && a>TURNANGLE*0.5 && speedX>=maxSpeed+15 && m<15) ? maxAbs(steer, lSteer) : steer;
 					else if (steer*turn<0 && distToEstCircle<0 && (relativeAngleMovement<-0.001 || distToEstCircle<lastDistToEstCircle) && relativePosMovement<-0.001)
-						steer = (relativePosMovement<-0.01 || relativeAngleMovement<-0.01 || speedX>lowestSpeed) ? -turn : steer;
+						steer = distToEstCircle<-GAP && (relativePosMovement<-0.01 || relativeAngleMovement<-0.01 || speedX>lowestSpeed) ? -turn : steer;
 					else if (steer*turn<0 && !isDanger && distToEstCircle>-W && isOffBalance && absSpeedY<10)
 						steer = (distToEstCircle<-GAP) ? distToEstCircle>lastDistToEstCircle ? maxAbs(steer,lSteer*0.5) : maxAbs(steer,lSteer)  
 													   : minAbs(steer, lSteer)*0.5;
@@ -11809,7 +11809,7 @@ public final class CircleDriver2{
 								(b>TURNANGLE && a>TURNANGLE*0.5 && speedX>=maxSpeed+15 && m<15) ? maxAbs(steer, lSteer) : steer; 
 
 					else if (steer*turn<0 && distToEstCircle<0 && (relativeAngleMovement<-0.001 || distToEstCircle<lastDistToEstCircle) && relativePosMovement<-0.001)
-						steer = (relativePosMovement<-0.01 || relativeAngleMovement<-0.01 || speedX>lowestSpeed) ? -turn : steer;
+						steer = distToEstCircle<-GAP && (relativePosMovement<-0.01 || relativeAngleMovement<-0.01 || speedX>lowestSpeed) ? -turn : steer;
 					else if (steer*turn<0 && !isDanger && distToEstCircle>-W && isOffBalance && absSpeedY<10)
 						steer = (distToEstCircle<-GAP) ? distToEstCircle>lastDistToEstCircle ? maxAbs(steer,lSteer*0.5) : maxAbs(steer,lSteer) 
 													   : minAbs(steer, lSteer)*0.5;
