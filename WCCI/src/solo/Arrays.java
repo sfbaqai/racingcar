@@ -2,7 +2,6 @@ package solo;
 
 import java.util.Comparator;
 
-import cern.colt.Swapper;
 
 public class Arrays {
 	public static void quicksort(double[] a) {
@@ -37,33 +36,33 @@ public class Arrays {
 		return i;
 	}
 
-	public static void quicksort(double[] a,Swapper swapper) {
-		quicksort(a, 0, a.length - 1,swapper);
-	}
-
-	// quicksort a[left] to a[right]
-	public static void quicksort(double[] a, int left, int right,Swapper swapper) {
-		if (right <= left) return;
-		int i = partition(a, left, right,swapper);
-		quicksort(a, left, i-1,swapper);
-		quicksort(a, i+1, right,swapper);
-	}
-
-	// partition a[left] to a[right], assumes left < right
-	private static int partition(double[] a, int left, int right,Swapper swapper) {
-		int i = left - 1;
-		int j = right;
-		while (true) {
-			while (a[++i]< a[right])      // find item on left to swap
-				;                               // a[right] acts as sentinel
-			while (a[right]< a[--j])      // find item on right to swap
-				if (j == left) break;           // don't go out-of-bounds
-			if (i >= j) break;                  // check if pointers cross            
-			swapper.swap(i, j);
-		}
-		swapper.swap(i, right);
-		return i;
-	}
+//	public static void quicksort(double[] a,Swapper swapper) {
+//		quicksort(a, 0, a.length - 1,swapper);
+//	}
+//
+//	// quicksort a[left] to a[right]
+//	public static void quicksort(double[] a, int left, int right,Swapper swapper) {
+//		if (right <= left) return;
+//		int i = partition(a, left, right,swapper);
+//		quicksort(a, left, i-1,swapper);
+//		quicksort(a, i+1, right,swapper);
+//	}
+//
+//	// partition a[left] to a[right], assumes left < right
+//	private static int partition(double[] a, int left, int right,Swapper swapper) {
+//		int i = left - 1;
+//		int j = right;
+//		while (true) {
+//			while (a[++i]< a[right])      // find item on left to swap
+//				;                               // a[right] acts as sentinel
+//			while (a[right]< a[--j])      // find item on right to swap
+//				if (j == left) break;           // don't go out-of-bounds
+//			if (i >= j) break;                  // check if pointers cross            
+//			swapper.swap(i, j);
+//		}
+//		swapper.swap(i, right);
+//		return i;
+//	}
 
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -112,35 +111,35 @@ public class Arrays {
 	}
 
 	
-	@SuppressWarnings("rawtypes")
-	public static void quicksort(Object[] a,Swapper swapper,Comparator c) {
-		quicksort(a, 0, a.length - 1,swapper,c);
-	}
-
-	// quicksort a[left] to a[right]	
-	@SuppressWarnings("rawtypes")
-	public static void quicksort(Object[] a, int left, int right,Swapper swapper,Comparator c) {
-		if (right <= left) return;
-		int i = partition(a, left, right,swapper,c);
-		quicksort(a, left, i-1,swapper,c);
-		quicksort(a, i+1, right,swapper,c);
-	}
-
-	// partition a[left] to a[right], assumes left < right	
-	@SuppressWarnings("rawtypes")
-	private static int partition(Object[] a, int left, int right,Swapper swapper,Comparator c) {
-		int i = left - 1;
-		int j = right;
-		while (true) {
-			while (compare(a[++i],a[right],c)<0)      // find item on left to swap
-				;                               // a[right] acts as sentinel
-			while (compare(a[right], a[--j],c)<0)      // find item on right to swap
-				if (j == left) break;           // don't go out-of-bounds
-			if (i >= j) break;                  // check if pointers cross            
-			swapper.swap(i, j);
-		}
-		swapper.swap(i, right);
-		return i;
-	}
+//	@SuppressWarnings("rawtypes")
+//	public static void quicksort(Object[] a,Swapper swapper,Comparator c) {
+//		quicksort(a, 0, a.length - 1,swapper,c);
+//	}
+//
+//	// quicksort a[left] to a[right]	
+//	@SuppressWarnings("rawtypes")
+//	public static void quicksort(Object[] a, int left, int right,Swapper swapper,Comparator c) {
+//		if (right <= left) return;
+//		int i = partition(a, left, right,swapper,c);
+//		quicksort(a, left, i-1,swapper,c);
+//		quicksort(a, i+1, right,swapper,c);
+//	}
+//
+//	// partition a[left] to a[right], assumes left < right	
+//	@SuppressWarnings("rawtypes")
+//	private static int partition(Object[] a, int left, int right,Swapper swapper,Comparator c) {
+//		int i = left - 1;
+//		int j = right;
+//		while (true) {
+//			while (compare(a[++i],a[right],c)<0)      // find item on left to swap
+//				;                               // a[right] acts as sentinel
+//			while (compare(a[right], a[--j],c)<0)      // find item on right to swap
+//				if (j == left) break;           // don't go out-of-bounds
+//			if (i >= j) break;                  // check if pointers cross            
+//			swapper.swap(i, j);
+//		}
+//		swapper.swap(i, right);
+//		return i;
+//	}
 
 }
