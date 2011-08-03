@@ -34,6 +34,10 @@ public final class EdgeDetector {
 	//	public static ObjectArrayList<Vector2D> newRight = ObjectArrayList.wrap(new Vector2D[20], 0);
 	//	private static IntArrayList lIndx = IntArrayList.wrap(new int[20], 0);	
 	//	private static IntArrayList rIndx = IntArrayList.wrap(new int[20], 0);
+	public final static int TURNLEFT = -1;
+	public final static int TURNRIGHT = 1;
+	public final static int STRAIGHT = 0;
+	public final static int UNKNOWN = 2;
 	public static boolean isNoisy = false;
 	public static boolean isConfirmedTW = false;
 	private static final int[] out = new int[]{0,0};
@@ -929,7 +933,7 @@ public final class EdgeDetector {
 		boolean nlS = (l1>l0 ? l1 : l0)>TrackSegment.EPSILON;
 		boolean nrS = (r1>r0?r1:r0)>TrackSegment.EPSILON;
 		if (straight && ((l1>=l0 ? l1-l0 : l0-l1)<=0.1*TrackSegment.EPSILON || (r1>=r0 ? r1-r0 : r0-r1)<=TrackSegment.EPSILON*0.1)) 
-			turn = MyDriver.STRAIGHT;
+			turn = STRAIGHT;
 		else if ((nlS && l1>l0+TrackSegment.EPSILON) || (nrS && r1>r0+TrackSegment.EPSILON))
 			turn = 1;
 		else if ((nlS && l1+TrackSegment.EPSILON<l0) || (nrS && r1+TrackSegment.EPSILON<r0))
@@ -2769,9 +2773,9 @@ public final class EdgeDetector {
 			if (!(Math.abs(r)<=DELTA || Math.abs(r-trackWidth)<=DELTA)){
 				all = false;
 			} else if (r>0){
-				return MyDriver.TURNRIGHT;			
+				return TURNRIGHT;			
 			} else if (r<-trackWidth)
-				return MyDriver.TURNLEFT;
+				return TURNLEFT;
 		}
 		double meanL = Math.round(sum/sL*10000)/10000.0d;
 		sum = 0;
@@ -2782,30 +2786,30 @@ public final class EdgeDetector {
 			if (!(Math.abs(r)<=DELTA || Math.abs(r-trackWidth)<=DELTA)){
 				all = false;
 			} else if (r>0){
-				return MyDriver.TURNRIGHT;			
+				return TURNRIGHT;			
 			} else if (r<-trackWidth)
-				return MyDriver.TURNLEFT;
+				return TURNLEFT;
 		}
 		double meanR = Math.round(sum/sR*10000.0)/10000.0d;
 		if (all)
 			//			if (maxDistance>=99)
-			return MyDriver.STRAIGHT;
+			return STRAIGHT;
 		//		else return MyDriver.UNKNOWN;
 		if (sL<=0 || sR<=0)
-			return MyDriver.UNKNOWN;
+			return UNKNOWN;
 		double rl = lArr[sL-1].x;
 		double rr = rArr[sR-1].x;
 
 		if (Math.abs(rl-meanL)<=DELTA && Math.abs(rr-meanR)<=DELTA){
 			if (maxDistance>=99) {		
-				return MyDriver.STRAIGHT;
+				return STRAIGHT;
 			}
-			return MyDriver.UNKNOWN;
+			return UNKNOWN;
 		}
 		if (meanR<=0 || rl<meanL-DELTA || meanR>rr+DELTA)
-			return MyDriver.TURNLEFT;
+			return TURNLEFT;
 
-		return MyDriver.TURNRIGHT;
+		return TURNRIGHT;
 	}
 
 

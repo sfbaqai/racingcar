@@ -15497,9 +15497,14 @@ public final class Segment {
 			return false;
 		else if (nr!=null && nr.type==r.type && Math.abs(nr.radius-r.radius)<5)
 			return false;
-		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (!isConfirmed(r, edge, tW) || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex))
+		
+		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 		
+		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (notIsconfirmed || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex)){
+			if (pr!=null && isConnected(pr, r, tW, tmpPoint))
+				return false;
 			return true;
-		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 
+		}			
+		
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)){
 //			Vector2D point = new Vector2D();
