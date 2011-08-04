@@ -34,8 +34,8 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 6000.18;
-	public static boolean debug = true;
+	public static final double BREAK_TIME = 7000.77;
+	public static boolean debug = false;
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+				-	// [m/s] range [0..10]
@@ -10899,10 +10899,14 @@ public final class CircleDriver2{
 					? lastDistToEstCircle>distToEstCircle || a>TURNANGLE/1.5? (steer+lSteer)*0.5 : 0 
 					: (distToEstCircle<-W || lastDistToEstCircle>distToEstCircle) ? (steer*lSteer<0) ? 0 : maxAbs(lSteer,steer) : steer*lSteer>=0 ? (steer+lSteer)*0.5 : 0;
 		else if (a>0 && b>TURNANGLE*0.75 || a>TURNANGLE*0.5){
-			return (distToEstCircle<0) ? lSteer : (a>TURNANGLE/1.5 && absSpeedY<MODERATE_SPEEDY) ? (b>TURNANGLE*0.75 && distToEstCircle<GAP) ? lSteer : steer*0.5 
-					: (b>TURNANGLE || a>TURNANGLE*0.5) && distToEstCircle<GAP ? lSteer : (distToEstCircle>GAP) ? 0 : steer;
+			return (distToEstCircle<0) ? lSteer : (a>TURNANGLE/1.5 && absSpeedY<MODERATE_SPEEDY) ? (b>TURNANGLE*0.75 && distToEstCircle<GAP) 
+						? distToEstCircle>lastDistToEstCircle ? lSteer*0.5 : lSteer 
+						: steer*0.5 
+					: (b>TURNANGLE || a>TURNANGLE*0.5) && distToEstCircle<GAP ? distToEstCircle>0 && distToEstCircle>lastDistToEstCircle ? lSteer*0.5 : lSteer : (distToEstCircle>GAP) ? 0 : steer;
 		} else if (a>b && distToEstCircle<0)
-			steer = b>TURNANGLE || a>TURNANGLE*0.5 && distToEstCircle<GAP ? lSteer : lSteer*0.5;
+			steer = (b>TURNANGLE || a>TURNANGLE*0.5) && distToEstCircle<-GAP 
+				? lSteer 
+				: lSteer*0.5;
 		return steer;
 	}
 	
