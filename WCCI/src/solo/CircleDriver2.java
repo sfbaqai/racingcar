@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 4200.34;
+	public static final double BREAK_TIME = 5400.30;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5328,7 +5328,7 @@ public final class CircleDriver2{
 			double dl = safeDist(al, hl);
 			if (canGoVeryFast && speedX-lastSpeed<dl*1.5) {				
 				if (a>0 && b>0 && (al>50 || distToEstCircle>-W && absSpeedY<MODERATE_SPEEDY || distToEstCircle>-GAP && absSpeedY<HIGH_SPEEDY || (distToEstCircle>-W || relativeAngleMovement>0.01) && b>TURNANGLE*0.5 && relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY)) {
-					acc = (distToEstCircle<0 && speedX>lastSpeed+dl ) ? acc : (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0) ? 1 : acc;
+					acc = (distToEstCircle<0 && speedX>lastSpeed+dl ) ? acc : (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0 || speedX<aheadSpeed+dl && distToEstCircle>-W && relativeAngleMovement>lastRelativeAngleMovement) ? 1 : acc;
 					if (relativeAngleMovement>-0.01 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5)) brake = 0;
 				} else if (a>0 && b>0 && absSpeedY<HIGH_SPEEDY && relativePosMovement>-0.001 && relativeAngleMovement>0.001) {
 					double sp = Math.min(lastSpeed,aheadSpeed)+dl;
