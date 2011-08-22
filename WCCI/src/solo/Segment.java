@@ -15498,12 +15498,18 @@ public final class Segment {
 		else if (nr!=null && nr.type==r.type && Math.abs(nr.radius-r.radius)<5)
 			return false;
 		
-		boolean notIsconfirmed = !isConfirmed(r, edge, tW); 		
+		boolean notIsconfirmed = !isConfirmed(r, edge, tW);
+				
 		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (notIsconfirmed || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex)){
 			if (pr!=null && isConnected(pr, r, tW, tmpPoint))
 				return false;
 			return true;
-		}			
+		}
+		
+		
+		if (r.type!=0 && r.map!=null && r.num>1 && r.num<=2 && notIsconfirmed && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && nr!=null && isConfirmed(nr, edge, tW) && pr!=null && nr!=null && isConfirmed(pr, edge, tW)){		
+			return true;
+		}
 		
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
 		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)){
