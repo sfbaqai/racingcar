@@ -296,7 +296,7 @@ public final class EdgeDetector {
 		rSize -= lastIndx-indx+1;
 		CircleDriver2.trSz = trSz;
 		return tmpIndx[0];
-	}
+	}		
 	
 	public final int removeFromLeftEdge(int i,Segment[] trArr,int trSz,int[] trIndx,int[] occupied){
 		int n = removeElems(left, i, lSize, tmpIndx);
