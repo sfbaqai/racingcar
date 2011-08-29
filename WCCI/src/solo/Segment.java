@@ -14219,7 +14219,7 @@ public final class Segment {
 
 					if (!ok){
 						if (sR>=0 && currentMap[sR]>1) currentMap[sR]--;
-						if (!isConfirmed(s, which, tW) && currentMap[sR]<1){							
+						if (!isConfirmed(s, which, tW) && sR>=0 && currentMap[sR]<1){							
 							trSz = remove(s, which, currentIndx, trSz);
 							if (trSz>currentIndx+1){
 								next = trArr[trIndx[currentIndx+1]];
@@ -15520,6 +15520,106 @@ public final class Segment {
 		}
 		return false;
 	}
+	
+	public static final void removePointFromEdge(int i,Segment[] trArr,int trSz,int[] trIndx,int[] occupied,int which){		
+		for (int j = trSz-1;j>=0;--j){			
+			Segment t = (which==-1) ? trArr[ trIndx[j] ].leftSeg : trArr[ trIndx[j] ].rightSeg;
+			if (t.startIndex>=i || t.endIndex>=i){
+				if (t.startIndex>i) {
+					t.startIndex--;
+					t.endIndex--;
+				} else if (t.endIndex>=t.startIndex) t.endIndex--;
+				
+				t.num = t.endIndex - t.startIndex+1;				
+			} else break;
+		}				
+		
+
+	}
+	
+	public static final int removeRedundant(Segment pl,Segment l,Segment nl,Vector2D[] lV,Segment[] trArr,int trSz,int[] trIndx,int[] occupied,int which,int lN){
+		if (l.num>0){
+			if (l.startIndex>0){
+				Vector2D ls = lV[l.startIndex];
+				if (ls.certain && (pl==null || pl.endIndex<l.startIndex-1) ){
+					while (true){
+						Vector2D pt = lV[l.startIndex-1];
+						if (!pt.certain && pt.distance(ls)<1){
+							if (lN>l.startIndex) {
+								for (int ii = 0,nn = lN-l.startIndex;ii<nn;++ii)
+									lV[l.startIndex-1+ii].copy(lV[l.startIndex+ii]);																														
+							}
+							removePointFromEdge(l.startIndex-1, trArr, trSz, trIndx, occupied, which);
+							lN--;
+							if (l.startIndex>0 && (pl==null || pl.endIndex<l.startIndex-1)) {
+								ls = lV[l.startIndex];
+								continue;
+							}
+						}
+						break;
+					} //end of while					
+				} else if (!ls.certain && (pl==null || pl.endIndex<l.startIndex-1)){
+					while (true){
+						Vector2D pt = lV[l.startIndex-1];
+						if (pt.certain && pt.distance(ls)<1){
+							if (lN>l.startIndex+1) {
+								for (int ii = 0,nn = lN-l.startIndex-1;ii<nn;++ii)
+									lV[l.startIndex+ii].copy(lV[l.startIndex+ii+1]);																														
+							}
+							removePointFromEdge(l.startIndex, trArr, trSz, trIndx, occupied, which);
+							lN--;	
+							if (l.num>0 && l.startIndex>0){
+								ls = lV[l.startIndex];
+								if (!ls.certain  && (pl==null || pl.endIndex<l.startIndex-1)) continue;
+							}
+						}
+						break;
+					} //end of while										
+				}
+			}
+			
+			if (l.num>0 && l.endIndex<lN-1){
+				Vector2D ls = lV[l.endIndex];
+				if (ls.certain && (nl==null || l.endIndex<nl.startIndex-1) ){
+					while (true){
+						Vector2D pt = lV[l.endIndex+1];
+						if (!pt.certain && pt.distance(ls)<1){
+							if (lN>l.endIndex+2) {
+								for (int ii = 0,nn = lN-l.endIndex-1;ii<nn;++ii)
+									lV[l.endIndex+1+ii].copy(lV[l.endIndex+2+ii]);																														
+							}
+							removePointFromEdge(l.endIndex+1, trArr, trSz, trIndx, occupied, which);
+							lN--;
+							if (l.endIndex<lN-1 && (nl==null || l.endIndex<nl.startIndex-1)) {
+								ls = lV[l.endIndex];
+								continue;
+							}
+						}
+						break;
+					} //end of while					
+				} else if (!ls.certain && (nl==null || l.endIndex<nl.startIndex-1)){
+					while (true){
+						Vector2D pt = lV[l.endIndex+1];
+						if (pt.certain && pt.distance(ls)<1){
+							if (lN>l.endIndex+1) {
+								for (int ii = 0,nn = lN-l.startIndex-1;ii<nn;++ii)
+									lV[l.endIndex+ii].copy(lV[l.endIndex+ii+1]);																														
+							}
+							removePointFromEdge(l.endIndex, trArr, trSz, trIndx, occupied, which);
+							lN--;	
+							if (l.num>0 && l.endIndex<lN-1){
+								ls = lV[l.endIndex];
+								if (!ls.certain && (nl==null || l.endIndex<nl.startIndex-1)) continue;
+							}
+						}
+						break;
+					} //end of while										
+				}
+			}
+								
+		}
+		return lN;
+	}
 		
 	public static final int reUpdate(Segment[] trArr,int sz,double tW,int fromSeg){
 		if (CircleDriver2.debug) System.out.println("Start reUpdate : "+(System.nanoTime()-CircleDriver2.ti)/1000000);
@@ -15603,7 +15703,12 @@ public final class Segment {
 //			}
 
 			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center!=null && l.center.y==0)));
-			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){				
+			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){								
+				if (!CircleDriver2.inTurn) {
+//					edge.lSize = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+//					edge.rSize = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+				}
+				
 				occupied[ trIndx[i] ] = 0;
 				if ((trSz-=i+1)>0) System.arraycopy(trIndx, i+1, trIndx, i, trSz);									
 				trSz+=i--;				
