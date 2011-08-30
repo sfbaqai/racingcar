@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 3200.08;
+	public static final double BREAK_TIME = 10000.75;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5343,7 +5343,8 @@ public final class CircleDriver2{
 				if (acc<=CONSTANT_SPEED_ACC*0.25 && brake==0 && relativeAngleMovement>0.001 && speedX<lowestSpeed || acc>CONSTANT_SPEED_ACC && relativeAngleMovement<-0.01 && distToEstCircle<-GAP) acc = CONSTANT_SPEED_ACC;			
 			} else if (speed-lowestSpeed<dl && absSpeedY<HIGH_SPEEDY && (distToEstCircle>0 && !isSafeToAccel|| distToEstCircle>-GAP && speed-lowestSpeed<dl*1.5) ){
 				
-				if (relativeAngleMovement>-0.01 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5) && (absSpeedY<MODERATE_SPEEDY || relativeAngleMovement>0.001 && canGoModerate || distToEstCircle>0) ) brake = 0;
+				if (relativeAngleMovement>-0.01 && brake>0 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5) && (absSpeedY<MODERATE_SPEEDY || relativeAngleMovement>0.001 && canGoModerate || distToEstCircle>0) ) 
+					brake = 0;
 //				if (speedX<aheadSpeed+al*0.5 && (absSpeedY<MODERATE_SPEEDY || a<=0|| relativeAngleMovement>0.01) ) acc = 1;
 				
 			} else if (canGoModerate && speed-lastSpeed<Math.min(100, dl*1.5)){				
@@ -5396,7 +5397,7 @@ public final class CircleDriver2{
 //					:relativeAngleMovement>0.001 ? brake*0.5 : brake;
 			}//*/
 			if (a>0 && b>0 && brake>0 && absSpeedY>=MODERATE_SPEEDY && relativePosMovement>0.001 && speed<sp+10){
-				brake =  Math.min(brake,(speed*speed-sp*sp)*0.5/(speed*speed));
+				brake =  (speed<sp) ? (distToEstCircle<0 || relativeAngleMovement<-0.01 || absSpeedY>20 && absSpeedY>absLastSpeedY) ? brake : 0 : speed>sp && relativeAngleMovement>-0.01 ? Math.min(brake,(speed*speed-sp*sp)*0.5/(speed*speed)) : brake;
 				
 			}
 			if (steer*turn<=0 && brake>0 && speed-lastSpeed>Math.min(100, dl*1.5) && relativePosMovement>-0.001 && a>TURNANGLE*0.5 && b>TURNANGLE*0.75 && distToEstCircle<GAP && absSpeedY<HIGH_SPEEDY){				
