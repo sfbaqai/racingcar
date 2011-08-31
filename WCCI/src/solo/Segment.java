@@ -15551,7 +15551,7 @@ public final class Segment {
 							}
 							removePointFromEdge(l.startIndex-1, trArr, trSz, trIndx, occupied, which);
 							lN--;
-							if (l.startIndex>0 && (pl==null || pl.endIndex<l.startIndex-1)) {
+							if (l.startIndex>0 && l.num>0 && (pl==null || pl.endIndex<l.startIndex-1)) {
 								ls = lV[l.startIndex];
 								continue;
 							}
@@ -15568,9 +15568,9 @@ public final class Segment {
 							}
 							removePointFromEdge(l.startIndex, trArr, trSz, trIndx, occupied, which);
 							lN--;	
-							if (l.num>0 && l.startIndex>0){
+							if (l.num>0 && l.startIndex>0 && (pl==null || pl.endIndex<l.startIndex-1)){
 								ls = lV[l.startIndex];
-								if (!ls.certain  && (pl==null || pl.endIndex<l.startIndex-1)) continue;
+								if (!ls.certain) continue;
 							}
 						}
 						break;
@@ -15585,12 +15585,12 @@ public final class Segment {
 						Vector2D pt = lV[l.endIndex+1];
 						if (!pt.certain && pt.distance(ls)<1){
 							if (lN>l.endIndex+2) {
-								for (int ii = 0,nn = lN-l.endIndex-1;ii<nn;++ii)
+								for (int ii = 0,nn = lN-l.endIndex-2;ii<nn;++ii)
 									lV[l.endIndex+1+ii].copy(lV[l.endIndex+2+ii]);																														
 							}
 							removePointFromEdge(l.endIndex+1, trArr, trSz, trIndx, occupied, which);
 							lN--;
-							if (l.endIndex<lN-1 && (nl==null || l.endIndex<nl.startIndex-1)) {
+							if (l.endIndex<lN-1 && l.num>0 && (nl==null || l.endIndex<nl.startIndex-1)) {
 								ls = lV[l.endIndex];
 								continue;
 							}
@@ -15602,14 +15602,14 @@ public final class Segment {
 						Vector2D pt = lV[l.endIndex+1];
 						if (pt.certain && pt.distance(ls)<1){
 							if (lN>l.endIndex+1) {
-								for (int ii = 0,nn = lN-l.startIndex-1;ii<nn;++ii)
+								for (int ii = 0,nn = lN-l.endIndex-1;ii<nn;++ii)
 									lV[l.endIndex+ii].copy(lV[l.endIndex+ii+1]);																														
 							}
 							removePointFromEdge(l.endIndex, trArr, trSz, trIndx, occupied, which);
 							lN--;	
-							if (l.num>0 && l.endIndex<lN-1){
+							if (l.num>0 && l.endIndex<lN-1 && (nl==null || l.endIndex<nl.startIndex-1)){
 								ls = lV[l.endIndex];
-								if (!ls.certain && (nl==null || l.endIndex<nl.startIndex-1)) continue;
+								if (!ls.certain) continue;
 							}
 						}
 						break;
@@ -15705,8 +15705,8 @@ public final class Segment {
 			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center!=null && l.center.y==0)));
 			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){								
 				if (!CircleDriver2.inTurn) {
-//					edge.lSize = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
-//					edge.rSize = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+					edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+					edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
 				}
 				
 				occupied[ trIndx[i] ] = 0;
