@@ -1269,7 +1269,7 @@ public final class Segment {
 			double dd =  Math.sqrt(dx*dx+dy*dy);
 			double d = dd-radius;
 			if (d<0) d = -d;
-			if (d>=EPSILON*0.5) return false;
+			if (d>=EPSILON*10) return false;
 		}
 		return true;
 	}
@@ -9006,7 +9006,11 @@ public final class Segment {
 //							}
 							radiusFrom2Points(prev, fst, lst, tW, s);							
 							if (s.type!=Segment.UNKNOWN ){
-								if (donePrev && map!=null){
+								
+								if (!CircleDriver2.inTurn && prev.type==0 && Math.abs(prev.start.x-prev.end.x)<=E && s.num==3 && s.type!=0 ){
+									ok = true;
+									isGPN = true;
+								} else if (donePrev && map!=null){
 									int er = (s.type==0) ? 0 : (int)Math.round(s.radius+which*s.type*abstW);
 									if (er>=Segment.MAX_RADIUS-1) {
 										er = 0;
@@ -10976,9 +10980,11 @@ public final class Segment {
 							}
 						}
 					}
-					if (s.map!=null && sr>0 && lr>0 && (score>=s.map[sr] || s.map[lr]>=s.map[sr]) ) {														
+					
+					boolean isGood = sr>0 && lr>0 && lr!=sr && s.map!=null && (l.num<=s.num && l.startIndex>=s.startIndex && l.endIndex<=s.endIndex && l.num>=3 && l.end.y-l.start.y<=3 || l.end.y-l.start.y<=1 || l.end.y-l.start.y<=2 && l.end.y-l.start.y<s.end.y-s.start.y);
+					if (s.map!=null && sr>0 && lr>0 && (score>=s.map[sr] || s.map[lr]>=s.map[sr]) && !isGood) {														
 						if (s.type!=UNKNOWN && s.map!=null)
-							for (int j = s.startIndex;j<=s.endIndex;++j) mark[j-startIndex] = 0;
+							for (int j = s.startIndex;j<=s.endIndex;++j) if (j-startIndex<mark.length) mark[j-startIndex] = 0;
 						
 						if (s.map[lr]==0) {
 							s.appearedRads[s.radCount++] = lr;
@@ -15518,6 +15524,8 @@ public final class Segment {
 				return false;
 			return true;
 		}
+		
+		if (r.num>=2 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=1) return true;
 		return false;
 	}
 	
@@ -15978,7 +15986,11 @@ public final class Segment {
 						} else i -= oldTrSz-trSz;
 						t = prev;
 					}
-				} else {													
+				} else {		
+					if (!CircleDriver2.inTurn) {
+						edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+						edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+					}
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -16077,7 +16089,11 @@ public final class Segment {
 							}
 						}
 					}
-				}
+				} 
+				else if (i>0 && t.type==0 && Math.abs(t.end.x-t.start.x)<=E && prev!=null && firstSeg.type!=0 && firstSeg.end.y>1 && t.start.y>0 && !CircleDriver2.inTurn){ 
+					good = false;
+//					CircleDriver2.debug = true;
+				}//*/
 				if (good){
 					for (int j = 0;j<i;++j)	occupied[ trIndx[j] ] = 0;
 					if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, 0, trSz);
@@ -16150,11 +16166,34 @@ public final class Segment {
 				}
 				
 				if (trSz>0){
+					
+					if (lastTrsz<trSz-1){
+						for (int i = lastTrsz+1;i<trSz;++i){							
+							t = trArr[ trIndx[i] ];
+							next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
+							prev = trArr[ trIndx[i-1]];
+							l = t.leftSeg;
+							r = t.rightSeg;
+							nl = (next==null) ? null : next.leftSeg;
+							nr = (next==null) ? null : next.rightSeg;
+							pl = prev.leftSeg;
+							pr = prev.rightSeg;
+							if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+									|| reject2(pr, r, nr, 1,rN, rV, tW))){
+								l.type = Segment.UNKNOWN;
+								r.type = Segment.UNKNOWN;
+								if (!CircleDriver2.inTurn) {
+									edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+									edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+								}
+							}
+						}
+					}//*/
 					int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
 					for (int i = trSz-1;i>=minSeg;--i){					
 						t = trArr[ trIndx[i] ];	
 						Segment s = t.leftSeg;
-						if (s.type==Segment.UNKNOWN){
+						if (s.type==Segment.UNKNOWN){							
 							occupied[ trIndx[i] ] = 0;
 							if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
 							trSz--;
@@ -16172,8 +16211,9 @@ public final class Segment {
 							reCalibrate(prev, s, 1, tw);							
 						}
 						t.radCount = s.radCount;
+						
 					}
-					if (lastTrsz<trSz) {
+					if (lastTrsz<trSz) {						
 						prev = trArr[ trIndx[trSz-1] ];
 						continue;
 					}
