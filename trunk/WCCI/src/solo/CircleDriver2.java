@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 105.78;
+	public static final double BREAK_TIME = 3410.86;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -4259,6 +4259,9 @@ public final class CircleDriver2{
 			if (turn!=0 && turn!=2 && acc>CONSTANT_SPEED_ACC && Math.abs(a)>0.8 && speedX>lowestSpeed-tW*2){
 				acc = 0;
 			}
+						
+			if (acc>0 && absSpeedY>=MODERATE_SPEEDY && relativePosMovement<-0.03 && distToEstCircle<0)
+				acc = CONSTANT_SPEED_ACC;
 			
 			if (acc>0 && absSpeedY>=MODERATE_SPEEDY && relativePosMovement<-0.001 && distToEstCircle<0 && (relativeAngleMovement<-0.015 && relativeAngleMovement<lastRelativeAngleMovement || relativeAngleMovement<-0.02) )
 				acc = 0;
@@ -5385,7 +5388,10 @@ public final class CircleDriver2{
 						brake  =0;
 					} else brake = Math.min(brake, (speed*speed-sp*sp)*0.5/(speed*speed));
 				}//*/
-			} 
+			}
+			
+			if (!inTurn && acc>CONSTANT_SPEED_ACC && (relativePosMovement<-0.03 && absSpeedY>HIGH_SPEEDY || relativePosMovement<-0.01 && relativeAngleMovement<-0.02))
+				acc = CONSTANT_SPEED_ACC*0.25;
 			
 //			if (acc>CONSTANT_SPEED_ACC && a>0 && speed>highestSpeed && steer*turn<=0 && relativePosMovement>-0.001 && absSpeedY>MODERATE_SPEEDY && (relativeAngleMovement<-0.001 && lastRelativeAngleMovement>relativeAngleMovement || relativeAngleMovement<-0.01) && distToEstCircle<-GAP && distToEstCircle<lastDistToEstCircle)
 //				acc = CONSTANT_SPEED_ACC;
@@ -13719,11 +13725,11 @@ public final class CircleDriver2{
 							: relativeAngleMovement<-0.01 || relativeAngle<0 ||relativeAngle<0.05 && relativeAngleMovement<-0.005 && speedX>first_speed ? -tp :relativeAngleMovement<-0.001 ? 0 : bal*0.5 ;
 					acc = 0;
 					
-					if (speedX<first_speed+FAST_MARGIN){
+					if (speedX<first_speed+FAST_MARGIN && relativeAngleMovement>0.001){
 						acc = 1;
 					}
 					if (speedX<first_speed+tW*3 && relativeAngle>0 && steer*tp<0 && relativeAngleMovement>-0.01) 
-						steer = 0;
+						steer = (relativeAngleMovement<-0.005 && relativeAngleMovement<lastRelativeAngleMovement) ? steer : 0;
 					/*if (relativeAngle>0.1){
 						if (relativeAngleMovement<lastRelativeAngleMovement){
 							steer = (relativeAngleMovement>0.01) 
