@@ -2576,14 +2576,22 @@ public final class EdgeDetector {
 				double x0 = r0.start.x;
 				double xx = l0.start.x;
 				int end = l0.endIndex+1;
+				boolean notGood = false;
+				int li = -1;
+				int ri= -1;
 				for (int i = l0.startIndex;i<end;++i){
 					double x = left[i].x;
 					if (CircleDriver2.debug && Math.abs(x-x0)<trackWidth-1)
 						System.out.println();
 					
 					if (left[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
-						reset();
-						return;
+						notGood = true;
+						if (i<end-1){
+							reset();
+							return;
+						}
+						li = i;
+						break;
 					}
 				}
 				
@@ -2597,13 +2605,61 @@ public final class EdgeDetector {
 							System.out.println();
 						
 						if (right[i].certain && Math.abs(x-xx)>=TrackSegment.EPSILON){
-							reset();
-							return;
+							notGood = true;
+							if (i<end-1){
+								reset();
+								return;
+							}
+							ri = i;
+							break;
 						}
 					}
 				}
+				
+				
+				if (notGood){
+					double mm = -1;					
+					if (li!=-1 && li>0) mm = Math.max(mm, left[li-1].y);
+					if (ri!=-1 && ri>0) mm = Math.max(mm, right[ri-1].y);
+					
+					if (li!=-1 && ri!=-1 || mm-l0.start.y<2){
+						reset();
+						return;
+					} else {						
+						if (li!=-1){ 
+							if (r0.num>0) {
+								mm = Math.max(right[r0.endIndex].y, mm);
+								if (mm>=left[li].y){
+									reset();
+									return;
+								}
+							}
+							l0.endIndex = li-1;
+							l0.num = li-l0.startIndex;
+							while (r0.endIndex>=r0.startIndex && right[r0.endIndex].y>mm) r0.endIndex--;
+							r0.num = r0.endIndex+1-r0.startIndex;
+						} else {
+							if (l0.num>0) {
+								mm = Math.max(left[l0.endIndex].y, mm);
+								if (mm>=right[ri].y){
+									reset();
+									return;
+								}
+							}
+							r0.endIndex = ri-1;
+							r0.num = ri-r0.startIndex;
+							while (l0.endIndex>=l0.startIndex && left[l0.endIndex].y>mm) l0.endIndex--;
+							l0.num = l0.endIndex+1-l0.startIndex;
+						}
+						l0.end.y = mm;
+						r0.end.y = mm;
+						t.end.y = mm;												
+					}
+				}
 			}
-		}		
+		}
+		
+		
 
 		Vector2D edH = ed.highestPoint;		
 		if (ed!=null && edH!=null && edH.length()<MAX_DISTANCE){
