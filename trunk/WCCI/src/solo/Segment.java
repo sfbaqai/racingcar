@@ -4250,10 +4250,14 @@ public final class Segment {
 				if (max+max<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
-						if (max<map[er]){
+						if (er==s.radius) map[er]++;
+						if (max<map[er]){							
 							max = map[er];
 							maxEr = er;
 							r = (er-Math.round(tW))+tW;							
+						} else if (max==map[er] && er==s.radius) {
+							maxEr = er;
+							r = (er-Math.round(tW))+tW;
 						}
 					}	
 				}	
@@ -9038,7 +9042,7 @@ public final class Segment {
 												double e = Math.sqrt(dx*dx+dy*dy)-s.radius;
 												if (e<0) e = -e;
 //												if (maxE<e) maxE = e;
-												if (e>EPS) {
+												if (e>EPS && ii>index && vv.y-v[ii-1].y>=1) {
 													good = false;
 													break;
 												}
