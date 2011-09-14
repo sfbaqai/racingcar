@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 15000.77;
+	public static final double BREAK_TIME = 24000.12;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5425,7 +5425,7 @@ public final class CircleDriver2{
 				
 			}
 			
-			if (brake>0 && speed>sp && m>30 && a>b && b>TURNANGLE*0.5 &&  speed-lastSpeed<Math.min(100, dl*1.5)+25) brake = Math.min(brake,(speed*speed-sp*sp)/(speed*speed));
+			if (brake>0 && speed>sp && m>30 && (a>b || a>0 && speed-lastSpeed<Math.min(100, dl*1.5)+10) && b>TURNANGLE*0.5 &&  speed-lastSpeed<Math.min(100, dl*1.5)+25) brake = Math.min(brake,(speed*speed-sp*sp)/(speed*speed));
 			
 			if (steer*turn<=0 && brake>0 && speed-lastSpeed>Math.min(100, dl*1.5) && relativePosMovement>-0.001 && a>TURNANGLE*0.5 && b>TURNANGLE*0.75 && distToEstCircle<GAP && absSpeedY<HIGH_SPEEDY){				
 				brake =  steer*turn<0 && (relativeAngleMovement<0.001 || absSpeedY>=MODERATE_SPEEDY) ? Math.min(brake,(speed*speed-sp*sp)/(speed*speed))*0.5 : brake;
