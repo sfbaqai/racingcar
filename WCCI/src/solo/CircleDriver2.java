@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME =2220.84;
+	public static final double BREAK_TIME =22200.84;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5462,10 +5462,11 @@ public final class CircleDriver2{
 //			if (relativeAngleMovement>0 && steer*turn<0 && relativePosMovement>0 && relativeAngle>0 && absSpeedY>=MODERATE_SPEEDY && absSpeedY>absLastSpeedY && acc ==0 && brake==0)
 //				acc = CONSTANT_SPEED_ACC;
 			
-			if (a<0 && acc>=CONSTANT_SPEED_ACC && relativeSpeedY<-MODERATE_SPEEDY && relativePosMovement>0.001 && relativeAngleMovement>0.001){ 
+			if (acc>=CONSTANT_SPEED_ACC && relativeSpeedY<-20 && (a<0 && relativePosMovement>0.001 || a>=0 && relativePosMovement<-0.001) && relativeAngleMovement>0.001){ 
 				acc = 0;
 				brake = 0 ;
-				steer = turn;
+				if (a<0) 
+					steer = turn;				
 			}//*/
 			
 			if (acc==0 && brake==0  && steer*turn<0)
