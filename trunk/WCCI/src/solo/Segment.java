@@ -3474,24 +3474,27 @@ public final class Segment {
 								angle -= 2*Math.PI;
 										
 							tp = (angle<0) ? -1 : 1;	
+							circle(fst, lst, cx,cy, r,center);
+							cx = center.x;
+							cy = center.y;
 						} else {
 							tp = 0;
 							r = 0;
 						}
 
 																		
-						circle(fst, lst, cx,cy, r,center);
-						cx = center.x;
-						cy = center.y;
+						
 						if (tp!=0 && r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
 							if (Math.abs(r-dd1)>0.5 && Math.abs(r-dd)>0.5) continue;
-							cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
-							cy = 0;		
-							center.x = cx;
-							center.y = 0;
+							if (tp!=0){
+								cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
+								cy = 0;		
+								center.x = cx;
+								center.y = 0;
+							}
 						}
 						
 						er = (int)Math.round(r);
@@ -3520,8 +3523,8 @@ public final class Segment {
 						tp = 0;
 					}
 					if (map[er]>2) {					
-						found = (tp==s.type && r==s.radius && Math.abs(cy-sy)<1);
-						if (found){							
+						found = (tp!=0 && tp==s.type && r==s.radius && Math.abs(cy-sy)<1);
+						if (found ){							
 							final double EE = EPSILON*4;
 							boolean ok = true;
 							for (int ii = from;ii<to;++ii){								
@@ -3614,17 +3617,17 @@ public final class Segment {
 
 				if (maxV>1){
 					tp = storage.getType(v, from,to-1);
-					if (maxEr>0 && check[maxEr]<0 || maxEr>2){						
+					if (maxEr>0 && check[maxEr]<0 || maxV>2 || maxV+maxV>=maxPossible){						
 						if (!isFirst){
 //							circle(fst, lst, center.x,center.y, r,center);
 							circle(fst, lst, tp, r, center);
-						} else {
+						} else if (tp!=0){
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
 							center.y = 0;
 						}
 						boolean ok = (!inTurn);
-						if (ok){
+						if (ok && tp!=0){
 							for (int i=from;i<to;++i){
 								Vector2D p = v[i];
 								if (p.certain){
@@ -3639,7 +3642,7 @@ public final class Segment {
 								}
 							}
 						}
-						if (ok || maxV>2){
+						if (ok || maxV>2 || maxV+maxV>=maxPossible){
 							rs.type = tp;
 							if (rs.start==null) 
 								rs.start = new Vector2D(fst);
@@ -4118,24 +4121,27 @@ public final class Segment {
 							else if (angle>Math.PI) 
 								angle -= 2*Math.PI;
 										
-							tp = (angle<0) ? -1 : 1;	
+							tp = (angle<0) ? -1 : 1;
+							circle(fst, lst, cx,cy, r,center);
+							cx = center.x;
+							cy = center.y;
 						} else {
 							r = 0;
 							tp = 0;
 						}
 						
-						circle(fst, lst, cx,cy, r,center);
-						cx = center.x;
-						cy = center.y;
+						
 						if (tp!=0 && r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
 							if (Math.abs(r-dd1)>0.5 && Math.abs(r-dd)>0.5) continue;
-							cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
-							cy = 0;
-							center.x = cx;
-							center.y = cy;
+							if (tp!=0){
+								cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
+								cy = 0;
+								center.x = cx;
+								center.y = cy;
+							}
 						}
 						
 						
@@ -4260,23 +4266,23 @@ public final class Segment {
 							r = (er-Math.round(tW))+tW;
 						}
 					}	
-				}	
+				} 
 
 				if (max>1){
 					if (to>from) tp = storage.getType(v, from,to-1);
 //					if (tp==-2)
 //						System.out.println();
-					if (maxEr>0 && check[maxEr]<0 || maxEr>2){						
+					if (maxEr>0 && check[maxEr]<0 || max>2 || max+max>=maxPossible){						
 						if (!isFirst){
 //							circle(fst, lst, center.x,center.y, r,center);
 							circle(fst, lst, tp, r, center);
-						} else {
+						} else if (tp!=0){
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
 							center.y = 0;
 						}
 						boolean ok = (!inTurn);
-						if (ok){
+						if (ok && tp!=0){
 							for (int i=from;i<to;++i){
 								Vector2D p = v[i];
 								if (p.certain){
@@ -4291,7 +4297,7 @@ public final class Segment {
 								}
 							}
 						}
-						if (ok || max>2){
+						if (ok || max>2 || max+max>=maxPossible){
 							rs.type = tp;
 							if (rs.start==null) 
 								rs.start = new Vector2D(fst);
