@@ -1391,7 +1391,16 @@ public final class EdgeDetector {
 				p2.x = v.x;
 				p2.y = v.y;
 				p2.certain = v.certain;
-			} else {
+			} else if (v.certain && prev!=null && prev.num>2 && !elems[prev.endIndex].certain && elems[prev.endIndex].y>v.y-1){
+				prev.num--;
+				elems[prev.endIndex].copy(v);
+				prev.endIndex--;				
+			} else if (v.certain && next!=null && next.num>2 && !elems[next.startIndex].certain && elems[next.startIndex].y<v.y+1){
+				next.num--;
+				elems[next.startIndex].copy(v);
+				next.startIndex++;				
+			} 
+			else {				
 				if ((sz-indx)>0) {
 					for (int ii = sz-indx-1;ii>=0;--ii)
 						elems[indx+1+ii].copy(elems[indx+ii]);
@@ -1920,6 +1929,7 @@ public final class EdgeDetector {
 				break;
 			}
 			s = (which==-1) ? trArr[ trIndx[i] ].leftSeg : trArr[ trIndx[i] ].rightSeg;
+			Segment next = (i>=trSz-1) ? null : (which==-1) ? trArr[ trIndx[i+1] ].leftSeg : trArr[ trIndx[i+1] ].rightSeg;
 			if (s.type==Segment.UNKNOWN){
 				occupied[ trIndx[i] ] = 0;
 				int idx = i+1;
@@ -2121,6 +2131,10 @@ public final class EdgeDetector {
 						p2.x = point.x;
 						p2.y = point.y;
 						p2.certain = point.certain;
+					} else if (point.certain && prev!=null && prev.num>2 && !elems[prev.endIndex].certain && elems[prev.endIndex].y>point.y-1){
+						prev.num--;
+						elems[prev.endIndex].copy(point);
+						prev.endIndex--;				
 					} else {
 						if (k+size-pos>0) {
 							for (int ii = k+size-pos-1;ii>=0;--ii){
@@ -2229,6 +2243,10 @@ public final class EdgeDetector {
 						p2.x = point.x;
 						p2.y = point.y;		
 						p2.certain = point.certain;
+					} else if (point.certain && prev!=null && prev.num>2 && !elems[prev.endIndex].certain && elems[prev.endIndex].y>point.y-1){
+						prev.num--;
+						elems[prev.endIndex].copy(point);
+						prev.endIndex--;				
 					} else {
 						if (k+size-pos>0) {
 							for (int ii = k+size-pos-1;ii>=0;--ii){
@@ -2290,7 +2308,10 @@ public final class EdgeDetector {
 					continue;
 				}
 				s.startIndex+=diff;
-				s.endIndex+=diff;
+				for (;s.startIndex<k;++s.startIndex) 
+					if (elems[s.startIndex].y>=s.start.y-SMALL_MARGIN) 
+						break; 
+				s.endIndex = s.startIndex+s.num-1;
 			}
 		}
 //		System.arraycopy(elems, sz, elems, 0, k-sz);
