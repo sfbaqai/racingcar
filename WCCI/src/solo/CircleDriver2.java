@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME =22200.84;
+	public static final double BREAK_TIME = 10400.38;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -3506,7 +3506,7 @@ public final class CircleDriver2{
 		}						
 		double b = 0,c=0;		
 		double a = (mLastY==0) ? 0 : turn*Vector2D.angle(carDirection.x,carDirection.y,mLastX, mLastY);
-		if (trSz>0 && lastS!=null && lastS.type!=0 && lastS.center.length()>lastS.radius){
+		if (trSz>0 && lastS!=null && lastS.type!=0 && lastS.type!=-2 && lastS.center!=null && lastS.center.length()>lastS.radius){
 			Geom.ptTangentLine(0, 0, lastS.center.x, lastS.center.y, lastS.radius, tmp);
 			double dx = (lastS.type==TURNRIGHT) ? tmp[0] : tmp[2];
 			double dy = (lastS.type==TURNRIGHT) ? tmp[1] : tmp[3];
@@ -5265,7 +5265,7 @@ public final class CircleDriver2{
 			
 			if ((isSafeToAccel || m>20) && (brake==1 || speedX>targetSpeed+40) && steer*turn<=0 && distToEstCircle<lastDistToEstCircle && relativeAngleMovement<0.01 && (relativeAngleMovement<0.001 || relativeAngleMovement<lastRelativeAngleMovement)){
 				if (a>0 && !canGoVeryFast) 
-					steer=-turn;
+					steer=(relativeSpeedY<-10) ? -a*0.5*turn : -turn;
 				
 				if (relativeAngleMovement<0.001 && absSpeedY>10)
 					brake = (distToEstCircle<0 && relativeAngleMovement>-0.01 && speedX<targetSpeed+25 && absSpeedY<HIGH_SPEEDY) ? (speed*speed-targetSpeed*targetSpeed)/(speed*speed)*0.5 : brake;
@@ -11898,7 +11898,7 @@ public final class CircleDriver2{
 							
 //							if (speed>maxSpeed && steer*turn>0) steer=0;
 						}  else if (speedX>faster(last_speed,m) && (distToEstCircle<GAP && distToEstCircle<lastDistToEstCircle && lastSteer*turn>=0 || b>TURNANGLE*0.75 && absSpeedY>MODERATE_SPEEDY && relativeAngleMovement<-0.001)){ 
-							steer = (relativeAngleMovement<-0.01 && b>TURNANGLE*0.5) ? -turn : 0;
+							steer = (relativeAngleMovement<-0.01 && b>TURNANGLE*0.5 && relativeSpeedY>0) ? -turn : 0;
 							hazard = 2;	
 						} else if (relativeSpeedY>0) 
 							steer = (relativeAngleMovement<-0.01 || b>TURNANGLE*0.75 && speedX>maxSpeed+10 && absSpeedY>MODERATE_SPEEDY && m>15  && distToEstCircle<GAP) ? 0 : steer*0.5;				
