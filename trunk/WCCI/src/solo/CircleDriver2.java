@@ -34,7 +34,7 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 10400.38;
+	public static final double BREAK_TIME = 6000.78;
 	public static boolean debug = false;
 	//		661.28;
 
@@ -5265,7 +5265,7 @@ public final class CircleDriver2{
 			
 			if ((isSafeToAccel || m>20) && (brake==1 || speedX>targetSpeed+40) && steer*turn<=0 && distToEstCircle<lastDistToEstCircle && relativeAngleMovement<0.01 && (relativeAngleMovement<0.001 || relativeAngleMovement<lastRelativeAngleMovement)){
 				if (a>0 && !canGoVeryFast) 
-					steer=(relativeSpeedY<-10) ? -a*0.5*turn : -turn;
+					steer=-turn;
 				
 				if (relativeAngleMovement<0.001 && absSpeedY>10)
 					brake = (distToEstCircle<0 && relativeAngleMovement>-0.01 && speedX<targetSpeed+25 && absSpeedY<HIGH_SPEEDY) ? (speed*speed-targetSpeed*targetSpeed)/(speed*speed)*0.5 : brake;
@@ -5356,7 +5356,7 @@ public final class CircleDriver2{
 					acc = (distToEstCircle<0 && (relativePosMovement<0.01 && speedX>lastSpeed+dl || relativeAngleMovement<-0.01) ) ? acc : (relativeAngleMovement>-0.001 || absSpeedY<MODERATE_SPEEDY && distToEstCircle>0) ? 1 : acc;
 					if (acc>0 || relativeAngleMovement>-0.01 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5)) brake = 0;
 				} else if (a>0 && b>0 && absSpeedY<HIGH_SPEEDY && relativePosMovement>-0.001 && relativeAngleMovement>0.001) brake = 0;
-				if (acc<=CONSTANT_SPEED_ACC*0.25 && brake==0 && relativeAngleMovement>0.001 && speedX<lowestSpeed || acc>CONSTANT_SPEED_ACC && relativeAngleMovement<-0.01 && distToEstCircle<-GAP) acc = CONSTANT_SPEED_ACC;				
+				if (acc<=CONSTANT_SPEED_ACC*0.25 && brake==0 && relativeAngleMovement>0.001 && speedX<lowestSpeed || acc>CONSTANT_SPEED_ACC && relativeAngleMovement<-0.01 && distToEstCircle<-GAP && relativePosMovement<-0.001) acc = CONSTANT_SPEED_ACC;				
 			} else if (speed-lowestSpeed<dl && absSpeedY<HIGH_SPEEDY && (distToEstCircle>0 && !isSafeToAccel|| distToEstCircle>-GAP && speed-lowestSpeed<dl*1.5) ){
 				
 				if (relativeAngleMovement>-0.01 && brake>0 && (speedX<aheadSpeed+dl || speedX<aheadSpeed+dl*1.5 && distToEstCircle>-GAP*0.5) && (absSpeedY<MODERATE_SPEEDY || relativeAngleMovement>0.001 && canGoModerate || distToEstCircle>0) ) 
@@ -11898,7 +11898,7 @@ public final class CircleDriver2{
 							
 //							if (speed>maxSpeed && steer*turn>0) steer=0;
 						}  else if (speedX>faster(last_speed,m) && (distToEstCircle<GAP && distToEstCircle<lastDistToEstCircle && lastSteer*turn>=0 || b>TURNANGLE*0.75 && absSpeedY>MODERATE_SPEEDY && relativeAngleMovement<-0.001)){ 
-							steer = (relativeAngleMovement<-0.01 && b>TURNANGLE*0.5 && relativeSpeedY>0) ? -turn : 0;
+							steer = (relativeAngleMovement<-0.01 && b>TURNANGLE*0.5) ? -turn : 0;
 							hazard = 2;	
 						} else if (relativeSpeedY>0) 
 							steer = (relativeAngleMovement<-0.01 || b>TURNANGLE*0.75 && speedX>maxSpeed+10 && absSpeedY>MODERATE_SPEEDY && m>15  && distToEstCircle<GAP) ? 0 : steer*0.5;				
