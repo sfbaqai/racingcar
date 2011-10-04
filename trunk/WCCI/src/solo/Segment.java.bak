@@ -37,13 +37,15 @@ public final class Segment {
 	private static boolean isPossiblyConnected = false;	
 	private static final Segment tmpPrev = new Segment();
 	private static final Segment tmpSeg = new Segment();
-	private static final Segment tmpSeg0 = new Segment();
+//	private static final Segment tmpSeg0 = new Segment();
 	private static final Vector2D tmpCenter = new Vector2D();
 	private static Vector2D pt = new Vector2D();
 	private static final double[] temp = new double[6];	
 	private static final double[] rs = new double[3];	
 	private static final double E = (CircleDriver2.inTurn) ? 0.1*TrackSegment.EPSILON : TrackSegment.EPSILON*0.1;
 	private static final int tmpL = 2002;
+	private static final Vector2D tmpPoint = new Vector2D();
+	public static boolean careful = false;
 //	private static final double[] tmpR = new double [tmpL];
 	public static final int[] tmpAppear = new int[tmpL];
 	private static Segment p = new Segment();
@@ -108,8 +110,8 @@ public final class Segment {
 	public static final double REJECT_VALUE = 11;
 	public static final double EPSILON = TrackSegment.EPSILON;
 	public static final double EPS = TrackSegment.EPSILON*5;
-	public static final Segment[] oalArr = new Segment[30];
-	private static final Segment[] salArr = new Segment[30];
+	public static final Segment[] oalArr = new Segment[64];
+	private static final Segment[] salArr = new Segment[64];
 	static {
 		for (int i=tmpS.length-1;i>=0;--i) tmpS[i] = new Segment();
 		for (int i=oalArr.length-1;i>=0;--i) {
@@ -176,7 +178,7 @@ public final class Segment {
 	public boolean updated = true;
 	private final static String TAB = "    ";
 	private final static char[] buf = new char[300];
-	private static final String[] headers = {"Segment (type = ",TAB+"num = ",TAB+"radius = ",TAB+"length = ",TAB+"start = ",TAB+"end = ",TAB+"center = ",TAB+"dist = "," )"};	
+	private static final String[] headers = {"Segment (type = ",TAB+"num = ",TAB+"radius = ",TAB+"length = ",TAB+"start = ",TAB+"end = ",TAB+"center = ",TAB+"lower = ",TAB+"upper =","  )"};	
 	private static final char[] tpo = headers[0].toCharArray();
 	private static final char[] nm = headers[1].toCharArray();
 	private static final char[] rad = headers[2].toCharArray();
@@ -184,8 +186,9 @@ public final class Segment {
 	private static final char[] strt = headers[4].toCharArray();
 	private static final char[] en = headers[5].toCharArray();	
 	private static final char[] cnt = headers[6].toCharArray();
-	private static final char[] dista = headers[7].toCharArray();			
-	private static final char[] fin = headers[8].toCharArray();
+	private static final char[] lwer = headers[7].toCharArray();
+	private static final char[] uper = headers[8].toCharArray();
+	private static final char[] fin = headers[9].toCharArray();
 	public Segment opp = null;
 	public Segment leftSeg = null;
 	public Segment rightSeg = null;
@@ -458,19 +461,23 @@ public final class Segment {
 			}
 		};
 		
-		if (start==null) 
-			start = new Vector2D(s.start);
-		else {
-			start.x = s.start.x;
-			start.y = s.start.y;
+		if (s.start!=null){
+			if (start==null) 
+				start = new Vector2D(s.start);
+			else {
+				start.x = s.start.x;
+				start.y = s.start.y;
+			}
 		}
 		
 		unsafe = s.unsafe;
-		if (end==null) 
-			end = new Vector2D(s.end);
-		else {
-			end.x = s.end.x;
-			end.y = s.end.y;
+		if (s.end!=null){
+			if (end==null) 
+				end = new Vector2D(s.end);
+			else {
+				end.x = s.end.x;
+				end.y = s.end.y;
+			}
 		}
 			
 		if (s.upper!=null){
@@ -597,10 +604,10 @@ public final class Segment {
 			} else {
 				int er = (int)Math.round(radius-type*tW);
 				if (er>=MAX_RADIUS) er = MAX_RADIUS-1;
-				if (er<MAX_RADIUS && map[er]==0) {					
+				if (er<MAX_RADIUS && er>=0 && map[er]==0) {					
 					if (appearedRads!=null) appearedRads[radCount++] = er;
 				}	
-				map[er]++;
+				if (er>=0) map[er]++;
 			}
 			if (opp!=null) opp.radCount = radCount;
 		}
@@ -1262,7 +1269,7 @@ public final class Segment {
 			double dd =  Math.sqrt(dx*dx+dy*dy);
 			double d = dd-radius;
 			if (d<0) d = -d;
-			if (d>=EPSILON*0.5) return false;
+			if (d>=EPSILON*10) return false;
 		}
 		return true;
 	}
@@ -1681,6 +1688,63 @@ public final class Segment {
 		}
 		return s;
 	}
+	
+	public static final void mapPoint(Vector2D p,Segment seg ,int which,double tW,Vector2D q){
+		double t = (seg.type==0) ? 2*tW*which : -2*tW*which*seg.type;
+		if (seg.type==0 && Math.abs(seg.start.x-seg.end.x)<=TrackSegment.EPSILON){
+			q.x = p.x+t;
+			q.y = p.y;
+		} else if (seg.type==0){
+			double sx = seg.start.x;
+			double sy = seg.start.y;
+			double ex = seg.end.x;
+			double ey = seg.end.y;
+			double nx = sy-ey;
+			double ny = ex-sx;
+			double d = -t/Math.sqrt(nx*nx+ny*ny);
+			nx*=d;
+			ny*=d;
+			q.x = p.x+nx;
+			q.y = p.y+ny;
+		} else {
+			double rad = seg.radius + t;
+			Vector2D center = seg.center;
+			double ox = center.x;
+			double oy = center.y;
+			double d = rad/seg.radius;
+			Vector2D first = seg.start;
+			Vector2D last = seg.end;
+			if (oy!=0){
+				double cx = center.x;
+				double cy = center.y;
+				ox = (first.x+last.x)*0.5;
+				oy = (first.y+last.y)*0.5;
+				double dx = ox - first.x;
+				double dy = oy - first.y;
+				double dd = dx*dx+dy*dy;
+
+				double nx = -dy;
+				double ny = dx;		
+				double dn = nx*nx+ny*ny;
+
+				cx -= ox;
+				cy -= oy;
+				if (nx*cx+ny*cy<0) {
+					nx = -nx;
+					ny = -ny;
+				}
+				double r = seg.radius;				
+				double dt = Math.sqrt((r*r-dd)/dn);
+				ox += nx * dt;
+				oy += ny * dt;					
+
+			}
+			double nsx = p.x - ox;
+			double nsy = p.y - oy;				
+			q.x = ox+nsx*d;
+			q.y = oy+nsy*d;
+		}
+	}
 
 	public static final void toSideSegment(Segment seg,Segment s,int which,double tW){
 		if (seg!=null && seg.type==Segment.UNKNOWN) return;
@@ -2043,7 +2107,7 @@ public final class Segment {
 					i++;
 					t = (i<sz-1) ? lArr[i+1] : null;
 				}
-				if ((sz-=oldI)>0) arraycopy(lArr, oldI,lArr, i, sz);
+				if ((sz-=oldI)>0) System.arraycopy(lArr, oldI,lArr, i, sz);
 				sz+=i;
 				continue;
 			}
@@ -2108,7 +2172,15 @@ public final class Segment {
 						s.opp.endIndex = t.opp.endIndex;
 						s.opp.num += t.opp.num;
 					}
-					s.num += t.num;				
+					s.num += t.num;			
+					if (s.num>1){
+						if (s.center!=null)
+							circle(s.points[s.startIndex], s.points[s.endIndex], s.center.x,s.center.y, s.radius,s.center);
+						else {
+							s.center = new Vector2D();
+							circle(s.points[s.startIndex], s.points[s.endIndex], s.type,s.radius,s.center);
+						}
+					}
 				}
 				
 				if (s.map!=null && t.map!=null){
@@ -2125,9 +2197,9 @@ public final class Segment {
 					t.copy(s);
 					if (t.opp!=null) t.opp.copy(s.opp);
 					int idx = i+1;
-					if ((sz-=idx)>0) arraycopy(lArr,idx,lArr,idx-1,sz);
+					if ((sz-=idx)>0) System.arraycopy(lArr,idx,lArr,idx-1,sz);
 					sz+=idx-1;
-					continue;
+					break;
 				}
 
 				if (s.radius!=t.radius && s.type!=0){
@@ -2268,7 +2340,7 @@ public final class Segment {
 					map[rr]++;
 				} else if (rr>REJECT_VALUE && rr<MAX_RADIUS-1){
 					if (map[rr]==0) {
-						appearedRads[radCount++] = rr;
+						if (appearedRads!=null) appearedRads[radCount++] = rr;
 						if (opp!=null) opp.radCount++;
 					}
 					map[rr]++;					
@@ -2304,7 +2376,8 @@ public final class Segment {
 
 		if (len<3) {
 			if (len==2 && type!=0){
-				center = circle(first, last, this.center, radius);				
+				center = tmpCenter; 
+				circle(first, last, this.center.x,this.center.y, radius,center);				
 				double tx = center.x;
 				double ty = center.y;
 				if (ty<SMALL_MARGIN && ty>-SMALL_MARGIN) {
@@ -2684,7 +2757,7 @@ public final class Segment {
 		}
 	}//*/	
 
-	private static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
+	public static final boolean isConnected(Segment s,Segment last,double tW,Vector2D point){
 		if (s==null || last==null || s.type==Segment.UNKNOWN || last.type==Segment.UNKNOWN) return false;
 		double[] temp = new double[6];
 		isPrevNextConnected = false;
@@ -2985,7 +3058,7 @@ public final class Segment {
 
 	private final static boolean isBelong(Segment s,Vector2D[] v,int from,int to,Segment rs,int which,double tW){
 //		long ti = System.nanoTime();
-		int n = 0;
+//		int n = 0;
 		int size = to - from;
 		if (size<2) return false;
 		int sNum = s.num;
@@ -3026,7 +3099,7 @@ public final class Segment {
 				if (s.type!=UNKNOWN){
 					int sr = (s.type==0) ? 0 : (int)Math.round(s.radius+s.type*which*tW);
 					if (s.type==1) sr+=Segment.MAX_RADIUS;
-					if (map[mr]>1 && (sr==mr || map!=null && map[sr]>0 && map[sr]>=map[mr])){
+					if (mr<map.length && mr>=0 && map[mr]>1 && (sr==mr || map!=null && sr<map.length && map[sr]>0 && map[sr]>=map[mr])){
 						rs.type = s.type;
 						if (rs.start==null) 
 							rs.start = new Vector2D(fst);
@@ -3207,6 +3280,7 @@ public final class Segment {
 			return false;
 		} else {	
 			int maxPossible = size-2;
+			int max = 0;
 			//double sx = (s.type==0 || s.center==null) ? 0 : s.center.x;
 			double sy = (s.type==0 || s.center==null) ? 0 : s.center.y;
 			boolean isFirst = (s.type==0 && Math.abs(s.start.x-s.end.x)<=E) || (s.type!=0 && s.type!=Segment.UNKNOWN && s.center!=null && sy==0);
@@ -3345,7 +3419,7 @@ public final class Segment {
 					if (maxPossible==max) return false;
 				}
 				
-			}//*/
+			}//*/			
 
 			if (!found){
 				if (isFirst && (dd==0 || dd1==0)){
@@ -3374,10 +3448,9 @@ public final class Segment {
 					}
 				}
 				double cx = 0;
-				double cy = 0;
+				double cy = 0;				
 				for (int i = from+1;i<endIndx;++i){					
-					Vector2D mid = v[i];
-					n++;
+					Vector2D mid = v[i];					
 					boolean isCircle = Geom.getCircle(fst, mid,lst, tmp1);					
 					if (isCircle){						
 						r = Math.sqrt(tmp1[2]);							
@@ -3401,24 +3474,27 @@ public final class Segment {
 								angle -= 2*Math.PI;
 										
 							tp = (angle<0) ? -1 : 1;	
+							circle(fst, lst, cx,cy, r,center);
+							cx = center.x;
+							cy = center.y;
 						} else {
 							tp = 0;
 							r = 0;
 						}
 
 																		
-						circle(fst, lst, cx,cy, r,center);
-						cx = center.x;
-						cy = center.y;
-						if (r<=REJECT_VALUE || r+tp*which*tW*2<=REJECT_VALUE) continue;
+						
+						if (tp!=0 && r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
 							if (Math.abs(r-dd1)>0.5 && Math.abs(r-dd)>0.5) continue;
-							cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
-							cy = 0;		
-							center.x = cx;
-							center.y = 0;
+							if (tp!=0){
+								cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
+								cy = 0;		
+								center.x = cx;
+								center.y = 0;
+							}
 						}
 						
 						er = (int)Math.round(r);
@@ -3436,7 +3512,8 @@ public final class Segment {
 						if (map[er]==0){
 							allRads[count++] = er;
 						}
-						map[er]++;															
+						map[er]++;		
+						max = Math.max(map[er], max);
 					} else {//else !isCircle
 						if (map[0]==0){
 							allRads[count++] = 0;
@@ -3446,9 +3523,9 @@ public final class Segment {
 						tp = 0;
 					}
 					if (map[er]>2) {					
-						found = (tp==s.type && r==s.radius && Math.abs(cy-sy)<1);
-						if (found){							
-							double EE = EPSILON*3;
+						found = (tp!=0 && tp==s.type && r==s.radius && Math.abs(cy-sy)<1);
+						if (found ){							
+							final double EE = EPSILON*4;
 							boolean ok = true;
 							for (int ii = from;ii<to;++ii){								
 								Vector2D vv = v[ii];
@@ -3491,7 +3568,7 @@ public final class Segment {
 				}//end of for			
 			}//end of if
 
-			if (found || check[er]>0 && (map[er]>2 || (map[er]>1 && maxPossible<=3) ) ){
+			if ((map[er]==max || max==0) && (found || check[er]>0 && (map[er]>2 || (map[er]>1 && maxPossible<=3) ) )){
 				if (rs!=null){
 					rs.type = tp;
 					if (rs.start==null) 
@@ -3515,37 +3592,42 @@ public final class Segment {
 				if (s.map!=null) {
 					int sr = (tp==0) ? MAX_RADIUS-1 : (int)Math.round(r+tp*which*tW);
 					if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-					if (s.map[sr]==0 && s.appearedRads!=null){
-						s.appearedRads[s.radCount++] = sr;
-						s.opp.radCount++;
+					if (sr>=0){
+						if (s.map[sr]==0 && s.appearedRads!=null){
+							s.appearedRads[s.radCount++] = sr;
+							s.opp.radCount++;
+						}
+						s.map[sr]+=map[er];
 					}
-					s.map[sr]+=map[er];
 				}
 			} else if (rs!=null){
-				int max = map[er];
+				int maxV = map[er];
 				int maxEr = (int)Math.round(r);
-				if (max+max<maxPossible){
+				found = false;
+				if (maxV+maxV<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
-						if (max<map[er]){
-							max = map[er];
+						if (maxV<map[er]){
+							maxV = map[er];
 							maxEr = er;
 							r = (er-Math.round(tW))+tW;
 						}
 					}	
 				}
 
-				if (max>1){
-					if (maxEr>0 && check[maxEr]<0 ){						
+				if (maxV>1 || Math.abs(er-s.radius)<0.5){
+					tp = storage.getType(v, from,to-1);
+					if (maxEr>=0 && check[maxEr]<0 || maxV>2 || maxV+maxV>=maxPossible){						
 						if (!isFirst){
-							circle(fst, lst, center.x,center.y, r,center);
-						} else {
+//							circle(fst, lst, center.x,center.y, r,center);
+							circle(fst, lst, tp, r, center);
+						} else if (tp!=0){
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
 							center.y = 0;
 						}
 						boolean ok = (!inTurn);
-						if (ok){
+						if (ok && tp!=0){
 							for (int i=from;i<to;++i){
 								Vector2D p = v[i];
 								if (p.certain){
@@ -3560,7 +3642,7 @@ public final class Segment {
 								}
 							}
 						}
-						if (ok || max>2){
+						if (ok || maxV>2 || maxV+maxV>=maxPossible){
 							rs.type = tp;
 							if (rs.start==null) 
 								rs.start = new Vector2D(fst);
@@ -3580,6 +3662,7 @@ public final class Segment {
 							}
 							rs.startIndex = from;
 							rs.endIndex = to-1;		
+							found = true;
 						}
 					}
 				}
@@ -3603,7 +3686,7 @@ public final class Segment {
 	
 	private final static boolean isBelongToEither(Segment s,Segment s1,Vector2D[] v,int from,int to,Segment rs,int which,double tW){
 //		long ti = System.nanoTime();
-		int n = 0;
+//		int n = 0;
 		int size = to - from;
 		if (size<2) return false;		
 
@@ -3667,7 +3750,7 @@ public final class Segment {
 					int sr = (s1.type==0) ? 0 : (int)Math.round(s1.radius+s1.type*which*tW);
 					if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 					if (s1.type==1) sr+=Segment.MAX_RADIUS;					
-					if (sr==mr || map!=null && map[sr]>0 && map[sr]>=map[mr]){
+					if (sr==mr || map!=null && sr>=0 && mr>=0 && map[sr]>0 && map[sr]>=map[mr]){
 						rs.type = s1.type;
 						if (rs.start==null) 
 							rs.start = new Vector2D(fst);
@@ -3825,6 +3908,7 @@ public final class Segment {
 			return false;
 		} else {								
 			int maxPossible = size-2;
+			int maxE = 0;
 			int[] map = tmpAMap;
 			int[] allRads = tmpARads;
 			int[] check = tmpCheck;			
@@ -4013,8 +4097,7 @@ public final class Segment {
 				double cx = 0;
 				double cy = 0;
 				for (int i = from+1;i<endIndx;++i){					
-					Vector2D mid = v[i];
-					n++;
+					Vector2D mid = v[i];					
 					boolean isCircle = Geom.getCircle(fst, mid,lst, tmp1);					
 					if (isCircle){
 				
@@ -4038,24 +4121,27 @@ public final class Segment {
 							else if (angle>Math.PI) 
 								angle -= 2*Math.PI;
 										
-							tp = (angle<0) ? -1 : 1;	
+							tp = (angle<0) ? -1 : 1;
+							circle(fst, lst, cx,cy, r,center);
+							cx = center.x;
+							cy = center.y;
 						} else {
 							r = 0;
 							tp = 0;
 						}
 						
-						circle(fst, lst, cx,cy, r,center);
-						cx = center.x;
-						cy = center.y;
-						if (r<=REJECT_VALUE || r+tp*which*tW*2<=REJECT_VALUE) continue;
+						
+						if (tp!=0 && r<=REJECT_VALUE) continue;
 						double de = which*tp*tW;
 						if (isFirst){
 							if (Math.abs(cy)>MARGIN) continue;
 							if (Math.abs(r-dd1)>0.5 && Math.abs(r-dd)>0.5) continue;
-							cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
-							cy = 0;
-							center.x = cx;
-							center.y = cy;
+							if (tp!=0){
+								cx = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
+								cy = 0;
+								center.x = cx;
+								center.y = cy;
+							}
 						}
 						
 						
@@ -4074,7 +4160,8 @@ public final class Segment {
 						if (map[er]==0){
 							allRads[count++] = er;
 						}
-						map[er]++;															
+						map[er]++;
+						maxE = Math.max(maxE, map[er]);
 					} else {//else !isCircle
 						if (map[0]==0){
 							allRads[count++] = 0;
@@ -4129,7 +4216,7 @@ public final class Segment {
 				}//end of for
 			}//end of if
 
-			if (found || (map[er]>2 && check[er]>0)){
+			if ((map[er]==maxE || maxE==0) && (found || (map[er]>2 && check[er]>0))){
 				if (rs!=null){
 					rs.type = tp;
 					if (rs.start==null) 
@@ -4154,37 +4241,48 @@ public final class Segment {
 				if (s.map!=null) {
 					int sr = (tp==0) ? MAX_RADIUS-1 : (int)Math.round(r+tp*which*tW);
 					if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-					if (s.map[sr]==0){
-						s.appearedRads[s.radCount++] = sr;
-						s.opp.radCount++;
+					if (sr>=0){
+						if (s.map[sr]==0){
+							s.appearedRads[s.radCount++] = sr;
+							s.opp.radCount++;
+						}
+						s.map[sr]+=map[er];
 					}
-					s.map[sr]+=map[er];
 				}
 			} else if (rs!=null){
 				int max = map[er];
 				int maxEr = (int)Math.round(r);
+				found = false;				
 				if (max+max<maxPossible){
 					for (int i = count-1;i>=0;--i){
 						er = allRads[i];
-						if (max<map[er]){
+						if (er==s.radius) map[er]++;
+						if (max<map[er]){							
 							max = map[er];
+							maxEr = er;
+							r = (er-Math.round(tW))+tW;							
+						} else if (max==map[er] && er==s.radius) {
 							maxEr = er;
 							r = (er-Math.round(tW))+tW;
 						}
 					}	
-				}	
+				} 
 
-				if (max>1){
-					if (maxEr>0 && check[maxEr]<0){						
+				if (max>1 || Math.abs(er-s.radius)<0.5){
+					if (to>from) tp = storage.getType(v, from,to-1);
+//					if (tp==-2)
+//						System.out.println();
+					if (maxEr>0 && check[maxEr]<0 || max>2 || max+max>=maxPossible){						
 						if (!isFirst){
-							circle(fst, lst, center.x,center.y, r,center);
-						} else {
+//							circle(fst, lst, center.x,center.y, r,center);
+							circle(fst, lst, tp, r, center);
+						} else if (tp!=0){
 							double de = which*tp*tW;
 							center.x = (tp==-1) ? CircleDriver2.toMiddle-r-de : r+de+CircleDriver2.toMiddle;
 							center.y = 0;
 						}
 						boolean ok = (!inTurn);
-						if (ok){
+						if (ok && tp!=0){
 							for (int i=from;i<to;++i){
 								Vector2D p = v[i];
 								if (p.certain){
@@ -4199,7 +4297,7 @@ public final class Segment {
 								}
 							}
 						}
-						if (ok || max>2){
+						if (ok || max>2 || max+max>=maxPossible){
 							rs.type = tp;
 							if (rs.start==null) 
 								rs.start = new Vector2D(fst);
@@ -4218,7 +4316,8 @@ public final class Segment {
 								else rs.center.copyValue(center);
 							}
 							rs.startIndex = from;
-							rs.endIndex = to-1;		
+							rs.endIndex = to-1;	
+							found = true;
 						}
 					}
 				}
@@ -4238,7 +4337,7 @@ public final class Segment {
 	}
 
 
-	private final static boolean testConnect(Segment prev,Segment s,Vector2D point,double tW,int cutIndx){
+	private final static boolean testConnect(Segment prev,Segment s,Vector2D point,double tW,int cutIndx,boolean noCheck){
 		int pStartIndx = prev.startIndex;
 		int endIndx = s.endIndex;
 		Segment op = prev.opp;
@@ -4250,7 +4349,7 @@ public final class Segment {
 		Vector2D[] opoints = (which==1) ? CircleDriver2.edgeDetector.left : CircleDriver2.edgeDetector.right;		
 		double tw = tW;
 		if (tw<0) tw = -tw;		
-		int pNum = cutIndx - pStartIndx;
+		int pNum = cutIndx - pStartIndx;		
 		Vector2D pCenter = prev.center;		
 		double px = point.x;
 		double py = point.y;
@@ -4285,7 +4384,7 @@ public final class Segment {
 				if (i-opStartIndx<2) {
 					pOk = false;
 				} else {					
-					pOk = isBelong(op, opoints, opStartIndx, i, tmpPrev, -which, tw);
+					pOk = noCheck && i-opStartIndx==op.num || isBelong(op, opoints, opStartIndx, i, tmpPrev, -which, tw);
 					if (tmpPrev.type!=Segment.UNKNOWN){
 						if (tmpPrev.type!=0){
 							pCenter = tmpPrev.center;
@@ -4316,7 +4415,7 @@ public final class Segment {
 				py = point.y;
 			}
 		} else {					
-			pOk = isBelong(prev, v, pStartIndx, cutIndx, tmpPrev, which, tw);
+			pOk = noCheck && prev.num==cutIndx-pStartIndx || isBelong(prev, v, pStartIndx, cutIndx, tmpPrev, which, tw);
 			if (pOk && isPrevConfirmed && !((tmpPrev.type==0 && Math.abs(tmpPrev.start.x-tmpPrev.end.x)<E) || (tmpPrev.type!=0 && tmpPrev.center!=null && tmpPrev.center.y==0))){
 				pOk = false;
 				return false;
@@ -4355,7 +4454,7 @@ public final class Segment {
 			if (osEndIndx+1-i<2){ 
 				sOk = false;
 			} else {				
-				sOk = isBelong(os, opoints, i, osEndIndx+1, tmpSeg, -which, tw);
+				sOk = noCheck && osEndIndx+1-i==os.num || isBelong(os, opoints, i, osEndIndx+1, tmpSeg, -which, tw);
 				if (tmpSeg.type!=Segment.UNKNOWN){
 					if (tmpSeg.type!=0){
 						sCenter = tmpSeg.center;
@@ -4382,7 +4481,7 @@ public final class Segment {
 				}
 			}
 		} else {			
-			sOk = isBelong(s, v, cutIndx, s.endIndex+1, tmpSeg, which, tw);						
+			sOk = noCheck && s.endIndex+1-cutIndx==s.num || isBelong(s, v, cutIndx, s.endIndex+1, tmpSeg, which, tw);						
 		}		
 		
 		if (tmpPrev!=null && tmpSeg!=null && tmpPrev.type!=Segment.UNKNOWN && tmpSeg.type!=Segment.UNKNOWN){
@@ -4405,7 +4504,7 @@ public final class Segment {
 							if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 							if (s.map!=null){
 								if (s.map[sr]==0){
-									s.appearedRads[s.radCount++] =sr;
+									if (s.appearedRads!=null)  s.appearedRads[s.radCount++] =sr;
 									if (s.opp!=null) s.opp.radCount = s.radCount;
 								}
 								s.map[sr]++;
@@ -4421,7 +4520,7 @@ public final class Segment {
 								if (pr>=Segment.MAX_RADIUS) pr = Segment.MAX_RADIUS-1;
 								if (prev.map!=null){
 									if (prev.map[pr]==0){
-										prev.appearedRads[prev.radCount++] =pr;
+										if (prev.appearedRads!=null) prev.appearedRads[prev.radCount++] =pr;
 										if (prev.opp!=null) prev.opp.radCount = prev.radCount;
 									}
 									prev.map[pr]++;
@@ -4546,31 +4645,31 @@ public final class Segment {
 			} 
 			return false;
 		} else {
-			if (pOk && !isConfirmed(s, which, tw) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw)){
+			if (pOk && !isConfirmed(s, which, tw) && isBelong(prev, v, pStartIndx, endIndx+1, tmpPrev, which, tw) && tmpPrev.type==prev.type && (prev.type==0 || prev.radius==tmpPrev.radius)){
 				prev.copy(tmpPrev);
 				prev.opp = op;
 				prev.updated = true;
 				int pr = (prev.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(prev.radius+prev.type*which*tw);
 				if (pr>=Segment.MAX_RADIUS) pr = Segment.MAX_RADIUS-1;
 //				if (prev.map==null) prev.map = new int[MAX_RADIUS];
-				if (prev.map!=null){
+				if (prev.map!=null && pr>=0){
 					if (prev.map[pr]==0){
-						prev.appearedRads[prev.radCount++] =pr;
+						if (prev.appearedRads!=null) prev.appearedRads[prev.radCount++] =pr;
 						if (prev.opp!=null) prev.opp.radCount = prev.radCount;
 					}
 					prev.map[pr]++;
 				}
 				s.type = Segment.UNKNOWN;		
 				os.type = Segment.UNKNOWN;
-			} else if (sOk && !isConfirmed(prev, which, tw) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw)){
+			} else if (sOk && !isConfirmed(prev, which, tw) && isBelong(s, v, pStartIndx, endIndx+1, tmpSeg, which, tw) && tmpSeg.type==s.type && (s.type==0 || s.radius==tmpSeg.radius)){
 				s.copy(tmpSeg);
 				s.opp = os;
 				int sr = (s.type==0) ? Segment.MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*which*tw);
 				if (sr>=Segment.MAX_RADIUS) sr = Segment.MAX_RADIUS-1;
 //				if (s.map==null) s.map = new int[MAX_RADIUS];
-				if (s.map!=null){
+				if (s.map!=null && sr>=0){
 					if (s.map[sr]==0){
-						s.appearedRads[s.radCount++] =sr;
+						if (s.appearedRads!=null) s.appearedRads[s.radCount++] =sr;
 						if (s.opp!=null) s.opp.radCount = s.radCount;
 					}
 					s.map[sr]++;
@@ -4578,13 +4677,14 @@ public final class Segment {
 				prev.type = Segment.UNKNOWN;
 				op.type = Segment.UNKNOWN;
 			}
-		}				
+		}		
+		if (noCheck) return true;
 		return false;
 	}
 
-	private final static void connect(Segment prev,Segment s,Vector2D point,double tW){
+	private final static void connect(Segment prev,Segment s,Vector2D point,double tW,boolean noCheck){
 		//		if (prev.type!=0 && prev.center!=null && prev.center.y==0) return; 
-		long ti = System.nanoTime();
+//		long ti = System.nanoTime();
 		Vector2D pLast = prev.end;
 		Vector2D start = s.start;
 		Vector2D[] v = s.points;
@@ -4620,7 +4720,7 @@ public final class Segment {
 				i = -i-1;
 			else if (yy>v[i].y) i++;
 			//			if (notAllowed && i-1<prev.endIndex) return;
-			if (testConnect(prev, s, point, tW, i)){
+			if (testConnect(prev, s, point, tW, i,noCheck)){
 				reSynchronize(s, os, 0, otherNums, 1, tw);
 				reSynchronize(prev, op, 0, otherNums, 1, tw);
 				boolean isFirstS = (s!=null && s.type!=Segment.UNKNOWN && ((s.type==0 && Math.abs(s.start.x-s.end.x)<E) || (s.type!=0 && s.center.y==0)));
@@ -4640,13 +4740,14 @@ public final class Segment {
 				}
 			} else {
 				prev.upper = null;
-				s.lower = null;
+				s.lower = null;				
 			}
-			long endTime = (System.nanoTime()-ti)/1000000;
-			if (CircleDriver2.debug || endTime>=1) System.out.println("End connect : "+endTime+"   at "+CircleDriver2.time+" s.");
+//			long endTime = (System.nanoTime()-ti)/1000000;
+//			if (CircleDriver2.debug || endTime>=1) System.out.println("End connect : "+endTime+"   at "+CircleDriver2.time+" s.");
 			return;
 		}
 	}
+		
 
 	/*private final static void calibrateConnected(Segment s,int index,Segment last,int lIndex,Vector2D[] v,double tW,int[] startArr,int[] endArr,Vector2D point){
 		double yy = point.y;
@@ -5099,7 +5200,7 @@ public final class Segment {
 						}
 					}
 					if (!s.reCalculate(v, s.startIndex, s.endIndex+1, tW)){
-						System.out.println("Check out reCalculate************************************************************");
+						if (CircleDriver2.debug) System.out.println("Check out reCalculate************************************************************");
 					}
 					if (last.lower!=null && s.lower==null) s.lower = last.lower;
 					if (last.upper!=null) s.upper = last.upper;
@@ -5108,7 +5209,7 @@ public final class Segment {
 					if ((sz-=size)>0 && rsArr!=null){
 //						if (l+1<0 || indx+1<0 || l+1>rsArr.length || indx+1>rsArr.length || l+1+size>rsArr.length || indx+1+size>rsArr.length)
 //							System.out.println();
-						arraycopy(rsArr, l+1, rsArr, indx+1, size);
+						System.arraycopy(rsArr, l+1, rsArr, indx+1, size);
 					}
 
 					l = indx;
@@ -5142,7 +5243,7 @@ public final class Segment {
 					Vector2D start = last.start;
 					double yy = pt.y;
 					if (pLast.y>yy || start.y<yy || s.endIndex+1<last.startIndex)
-						connect(s, last, pt, tW);
+						connect(s, last, pt, tW,true);
 					//					calibrateConnected(s, indx, last, l, v, tW, startArr, endArr, pt);
 					s.upper = pt;
 					last.lower = pt;				
@@ -5151,33 +5252,29 @@ public final class Segment {
 					int size = l-indx-1;
 					if (sI>eI && indx<l-1){
 						if ((sz-=size)>0)
-							arraycopy(rsArr, l, rsArr, indx+1, size);										
+							System.arraycopy(rsArr, l, rsArr, indx+1, size);										
 						l = indx+1;
 					} else if (sI<=eI){
 						if (indx<l-2){
 							size = l-indx-2;
 							int np = indx+2;
 							if ((sz-=size)>0)
-								arraycopy(rsArr, l, rsArr, np, size);														
+								System.arraycopy(rsArr, l, rsArr, np, size);														
 							l = np;
 						}
 						int pos = indx+1;
 						if (l==indx+1){
-							if (rsArr[pos]==null)
-								rsArr[pos] = new Segment();
-							Segment ns = rsArr[pos];
-							ns.reset();
-							ns.map = null;
+							Segment ns = new Segment();
 							ns.start = new Vector2D(v[sI]);							
 							ns.end = new Vector2D(v[eI]);							
 							ns.num = eI-sI+1;						
 							int np = pos +1;
 							if ((sz-=pos)>0)							
-								arraycopy(rsArr, pos, rsArr, np, sz);								
+								System.arraycopy(rsArr, pos, rsArr, np, sz);								
 							sz+=np;
 							ns.startIndex = sI;
 							ns.endIndex = eI;
-//							rsArr[pos] = ns;										
+							rsArr[pos] = ns;										
 						} else {						
 							Segment ns = rsArr[pos];
 							ns.start = new Vector2D(v[sI]);
@@ -5197,8 +5294,9 @@ public final class Segment {
 			if (l<1) return sz; 
 			s = rsArr[l-1];
 			int sR = (s==null || s.type==UNKNOWN) ? 0 : (s.type==0) ? MAX_RADIUS-1 : (int)Math.round(s.radius-s.type*tW);
+			if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 			boolean ok = false;
-			if (s!=null && (s.type==Segment.UNKNOWN || (ok = (s.num<=3 && (s.map==null || s.map[sR]<3))) ) && last.type!=Segment.UNKNOWN){									
+			if (s!=null && (s.type==Segment.UNKNOWN || (ok = (s.num<=3 && (s.map==null || sR>=0 && s.map[sR]<3))) ) && last.type!=Segment.UNKNOWN){									
 				int len = s.num;
 				int startIndex = s.startIndex; 
 				int index = startIndex+len-1;
@@ -5226,14 +5324,14 @@ public final class Segment {
 				if (s.type!=Segment.UNKNOWN && changed && s.num>0){
 					double oldr = s.radius;
 					if (!s.reCalculate(v,s.startIndex,s.endIndex+1,tW)){
-						System.out.println("Check out reCalculate************************************************************");
+						if (CircleDriver2.debug) System.out.println("Check out reCalculate************************************************************");
 					}
 					if (l-1>=1 && Math.abs(oldr-s.radius)>0.5) sz = checkRs(v,rsArr, l-1,tW,sz);
 				}
 
 				if (changed && s.num<=0) {			
 					if ((sz-=l)>0)
-						arraycopy(rsArr, l, rsArr, l-1, sz);						
+						System.arraycopy(rsArr, l, rsArr, l-1, sz);						
 					sz+=l-1;				
 				}
 			}
@@ -5263,26 +5361,21 @@ public final class Segment {
 						circle(p, s.end, s.center.x,s.center.y, s.radius,center);
 						if (center.y==0) s.center.x = center.x;
 						if (j>0){
-//							Segment ns = new Segment();
-							if (rsArr[0]==null)
-								rsArr[0] = new Segment();
-							Segment ns = rsArr[0];
-							ns.reset();
-							ns.map = null;
+							Segment ns = new Segment();
 							ns.start = new Vector2D(v[0]);
 							ns.end = new Vector2D(v[j-1]);
 							ns.startIndex = 0;
 							ns.center = center;
 							ns.endIndex = j-1;
 							ns.num = j;
-//							rsArr[0] = ns;								
+							rsArr[0] = ns;								
 							indx = 1;
 						}
 						break;
 					}
 				}
 				if (indx<i){
-					arraycopy(rsArr, i, rsArr, indx, sz-=i);
+					System.arraycopy(rsArr, i, rsArr, indx, sz-=i);
 					sz+=indx;
 				}
 				i = indx;
@@ -5304,7 +5397,7 @@ public final class Segment {
 				s.endIndex = next.endIndex;
 				if (s.end==null && s.num>0) s.end = new Vector2D(v[s.endIndex]);
 				if (sz>i+2)
-					arraycopy(rsArr, i+2, rsArr, i+1, sz-i-2);
+					System.arraycopy(rsArr, i+2, rsArr, i+1, sz-i-2);
 
 				sz--;				
 				found = true;
@@ -5329,11 +5422,11 @@ public final class Segment {
 						}
 					} else {
 						if (sz>i+1)
-							arraycopy(rsArr, i+1, rsArr, i, sz-i-1);							
+							System.arraycopy(rsArr, i+1, rsArr, i, sz-i-1);							
 						sz--;						
 						if (sz>i+1)							
-							arraycopy(rsArr, i+1, rsArr, i+1+olSz, sz-i-1);							
-						arraycopy(olArr, 0, rsArr, i, olSz);						
+							System.arraycopy(rsArr, i+1, rsArr, i+1+olSz, sz-i-1);							
+						System.arraycopy(olArr, 0, rsArr, i, olSz);						
 						sz+=olSz;
 						for (int j = i;j<olSz+i;++j){
 							s = rsArr[j];
@@ -5392,7 +5485,7 @@ public final class Segment {
 
 	public static final ObjectArrayList<Segment> segmentize(final Vector2D[] v,int from, int to,double tW,ObjectArrayList<Segment> rs){
 		//		long ti = System.nanoTime();
-		if (CircleDriver2.debug) System.out.println("start seg time : "+((System.nanoTime()-CircleDriver2.ti)/1000000)+" ms.");
+//		if (CircleDriver2.debug) System.out.println("start seg time : "+((System.nanoTime()-CircleDriver2.ti)/1000000)+" ms.");
 		if (rs==null) rs = ObjectArrayList.wrap(new Segment[30],0);
 		int len = to - from;
 		int count = 0;
@@ -5513,8 +5606,8 @@ public final class Segment {
 							x1 = vv.x;
 							y1 = vv.y;
 							vv = v[indx+1];
-							x1 = vv.x;
-							y1 = vv.y;
+							x2 = vv.x;
+							y2 = vv.y;
 							vv = v[j-1];
 							xx = vv.x;
 							yy = vv.y;
@@ -5885,6 +5978,7 @@ public final class Segment {
 								int indx = tmpI[k];
 								if (s.map==null) s.map = new int[MAX_RADIUS];
 								int sR = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)(s.radius-s.type*tW);
+								if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 								if (!s.reCalculate(v, indx, j, tW)) continue;
 								s.map[sR]++;																								
 								s.num = j-indx;
@@ -5957,7 +6051,8 @@ public final class Segment {
 					}
 					if (ty==0 || radius==rr){
 						Segment s = new Segment(x1, y1, xx, yy,tx, ty, radius,tW);
-						int sR = (rr>=MAX_RADIUS-1) ? MAX_RADIUS : (int)(rr-s.type*tW);						
+						int sR = (rr>=MAX_RADIUS-1) ? MAX_RADIUS : (int)(rr-s.type*tW);
+						if (sR>MAX_RADIUS-1) sR = MAX_RADIUS-1;
 						s.map[sR]++;
 						s.startIndex = i;
 						s.endIndex = j-1;
@@ -6123,7 +6218,7 @@ public final class Segment {
 
 		sz = lastCheck(v,rsArr,tW,sz);			
 		rs.size(sz);
-		if (CircleDriver2.debug)System.out.println("seg time : "+(System.nanoTime()-CircleDriver2.ti)/1000000+" ms.");
+//		if (CircleDriver2.debug)System.out.println("seg time : "+(System.nanoTime()-CircleDriver2.ti)/1000000+" ms.");
 		return rs;
 	}
 
@@ -6318,6 +6413,7 @@ public final class Segment {
 	public static final double check(Vector2D[] tmp,int from,int to,Vector2D center,double r){
 		double d = 0;
 		boolean ok = true;
+		if (center==null) return -1;
 		double cx = center.x;
 		double cy = center.y;
 		Vector2D s = tmp[from];
@@ -6326,6 +6422,7 @@ public final class Segment {
 		double e = Math.sqrt(dx*dx+dy*dy)-r;
 		if (e<0) e = -e;
 		if (e>EPSILON) return -1;
+		if (to<=0) return 0;
 		s = tmp[to-1];
 		dx = s.x-cx;
 		dy = s.y-cy;			
@@ -6340,6 +6437,7 @@ public final class Segment {
 			dy = s.y-cy;			
 			e = Math.sqrt(dx*dx+dy*dy)-r;
 			if (e<0) e = -e;
+			d+=e;
 			if (e>EPSILON) {
 				ok = false;		
 				prevGood = false;
@@ -6349,8 +6447,7 @@ public final class Segment {
 					continue;
 				}
 				break;
-			}
-			d+=e;
+			}			
 			prevGood = true;
 		}
 		return (ok) ? d : -d;
@@ -6463,7 +6560,7 @@ public final class Segment {
 		double d = dx*dx+dy*dy;
 
 		double nx = (tp==1) ? dy : -dy;
-		double ny = dx;		
+		double ny = -tp*dx;		
 		double dn = nx*nx+ny*ny;
 		
 
@@ -6508,6 +6605,7 @@ public final class Segment {
 			return;
 		}
 		int rd = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)Math.round(s.radius-s.type*tW);
+		if (rd>=MAX_RADIUS) rd = MAX_RADIUS-1;
 		double rad = s.radius;
 
 		if (Math.abs(r-rad)<0.5 || (s.type==0 && (rr>=MAX_RADIUS-1 || center==null || r==0)) || (rr>=MAX_RADIUS-1 && rd>=MAX_RADIUS-1)){
@@ -6529,15 +6627,15 @@ public final class Segment {
 			}
 		} else if (s.map!=null){
 			int score = 1;
-			if (tp==s.type || s.type==0 || tp==0){
+			if (rr>=0 && (tp==s.type || s.type==0 || tp==0)){
 				if (s.map[rr]==0) {
-					s.appearedRads[s.radCount++] = rr;
+					if (s.appearedRads!=null) s.appearedRads[s.radCount++] = rr;
 					if (s.opp!=null) s.opp.radCount = s.radCount;
 				}
 				s.map[rr]++;
 				score = s.map[rr];
-			} else if (s.map[rd]>0) s.map[rd]--;
-			if (s.map!=null && s.map[rd]==0){
+			} else if (rd>=0 && s.map[rd]>0) s.map[rd]--;
+			if (s.map!=null && rd>=0 && s.map[rd]==0 && s.appearedRads!=null){
 				for (int i = s.radCount-1;i>=0;--i){
 					int rads = s.appearedRads[i];
 					if (rads==rd){
@@ -6548,7 +6646,7 @@ public final class Segment {
 					}
 				}
 			}
-			int nr = s.map[rd];	
+			int nr = (rd>=0) ? s.map[rd] : 0;	
 																		
 			if (nr<=score && rr<MAX_RADIUS-1 && center!=null ){
 				double cx = center.x;
@@ -6589,7 +6687,7 @@ public final class Segment {
 				s.radius = r;
 				s.type = tp;
 				s.reCalLength();					
-			} else if (s.map!=null && nr<=s.map[rr] && rr>=MAX_RADIUS-1){				
+			} else if (s.map!=null && rr>=MAX_RADIUS-1 && nr<=s.map[rr] ){				
 				//				s.start = new Vector2D(first);
 				//				s.end = new Vector2D(last);
 				s.type = 0;
@@ -7902,7 +8000,7 @@ public final class Segment {
 
 	private static double radiusFrom2Points(Segment prev,Vector2D first,Vector2D last,double tW,Segment s){
 //		long ti = System.nanoTime();
-		if (prev==null || prev.type==UNKNOWN) return -1;				
+		if (prev==null || prev.type==UNKNOWN ) return -1;				
 		double r = 0;
 		double tw = tW+tW;
 		double startX = first.x;
@@ -7972,6 +8070,13 @@ public final class Segment {
 			d = Math.round(d-tW)+tW;
 			if (d==r){
 				Vector2D center = circle(first, last, ox,oy, r);
+				if (!isStraight){
+					Geom.ptLineDistSq(sx, sy, lx, ly, center.x, center.y, temp);
+//					double nx = temp[0];
+					double ny = temp[1];
+					if (Math.abs(ny-first.y)<1) return -1;
+					
+				}
 				if (s!=null) apply(s, tW,tp, first, last, center, r);
 //				long endTime = (System.nanoTime()-ti)/1000000;
 //				if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
@@ -7992,9 +8097,9 @@ public final class Segment {
 				for (int kk =no-1;kk>=0;--kk){
 					double rr = Math.round(temp[2+3*kk]-tp*tW)+tp*tW;						
 					if (rr>=MAX_RADIUS-1){
-						double d = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, sx, sy, null));
+						double d = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, sx, sy, tmp1));
 						d = Math.round(d-tW)+tW;
-						if (d==prev.radius && endY-startY>1){
+						if (d==prev.radius && endY-startY>1 && tmp1[1]<startY && prev.type*(endX-startX)>0){
 							if (s!=null) apply(s, tW,0, first, last, null, Double.MAX_VALUE);	
 //							long endTime = (System.nanoTime()-ti)/1000000;
 //							if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
@@ -8007,7 +8112,8 @@ public final class Segment {
 					if (rr<=REJECT_VALUE) continue;					
 					Vector2D center = pCntr[prL]; 
 					circle(first, last, temp[3*kk],temp[1+3*kk], rr,center);
-					//					if (CircleDriver2.time>=CircleDriver2.BREAK_TIME){														
+					if (tp*(center.x-startX)<0) continue;
+			
 					double dx = center.x - sx;
 					double dy = center.y - sy;
 					double dl = Math.round(Math.sqrt(dx*dx+dy*dy));
@@ -8020,9 +8126,9 @@ public final class Segment {
 //						double ssx = sx + dx*d;
 						double ssy = sy + dy*d;
 						if (prev.end.y<startY){
-							if (ssy>=startY || ssy<=prev.end.y) continue;
+							if (ssy<=prev.end.y-1.5 || Math.abs(ssy-startY)<1 || ssy>=startY+1.5) continue;
 						} else if (prev.start.y>endY){
-							if (ssy>=prev.start.y || ssy<=endY) continue;
+							if (ssy<endY-1.5 || Math.abs(ssy-prev.start.y)<1) continue;
 						}
 //						if ((sy<prev.start.y && startY>prev.start.y) || (sy>endY && endY>prev.end.y) || (sy<startY && startY<prev.start.y) || (sy>prev.end.y && prev.end.y>endY)) continue;
 					}
@@ -8082,8 +8188,11 @@ public final class Segment {
 						if (rr<20) continue;
 					}
 					double d = rr-prev.radius;
-					if (d<0) d=-d;
+					if (d<0 && !careful) d=-d;
 					int tp = pTp[i];
+					Vector2D center = pCntr[i];
+					
+					if (tp*(center.x-startX)<0) continue;
 					if (dmin>d) {
 						dmin = d;
 						index = i;
@@ -8102,7 +8211,7 @@ public final class Segment {
 				double dmin = Double.MAX_VALUE;
 				int index = -1;
 				double sr = s.radius;
-				Vector2D point = new Vector2D();
+//				Vector2D point = new Vector2D();
 				for (int i=prL-1;i>=0;--i){
 					double rr = pr[i];
 					Vector2D center = pCntr[i];
@@ -8116,17 +8225,21 @@ public final class Segment {
 					ns.end = last;
 					ns.num = s.num;
 					ns.radius = rr;					
-					if (isConnected(prev, ns, tW, point)){
+					if (isConnected(prev, ns, tW, tmpPoint)){
 						if (s!=null) {
 							apply(s,tW,ns.type,first,last,center,rr);						
 							if (s.radius==rr){
-								s.lower = point;
-								prev.upper = point;
+								if (s.lower==null)
+									s.lower = new Vector2D(tmpPoint);
+								else s.lower.copy(tmpPoint);
+								if (prev.upper==null)
+									prev.upper = new Vector2D(tmpPoint);
+								else prev.upper.copy(tmpPoint);
 							}							
 						};
 					}
 					double d = rr-sr;
-					if (d<0) d =-d;
+					if (d<0 && !careful) d =-d;
 					if (dmin>d) {
 						dmin = d;
 						index = i;
@@ -8145,6 +8258,21 @@ public final class Segment {
 //		long endTime = (System.nanoTime()-ti)/1000000;
 //		if (CircleDriver2.debug || endTime>=1) System.out.println("End radiuFrom2Points : "+endTime+"   at "+CircleDriver2.time+" s.    ");
 		return r;
+	}
+	
+	private static boolean isReject(Segment prev,Segment s,Segment next,double tW){
+		if (s==null || s.type==Segment.UNKNOWN) return false;
+		Vector2D first = s.start;
+		Vector2D last = s.end;
+		double r = s.radius;
+		if (s.type!=0 && (!CircleDriver2.inTurn && (s.type*(first.x-last.x)>=0 || last.y-first.y<=1 || s.end.y>99) || last.y-Math.max(0,first.y)>=r || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE))
+			return true;
+		
+		if (!CircleDriver2.inTurn && s.type!=0){
+			if (prev!=null && prev.type!=0 && s.end.y-s.start.y<5 && first.distance(prev.end)<1 && (prev.type!=s.type || Math.abs(s.radius-prev.radius)>tW))
+				return true;
+		}
+		return false;
 	}
 
 	/*private final static boolean tryConnect(Segment prev,Segment s,double tW,Vector2D point){
@@ -8542,9 +8670,66 @@ public final class Segment {
 		}
 		if (osz!=oldOsz) ols.size(osz);
 	}//*/
+	
+	public static final int getCircleType(Vector2D first,Vector2D mid,Vector2D last){		
+		boolean isCircle = Geom.getCircle(first, mid,last, tmp1);	
+		if (isCircle){			
+			double r = Math.sqrt(tmp1[2]);							
+			double cx = tmp1[0];
+			double cy = tmp1[1];									
+//			if (r==ignoreRad) continue;
+			
+//			if (inTurn){
+//				tp = allTurn[from][i][endIndx];
+//			} else 
+			if (r<MAX_RADIUS-1){						
+				double ax = first.x-cx;
+				double ay = first.y-cy;
+				double bx = last.x-cx;
+				double by = last.y-cy;
+				double angle = -Math.atan2(by, bx)+Math.atan2(ay, ax);			
+				if (angle<-Math.PI) 
+					angle += 2*Math.PI;
+				else if (angle>Math.PI) 
+					angle -= 2*Math.PI;
+							
+				return (angle<0) ? -1 : 1;
+											
+			} 
+		}
+		return 0;
+	}
+	
+	private static final boolean reject4(Segment s,Segment os,double tW){
+		if (s.type==0 || s.type==2 || s.center==null) return false;
+			if (tW<0) tW = -tW;
+			double R = Math.max(s.radius, os.radius);
+//			double r = Math.min(s.radius, os.radius);
+//			double xx = 2*Math.sqrt(R*2*tW)*r/R;
+			Vector2D first = s.start;
+//			Vector2D last = s.end;
+//			double diff = last.y-first.y;
+//			if (diff<xx) return false;
+			double dd = s.center.length();
+			if (dd>R){
+				double[] tmp =new double[6];
+				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, R,tmp);
+//				double lx = tmp[0];
+				double ly = (s.type==CircleDriver2.TURNRIGHT) ? tmp[1] : tmp[3];
+				if (ly>Math.max(first.y,0)+1) 
+					return true;
+//				Geom.ptTangentLine(0, 0, s.center.x, s.center.y, rm,tmp);
+//				double llx = tmp[0];
+//				double lly = tmp[1];
+//				Geom.getLineCircleIntersection(0, 0, llx, lly, s.center.x, s.center.y, r,tmp);
+//				double mx = tmp[0];
+//				double my = tmp[1];		
+			}		
+		return false;
+	}
 
 	public static final int bestGuess(final Vector2D[] v,int from,int to,double tW,Segment prev,Segment next,Segment[] oalArr,int indx){
-		long ti = System.nanoTime();
+//		long ti = System.nanoTime();
 		int size = to - from;
 						
 		int which = (tW<0) ? 1 : -1;
@@ -8552,7 +8737,7 @@ public final class Segment {
 		
 		Vector2D[] opoints = (which==1) ? CircleDriver2.edgeDetector.left : CircleDriver2.edgeDetector.right;
 		int otherTo = (which==1) ? CircleDriver2.edgeDetector.lSize:  CircleDriver2.edgeDetector.rSize;
-		double x = Math.abs(2*tW);
+//		double x = Math.abs(2*tW);
 		
 //		boolean inTurn = CircleDriver2.inTurn;
 //		double[][][] allRadius = (inTurn) ? (which==1) ? CircleDriver2.allRadiusRight : CircleDriver2.allRadiusLeft : null;
@@ -8692,18 +8877,24 @@ public final class Segment {
 				}				
 			}
 			
-			if (last.y-first.y<3 && prev!=null && !CircleDriver2.isFirstSeg(prev)) return indx;
+//			if (last.y-first.y<3 && prev!=null && !CircleDriver2.isFirstSeg(prev)) return indx;
 			
 			if (prev!=null && e>E){				
-				radiusFrom2Points(prev, first, last, tW, s);					 					
+				radiusFrom2Points(prev, first, last, tW, s);		
+//				if (CircleDriver2.time>=CircleDriver2.BREAK_TIME && prev.num>0){
+//					double[] r = new double[6];
+//					Geom.getCircle(first, last, prev.points[prev.endIndex], r);
+//					r[2] = Math.sqrt(r[2]);
+//					System.out.println();
+//				}
 				if (prev.type==0 && s.type==0){										
 					return indx;
 				}
-				if (last.y-first.y<3 && s.type!=Segment.UNKNOWN && s.type!=0 && s.radius-s.type*tW<=25)
+				if (last.y-first.y<2 && s.type!=Segment.UNKNOWN && s.type!=0 && s.radius-s.type*tW<=15)
 					return indx;
 			}
 			
-			if (s.type==Segment.UNKNOWN || (s.type!=0 && (s.end.y-s.start.y>=s.radius || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE || s.radius-s.type*tW>=MAX_RADIUS-1))) {									
+			if (s.type==Segment.UNKNOWN || (s.type!=0 && (s.end.y-s.start.y>=s.radius+1 || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-s.type*tW>=MAX_RADIUS-1))) {									
 				return indx;
 			}
 			if (s.type!=Segment.UNKNOWN){
@@ -8712,11 +8903,11 @@ public final class Segment {
 				s.num = 2;
 				s.unsafe = false;
 				reSynchronize(s, os, 0, otherTo, -which, tw);				
-				if ((os.type!=0 && (os.radius<=REJECT_VALUE || os.end.y-os.start.y>=os.radius*Math.sqrt(x/(x+os.radius)) || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
+				if ((os.type!=0 && ((os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>=on.startIndex ||  os.end.y>=on.start.y))) {								
 					return indx;
-				}
+				}				
 				if (s.type==0){ 
-					if (s.end.y-s.start.y<3 || os.end.y-os.start.y<3) return indx;
+//					if (s.end.y-s.start.y<3 || os.end.y-os.start.y<3) return indx;
 					double total = 0;
 					for (int kk = os.startIndex;kk<=os.endIndex;++kk){
 						Vector2D vv = opoints[kk];
@@ -8724,7 +8915,9 @@ public final class Segment {
 					}
 					total /= (double)os.num;
 					if (total>=0.1) return indx;
-				}
+				} 
+				else if (CircleDriver2.inTurn && reject4(s, os, tw)) return indx;
+				
 				s.done = true;
 				os.unsafe = false;
 				return 1+indx;
@@ -8734,15 +8927,15 @@ public final class Segment {
 		int numb = 0;		
 		int index = 0;
 
-		if (prev!=null || next!=null){			
+		if (prev!=null || next!=null || true){			
 			Segment tmpSeg = new Segment();	
-			int n = 0;
+//			int n = 0;
 			Segment s1 = oalArr[indx+1];
 			s1.points = s.points;
 			s1.unsafe = true;
 			Vector2D pt = new Vector2D();
-			final double EPS = EPSILON*3;
-			int m = 0;
+			final double EPS = EPSILON*3.5;
+//			int m = 0;			
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
 			int[] mapIndx = storage.mapIndx;
@@ -8765,8 +8958,9 @@ public final class Segment {
 				double startX = fst.x;
 				double startY = fst.y;	
 				int r_index = index<<SIZE_N;
+				if (r_index>=totalRad_N.length) continue;
 				for (int k=to-1;k>index+1;--k){
-					int m_indx = r_index + k;
+					int m_indx = r_index + k;					
 					int total = totalRad_N[m_indx];
 					boolean donePrev = total>=k-index-1;
 					boolean isFound = false;
@@ -8782,7 +8976,7 @@ public final class Segment {
 							int tp = aTypes[0];
 							if (tp>Segment.UNKNOWN){
 								int rad = aRads[0];
-								if (map[rad]>1) isFound = true;
+								if (rad>=0 && map[rad]>1) isFound = true;
 							}
 						}
 					}
@@ -8797,8 +8991,7 @@ public final class Segment {
 					Vector2D lst = v[k];
 					double endX = lst.x;
 					double endY = lst.y;
-					if (!ok){
-						n++;						
+					if (!ok){												
 						int num = k+1-index;					
 						s.type = Segment.UNKNOWN;
 						s.startIndex = index;
@@ -8824,39 +9017,49 @@ public final class Segment {
 //							}
 							radiusFrom2Points(prev, fst, lst, tW, s);							
 							if (s.type!=Segment.UNKNOWN ){
-								if (donePrev && map!=null){
+								
+								if (!CircleDriver2.inTurn && prev.type==0 && Math.abs(prev.start.x-prev.end.x)<=E && s.num==3 && s.type!=0 ){
+									ok = true;
+									isGPN = true;											
+								} else if (donePrev && map!=null){
 									int er = (s.type==0) ? 0 : (int)Math.round(s.radius+which*s.type*abstW);
 									if (er>=Segment.MAX_RADIUS-1) {
 										er = 0;
 										s.type = 0;
 									}
 									if (s.type==1) er+=Segment.MAX_RADIUS;
-									if (map[er]>0) {
+									if (er>=0 && map[er]>0) {
 										ok = true;
 										isGPN = true;
 									}
 								} else {
-									boolean good = true;
+									boolean good = true;									
 									if (s.type!=0){
-										double cnx = s.center.x;
-										double cny = s.center.y;																
-										for (int ii = index;ii<=k;++ii){								
-											Vector2D vv = v[ii];
-											m++;
-											double dx = vv.x-cnx;
-											double dy = vv.y-cny;			
-											double e = Math.sqrt(dx*dx+dy*dy)-s.radius;
-											if (e<0) e = -e;
-											if (e>EPS) {
-												good = false;
-												break;
+										if (isSameSegment(prev, s) || next!=null && isSameSegment(s, next)){
+											ok = true;											
+											isGPN = true;
+										} else {
+											double cnx = s.center.x;
+											double cny = s.center.y;	
+//											double maxE = 0;
+											for (int ii = index;ii<=k;++ii){								
+												Vector2D vv = v[ii];												
+												double dx = vv.x-cnx;
+												double dy = vv.y-cny;			
+												double e = Math.sqrt(dx*dx+dy*dy)-s.radius;
+												if (e<0) e = -e;
+//												if (maxE<e) maxE = e;
+												if (e>EPS && ii>index && vv.y-v[ii-1].y>=1) {
+													good = false;
+													break;
+												}
 											}
+//											if (!good && maxE<1 && num>3) storage.store(index, index, k, s.type, s.radius);
 										}
 									} else {																		
 										double tot = 0;
 										for (int ii = index;ii<=k;++ii){								
-											Vector2D vv = v[ii];
-											m++;
+											Vector2D vv = v[ii];											
 											double e = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, vv.x, vv.y, null));
 											if (e<0) e = -e;
 											tot+=e;
@@ -8864,6 +9067,7 @@ public final class Segment {
 												good = false;
 												break;
 											}
+											
 										}
 		
 										tot/=num;
@@ -8887,7 +9091,7 @@ public final class Segment {
 										s1.type = 0;
 									}
 									if (s1.type==1) er+=Segment.MAX_RADIUS;
-									if (map[er]>0){ 
+									if (er>=0 && map[er]>0){ 
 										ok = true;
 										s.copy(s1);
 										isGPN = true;
@@ -8895,25 +9099,33 @@ public final class Segment {
 								} else {
 									boolean good = true;
 									if (s1.type!=0){
-										double cnx = s1.center.x;
-										double cny = s1.center.y;																
-										for (int ii = index;ii<=k;++ii){
-											m++;
-											Vector2D vv = v[ii];
-											double dx = vv.x-cnx;
-											double dy = vv.y-cny;			
-											double e = Math.sqrt(dx*dx+dy*dy)-s1.radius;
-											if (e<0) e = -e;
-											if (e>EPS) {
-												good = false;
-												break;
+										if (prev!=null && isSameSegment(prev, s1) || isSameSegment(s1, next)){
+											ok = true;
+											isGPN = true;
+											s.copy(s1);
+										} else {
+											double cnx = s1.center.x;
+											double cny = s1.center.y;		
+//											double maxE = 0;
+											for (int ii = index;ii<=k;++ii){												
+												Vector2D vv = v[ii];
+												double dx = vv.x-cnx;
+												double dy = vv.y-cny;			
+												double e = Math.sqrt(dx*dx+dy*dy)-s1.radius;												
+												if (e<0) e = -e;
+//												if (maxE<e) maxE = e;
+												if (e>EPS) {
+													good = false;
+													break;
+												}
 											}
+											
+//											if (!good && maxE<1 && num>3) storage.store(index, index, k, s1.type, s1.radius);
 										}
-									} else if (s.type!=0){																		
+									} else {																		
 										double tot = 0;
 										for (int ii = index;ii<=k;++ii){								
-											Vector2D vv = v[ii];
-											m++;
+											Vector2D vv = v[ii];											
 											double e = Math.sqrt(Geom.ptLineDistSq(startX, startY, endX, endY, vv.x, vv.y, null));
 											if (e<0) e = -e;
 											tot+=e;
@@ -8957,13 +9169,16 @@ public final class Segment {
 										aLstIndx[r] = k;
 									}
 									aMap[r]+=map[r];
-									if (r!=maxR && aMap[r]>maxAppear){
+									if (aMap[r]>maxAppear){
 										maxAppear = aMap[r];
-										maxR = r;
-										maxFstIndx = aFstIndx[r];
-										maxLstIndx = aLstIndx[r];
+										if (r!=maxR){
+											maxR = r;
+											maxFstIndx = aFstIndx[r];
+											maxLstIndx = aLstIndx[r];
+										}
 									}
 								}
+								
 							}
 						}
 					}
@@ -8971,23 +9186,24 @@ public final class Segment {
 					if (ok){
 						boolean isPossiblePrevConnected = (s.type!=UNKNOWN && s.type==tmpSeg.type && (s.type==0 || s.radius==tmpSeg.radius));
 						boolean isPossibleNextConnected = (s1.type!=UNKNOWN && s1.type==tmpSeg.type && (s1.type==0 || s1.radius==tmpSeg.radius));
-						if (!isGPN) s.copy(tmpSeg);			
+						if (!isGPN && tmpSeg.type!=Segment.UNKNOWN) s.copy(tmpSeg);			
 						storage.store(index, index, k, s.type, s.radius);
 						if (s.radius>=MAX_RADIUS-1 || os.radius>=MAX_RADIUS-1){
 							s.type = 0;
 							s.radius = 0;
 //							s.center = null;							
 						}
-						if (s.type!=0 && (s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-s.type*tW<=REJECT_VALUE || s.radius-2*s.type*tW<=REJECT_VALUE || s.radius-s.type*tW>=MAX_RADIUS-1)) continue;
+//						if (s.type!=0 && (s.end.y-s.start.y>=x+s.radius || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-s.type*tW<=REJECT_VALUE || s.radius-s.type*tW>=MAX_RADIUS-1)) continue;
+						if (isReject(prev, s, next, tW)) continue;
 						reSynchronize(s,os,0,otherTo,-which,tw);													
 						if (prev!=null && isPossiblePrevConnected && isConnected(prev, s, tW, pt) && pt.y>prev.start.y && pt.y<s.end.y) {																														
 							if ((prev.type!=s.type || prev.radius!=s.radius))				
-								connect(prev, s, pt, tW);
+								connect(prev, s, pt, tW,true);
 						}
 
 						if (next!=null && isPossibleNextConnected && s.type!=Segment.UNKNOWN && next.type!=Segment.UNKNOWN && isConnected(s, next, tW, pt) && pt.y>s.start.y && pt.y<next.end.y) {																														
 							if ((next.type!=s.type || next.radius!=s.radius))				
-								connect(s, next, pt, tW);
+								connect(s, next, pt, tW,true);
 						}						
 					}
 
@@ -8999,6 +9215,7 @@ public final class Segment {
 							aLstIndx[r] = 0;
 							aRadius[i] = 0;
 						}
+						aNum = 0;
 						
 						if (!ok){
 							Vector2D mid = v[from+1];					
@@ -9031,17 +9248,26 @@ public final class Segment {
 										angle -= 2*Math.PI;
 												
 									s.type = (angle<0) ? -1 : 1;
-									s.radius = r;
+									s.radius = r; 
 									if (s.center==null) s.center = new Vector2D();
 									circle(first, last, cx,cy, r,s.center);
-									if (s.type!=0 && (!CircleDriver2.inTurn && (s.end.y-s.start.y<=4 || s.end.y>99) || s.end.y-s.start.y>=s.radius*Math.sqrt(x/(x+s.radius)) || s.radius<=REJECT_VALUE || s.radius>=MAX_RADIUS-1 || s.radius-2*s.type*tW<=REJECT_VALUE  || s.radius-s.type*tW>=MAX_RADIUS-1)){
+									if (isReject(prev, s, next, tW)){
 										s.type = Segment.UNKNOWN;
 										os.type = Segment.UNKNOWN;
-									}
+									}									
 								} else {
 									s.type = 0;
-									s.radius = 0;
+									s.radius = 0;									
+									if (CircleDriver2.inTurn){
+										double di = Math.sqrt(Geom.ptLineDistSq(first.x, first.y, last.x, last.y, mid.x, mid.y, temp));
+										if (di>0.01){
+											s.type = Segment.UNKNOWN;
+											os.type = Segment.UNKNOWN;
+										}
+									}
+										
 								}
+								
 								s.num = 3;
 							}
 						}
@@ -9053,8 +9279,7 @@ public final class Segment {
 								boolean changed = false;
 								boolean willchanged = false;
 								for (int i = s.endIndex;i>s.startIndex;--i){
-									Vector2D p = v[i];
-									m++;
+									Vector2D p = v[i];									
 									if (py!=null && Math.abs(py.x-p.x)<E && p.y-py.y>1){
 										s.type = UNKNOWN;										
 										prev.endIndex = i;
@@ -9080,8 +9305,7 @@ public final class Segment {
 								
 								if (!changed && willchanged){									
 									for (int i = s.startIndex+1;i<s.endIndex;++i){
-										Vector2D p = v[i];
-										m++;
+										Vector2D p = v[i];										
 										if (Math.abs(lst.x-p.x)<E && lst.y-p.y>1) {
 											s.type = 0;																					
 											s.startIndex = i;
@@ -9098,29 +9322,53 @@ public final class Segment {
 						}
 
 						if (s.type!=Segment.UNKNOWN) {
-							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);								
-							if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
-								reCalibrate(prev, s, which, tw);							
+							if (s.type==0 || !ok) reSynchronize(s,os,0,otherTo,-which,tw);
+							if (s!=null && op!=null && s.type!=Segment.UNKNOWN && os.num>0 && (op.endIndex>=os.startIndex || op.end.y>os.start.y-SMALL_MARGIN)){
+								s.type = Segment.UNKNOWN;
+								os.type = Segment.UNKNOWN;
+							} else if (s.type!=Segment.UNKNOWN && s.num>1 && os.num>1){
+								if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*(os.points[os.startIndex].x-os.points[os.endIndex].x)<0){
+									s.type = Segment.UNKNOWN;
+									os.type = Segment.UNKNOWN;
+								} else if ((s.points[s.startIndex].x-s.points[s.endIndex].x)*s.type>0 && os.num>2 && s.type*getCircleType(os.points[os.startIndex], os.points[(os.startIndex+os.endIndex)/2], os.points[os.endIndex])<0){
+									s.type = Segment.UNKNOWN;
+									os.type = Segment.UNKNOWN;
+								}
 							}
-							if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
-								reCalibrate(prev, s, which, tw);							
+							if (s.type!=Segment.UNKNOWN){
+								if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
+									reCalibrate(prev, s, which, tw);							
+								}
+								if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
+									reCalibrate(prev, s, which, tw);							
+								}
+								
+								if (next!=null && next.type!=Segment.UNKNOWN && (s.endIndex>next.startIndex || s.end.y>=next.start.y-SMALL_MARGIN)){
+									reCalibrate(s, next, which, tw);
+								} 
+								if (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){								
+									reCalibrate(s, next, which, tw);							
+								}
 							}
-							
-							if (next!=null && next.type!=Segment.UNKNOWN && (s.endIndex>next.startIndex || s.end.y>=next.start.y-SMALL_MARGIN)){
-								reCalibrate(s, next, which, tw);
-							} 
-							if (on!=null && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){								
-								reCalibrate(s, next, which, tw);							
-							}
-						}	
+						}
 						
-						if (s!=null && s.type!=Segment.UNKNOWN && s.type==0 && s.end.y-s.start.y<2) return indx;																						
+						for (int i = aNum-1;i>=0;--i){
+							int r = aRadius[i];
+							aMap[r] = 0;
+							aFstIndx[r] = 0;
+							aLstIndx[r] = 0;
+							aRadius[i] = 0;
+						}
+						aNum = 0;
+						
+						if (s!=null && s.type!=Segment.UNKNOWN && s.type==0 && s.end.y-s.start.y<1) return indx;	
+						if (reject4(s, os, tw)) return indx;
 						if (s.type!=Segment.UNKNOWN)
 							indx++;								
 
 						if (s.endIndex<to-1  && s.type!=Segment.UNKNOWN){																														
 //							if (s.type!=0) forwardOnly(v, prev, s, to, tW);
-							if (to-s.endIndex>2)																																	
+							if (to-s.endIndex>2 && s.num>0)																																	
 								indx = bestGuess(v, s.endIndex+1, to, tW, s, next,oalArr,indx);									
 
 						} else if (s.type==Segment.UNKNOWN){
@@ -9129,8 +9377,8 @@ public final class Segment {
 								indx = bestGuess(v, s.endIndex+1, to, tW, s, next,oalArr,indx);								
 						}
 
-						long endTime = (System.nanoTime()-ti)/1000000;
-						if (CircleDriver2.debug || endTime>=1) System.out.println("End bestGuess : "+endTime+"   at "+CircleDriver2.time+" s.    "+n+"   "+m);
+//						long endTime = (System.nanoTime()-ti)/1000000;
+//						if (CircleDriver2.debug || endTime>=1) System.out.println("End bestGuess : "+endTime+"   at "+CircleDriver2.time+" s.    "+n+"   "+m);
 						s.done = true;
 						if (os.num==0) os.done =  true;
 						return indx;														
@@ -9167,9 +9415,13 @@ public final class Segment {
 						circle(start, end, cx,cy, r,center);
 					} else s.center = center;
 									
-					if (check(v, from, from+i+1, center, r)>=0) {																						
-						s.start.copy(start);										
-						s.end.copy(end);										
+					if (check(v, from, from+i+1, center, r)>=0 && s!=null) {																						
+						if (s.start!=null) 
+							s.start.copy(start);
+						else s.start = new Vector2D(start);
+						if (s.end!=null) 
+							s.end.copy(end);
+						else s.end = new Vector2D(end);
 						s.type = tp;
 						s.radius = r;
 						s.startIndex = from;
@@ -9233,15 +9485,14 @@ public final class Segment {
 						else numb = Geom.getCircle5(start, end, prev.center, prev.radius, tmp1);
 						for (int kk =0;kk<numb;++kk){
 							double rr = Math.round(tmp1[2+3*kk]-tp*tW)+tp*tW;						
-							if (tp!=0 && (rr<=REJECT_VALUE || rr-tp*tW<=REJECT_VALUE )) continue;						
+							if (tp!=0 && (rr<=REJECT_VALUE || rr-tp*tW<=REJECT_VALUE || tp*(end.x-start.x)<0)) continue;						
 							if (rr<MAX_RADIUS-1){							
 								double cx = tmp1[3*kk];
 								double cy = tmp1[1+3*kk];
 								Vector2D center = (s.center==null) ? circle(start, end, cx,cy, rr) : s.center;
 								if (s.center!=null){
 									circle(start, end, cx,cy, rr,center);
-								} else s.center = center;				
-								if (end.y-start.y>=rr*Math.sqrt(x/(x+rr)) || rr<=REJECT_VALUE || rr-tW*2*tp<=REJECT_VALUE || center.y>start.y || rr>=MAX_RADIUS-1) continue;
+								} else s.center = center;												
 								if (s.start==null){
 									s.start = new Vector2D(start);
 								} else s.start.copy(start);											
@@ -9251,8 +9502,10 @@ public final class Segment {
 								s.type = tp;
 								s.radius = rr;
 								s.startIndex = from;
-								s.endIndex = from+1;						
-							} else {																		
+								s.endIndex = from+1;					
+//								if (end.y-start.y>=x+rr || end.y-start.y>=rr || rr<=REJECT_VALUE || rr-tW*2*tp<=REJECT_VALUE || center.y>start.y || rr>=MAX_RADIUS-1) continue;
+								if (isReject(prev, s, next, tW)) continue;
+							} else if (prev.type*(end.x-start.x)>0){																		
 								if (s.start==null){
 									s.start = new Vector2D(start);
 								} else s.start.copy(start);											
@@ -9263,13 +9516,14 @@ public final class Segment {
 								s.radius = 0;
 								s.startIndex = from;
 								s.endIndex = from+1;						
-							}					
+							} else continue;					
 							s.num =2;
 							s.unsafe = false;
 							reSynchronize(s, os, 0, otherTo, -which, tw);				
-							if ((os.type!=0 && (os.radius<=REJECT_VALUE || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y))) {								
-								continue;
-							}
+							if (isReject(op, os, on, tW)) continue;
+//							if ((os.type!=0 && (os.end.y-os.start.y>=os.radius ||os.radius<=REJECT_VALUE || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y))) {								
+//								continue;
+//							}
 							if (s.type==0){ 
 								if (s.end.y-s.start.y<3 || os.end.y-os.start.y<3) continue;
 								double total = 0;
@@ -9290,7 +9544,7 @@ public final class Segment {
 								if (next!=null) {
 									int tmptp = (int)rs[3];
 									double tmpr = rs[2];																
-									if (tmptp!=0 && (lst.y-fst.y>=tmpr*Math.sqrt(x/(x+tmpr)) || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-2*tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
+									if (tmptp!=0 && (tmptp*(lst.x-fst.x)<0 || lst.y-Math.max(0,fst.y)>=tmpr+1.5+tW*which*tmptp || lst.y-fst.y<=1 || tmpr<=REJECT_VALUE || tmpr>=MAX_RADIUS-1 || tmpr-tmptp*tW<=REJECT_VALUE || tmpr-tmptp*tW>=MAX_RADIUS-1)) continue;
 									
 									if (s2.start==null){
 										s2.start = new Vector2D(fst);
@@ -9319,7 +9573,8 @@ public final class Segment {
 									s2.done = true;
 									s2.points = v;
 									radiusFrom2Points(s, fst, lst, tW, s2);
-									if (s2.type==Segment.UNKNOWN || (s2.type!=0 && lst.y-fst.y>=s2.radius*(Math.sqrt(x/(x+s2.radius)))) ||(s2.type!=0 && (s2.radius<=REJECT_VALUE || s2.radius-tW*2*s2.type<=REJECT_VALUE))) continue;
+//									if (s2.type==Segment.UNKNOWN || (s2.type!=0 && lst.y-fst.y>=x+s2.radius) ||(s2.type!=0 && (s2.radius<=REJECT_VALUE || s2.end.y-s2.start.y>=s2.radius))) continue;
+									if (isReject(s, s2, next, tW)) continue;
 									double d = 0;
 									if (Math.abs(s.radius-s2.radius)>3 && ((d = radiusFrom2Points(s2, start, end, tW, null))<0 || Math.abs(s.radius-d) > 3)) continue;
 								}
@@ -9329,16 +9584,19 @@ public final class Segment {
 									Segment other = s2.opp;									
 									other.points = opoints;							
 									reSynchronize(s2, other, 0, otherTo, -which, tw);
-									if (os.type!=0 && os.type!=Segment.UNKNOWN && os.radius<=REJECT_VALUE || (os.center==null || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (other!=null && (os.endIndex>=other.startIndex ||  os.end.y>=other.start.y)))) {
-										continue;
-									}
+//									if (os.type!=0 && os.type!=Segment.UNKNOWN && os.radius<=REJECT_VALUE || (os.center==null || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y)) || (other!=null && (os.endIndex>=other.startIndex ||  os.end.y>=other.start.y)))) {
+//										continue;
+//									}
 									
-									if (other.type!=0 && other.type!=Segment.UNKNOWN && other.radius<=REJECT_VALUE || (other.center==null || other.startIndex<=os.endIndex || other.start.y<=os.end.y || (on!=null && on.type!=Segment.UNKNOWN && (other.endIndex>=on.startIndex ||  other.end.y>=on.start.y)))) {
-										continue;
-									}
+									
+//									if (other.type!=0 && other.type!=Segment.UNKNOWN && (other.end.y-other.start.y>=other.radius || other.radius<=REJECT_VALUE || (other.center==null || other.startIndex<=os.endIndex || other.start.y<=os.end.y || (on!=null && on.type!=Segment.UNKNOWN && (other.endIndex>=on.startIndex ||  other.end.y>=on.start.y))))) {
+//										continue;
+//									}
+									
+									if (isReject(os, other, on, tW)) continue;
 									
 									if (s2.type==0){ 
-										if (s2.end.y-s2.start.y<3 || other.end.y-other.start.y<3) continue;
+										if (s2.end.y-s2.start.y<3 || other.end.y-other.start.y<3 || s2.end.y-s2.start.y>=s2.radius+1.5) continue;
 										double total = 0;
 										for (int k = other.startIndex;k<=other.endIndex;++k){
 											Vector2D vv = opoints[k];
@@ -9366,28 +9624,153 @@ public final class Segment {
 			}
 
 			
-			if (maxAppear>0){
-				for (int i = aNum-1;i>=0;--i){
+			if (maxAppear>0){						
+				double avg = 0;
+				int num = 0;
+				boolean noStraight = true;
+				int[] marks = new int[aNum];
+				int idx = -1;
+				if (maxAppear<3 && aNum>5) maxAppear = 1;
+//				boolean found = false;
+				while (num==0 && aNum>0 && maxAppear>0){
+					for (int i = 0;i<aNum;++i){
+						int er = aRadius[i];
+						if (aMap[er]==maxAppear || maxAppear<3){
+	//						found = true;
+							int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
+							maxFstIndx = aFstIndx[er];
+							maxLstIndx = aLstIndx[er];
+							if (tp==1) er-=Segment.MAX_RADIUS;
+							Vector2D fst = v[maxFstIndx];
+							Vector2D lst = v[maxLstIndx];							
+							tmpSeg.type = tp;
+							tmpSeg.startIndex = maxFstIndx;
+							tmpSeg.endIndex = maxLstIndx;
+							tmpSeg.num = maxLstIndx-maxFstIndx+1;
+							if (tmpSeg.start==null) 
+								tmpSeg.start = new Vector2D(fst);
+							else tmpSeg.start.copy(fst);
+							if (tmpSeg.end==null) 
+								tmpSeg.end = new Vector2D(lst);
+							else tmpSeg.end.copy(lst);
+							
+							tmpSeg.radius = er + tW*tp;				
+							if (tmpSeg.type!=0){
+								if (tmpSeg.center==null) tmpSeg.center = new Vector2D();
+								Segment.circle(tmpSeg.start, tmpSeg.end, tp, tmpSeg.radius, tmpSeg.center);
+							}
+											
+							Segment tmpSegOp = tmpSeg.opp;
+							if (tmpSegOp==null) {
+								tmpSegOp = new Segment();
+								tmpSeg.opp = tmpSegOp;
+							}
+							tmpSegOp.points = opoints;
+							tmpSeg.points = v;
+							reSynchronize(tmpSeg,tmpSegOp,0,otherTo,-which,tw);
+							
+							if (tmpSeg.type!=Segment.UNKNOWN && tmpSeg.num>1 && tmpSegOp.num>1){
+								if ((v[maxFstIndx].x-v[maxLstIndx].x)*(opoints[tmpSegOp.startIndex].x-opoints[tmpSegOp.endIndex].x)<0){
+									tmpSeg.type = Segment.UNKNOWN;
+									tmpSegOp.type = Segment.UNKNOWN;
+								} else if ((v[maxFstIndx].x-v[maxLstIndx].x)*tmpSeg.type>0 && tmpSegOp.num>2 && tmpSeg.type*getCircleType(opoints[tmpSegOp.startIndex], opoints[(tmpSegOp.startIndex+tmpSegOp.endIndex)/2], opoints[tmpSegOp.endIndex])<0){
+									tmpSeg.type = Segment.UNKNOWN;
+									tmpSegOp.type = Segment.UNKNOWN;
+								}
+							}
+							
+							if (tp==0){ 
+								noStraight = false;
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
+								continue;
+							} else if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-Math.max(0,fst.y)>=er+1.5+tp*which*tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
+								continue;														
+							}
+							
+	//						if (tp!=0){
+	//							Vector2D center = new Vector2D();
+	//							Segment.circle(fst, lst, tp, er + tW*tp,center);
+	//							if (center.y>lst.y) continue;
+	//						}
+							
+							if (tp*(lst.x-fst.x)<0 && maxLstIndx-maxFstIndx>=3){
+								boolean anyConflict = false;
+								for (int j=i+1;j<aNum;++j){
+									int ner = aRadius[j];
+									int ntp = ner==0 ? 0: ner<Segment.MAX_RADIUS ? -1: 1;
+									if (ntp*tp<0){
+										anyConflict = true;
+										break;
+									}
+								}
+								if (anyConflict) continue;
+							}
+							marks[i] = 1;
+							if (noStraight && tp!=0){
+								avg+=er*tp;
+								num++;
+								if (maxAppear==1) break;
+							} else if (tp==0) noStraight = false;
+						}
+					}
+					if (num>0) break; 
+					maxAppear--;
+				}
+				
+				if (noStraight && num>0) {
+					avg/=num;
+					double minDist = 100000;
+					for (int i = 0;i<aNum;++i){
+						if (marks[i]==0) continue;
+						int er = aRadius[i];													
+						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;								
+						if (tp==1) er-=Segment.MAX_RADIUS;																
+						if (minDist>Math.abs(tp*er-avg)){
+							minDist = Math.abs(tp*er-avg);
+							idx = i;
+							if (num<3 || maxAppear==1) break;
+						}							
+					}
+
+				} else if (!noStraight && aNum>0 && num==0){
+					for (int i = 0;i<aNum;++i){
+						int er = aRadius[i];
+						if (aMap[er]==maxAppear || maxAppear<3){
+	//						found = true;
+							int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;							
+							if (tp==0) marks[i] = 1;							
+						}
+					}
+				}
+			
+				for (int i = 0;i<aNum;++i){
+					if (marks[i]==0) continue;
+					if (noStraight && num>0 && idx!=-1 && i!=idx) continue;
 					int er = aRadius[i];
-					if (aMap[er]==maxAppear){						
+					if (true){						
 						int tp = er==0 ? 0: er<Segment.MAX_RADIUS ? -1: 1;
 						maxFstIndx = aFstIndx[er];
 						maxLstIndx = aLstIndx[er];
 						if (tp==1) er-=Segment.MAX_RADIUS;
-						if (tp!=0 && v[maxLstIndx].y-v[maxFstIndx].y>=er*Math.sqrt(x/(x+er)) || er<=REJECT_VALUE || er-2*tW<=REJECT_VALUE || er<=REJECT_VALUE*2){
-							continue;														
-						}
+						Vector2D fst = v[maxFstIndx];
+						Vector2D lst = v[maxLstIndx];
+//						if (!CircleDriver2.inTurn && tp*(fst.x-lst.x)>=0 || tp!=0 && lst.y-fst.y>=x+er || tp!=0 && lst.y-Math.max(0,fst.y)>=er+tW || er<=REJECT_VALUE || er-tW<=REJECT_VALUE){
+//							continue;														
+//						}
 						
 						tmpSeg.type = tp;
 						tmpSeg.startIndex = maxFstIndx;
 						tmpSeg.endIndex = maxLstIndx;
 						tmpSeg.num = maxLstIndx-maxFstIndx+1;
 						if (tmpSeg.start==null) 
-							tmpSeg.start = new Vector2D(v[maxFstIndx]);
-						else tmpSeg.start.copy(v[maxFstIndx]);
+							tmpSeg.start = new Vector2D(fst);
+						else tmpSeg.start.copy(fst);
 						if (tmpSeg.end==null) 
-							tmpSeg.end = new Vector2D(v[maxLstIndx]);
-						else tmpSeg.end.copy(v[maxLstIndx]);
+							tmpSeg.end = new Vector2D(lst);
+						else tmpSeg.end.copy(lst);
 						
 						tmpSeg.radius = er + tW*tp;				
 						if (tmpSeg.type!=0){
@@ -9416,17 +9799,29 @@ public final class Segment {
 						if (tmpSeg.type!=Segment.UNKNOWN && on!=null && on.type!=Segment.UNKNOWN && (tmpSegOp.endIndex>on.startIndex || tmpSegOp.end.y>=on.start.y-SMALL_MARGIN)){								
 							reCalibrate(tmpSeg, next, which, tw);							
 						}
+						
+						if (tmpSeg.type!=Segment.UNKNOWN && tmpSeg.num>1 && tmpSegOp.num>1){
+							if ((v[maxFstIndx].x-v[maxLstIndx].x)*(opoints[tmpSegOp.startIndex].x-opoints[tmpSegOp.endIndex].x)<0){
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
+							} else if ((v[maxFstIndx].x-v[maxLstIndx].x)*tmpSeg.type>0 && tmpSegOp.num>2 && tmpSeg.type*getCircleType(opoints[tmpSegOp.startIndex], opoints[(tmpSegOp.startIndex+tmpSegOp.endIndex)/2], opoints[tmpSegOp.endIndex])<0){
+								tmpSeg.type = Segment.UNKNOWN;
+								tmpSegOp.type = Segment.UNKNOWN;
+							}
+						}
 										
 						if (tmpSeg!=null && tmpSeg.type!=Segment.UNKNOWN && tmpSeg.type==0 && tmpSeg.end.y-tmpSeg.start.y<2) return indx;
 														
-						for (int ii = aNum-1;ii>=0;--ii){
-							int r = aRadius[ii];
-							aMap[r] = 0;
-							aFstIndx[r] = 0;
-							aLstIndx[r] = 0;
-							aRadius[ii] = 0;
-						}
+					
 						if (tmpSeg.type!=Segment.UNKNOWN){
+							for (int ii = aNum-1;ii>=0;--ii){
+								int r = aRadius[ii];
+								aMap[r] = 0;
+								aFstIndx[r] = 0;
+								aLstIndx[r] = 0;
+								aRadius[ii] = 0;
+							}
+							aNum = 0;
 							if (maxFstIndx-from>=2){
 								indx = bestGuess(v, from, maxFstIndx, tW, prev, tmpSeg, oalArr, indx);
 							}
@@ -9438,12 +9833,16 @@ public final class Segment {
 							if (os.num==0) 
 								os.done = true;
 							else os.done = false;
+							if (reject4(s, os, tw)) continue;
 							++indx;
+							
 							if (to-maxLstIndx-1>=2){
 								return bestGuess(v, maxLstIndx+1, to, tW, s, next, oalArr, indx);
 							}
 							return indx;
-						}					
+						} else {
+							idx = -1;
+						}
 					}
 				}
 			}				
@@ -9455,11 +9854,13 @@ public final class Segment {
 				aLstIndx[r] = 0;
 				aRadius[i] = 0;
 			}
+			aNum = 0;
 		} else {//end of if			
 			Segment[] tmpStore = new Segment[30];
 			ObjectArrayList<Segment> ols = ObjectArrayList.wrap(tmpStore,0);
 			segmentize(v, from, to, tW,ols);
 			int osz = ols.size();
+			
 			for (int i = 0;i<osz;++i){
 				Segment ss = tmpStore[i];				
 				if (ss==null || ss.type==Segment.UNKNOWN || ss.end.y<0) continue;												
@@ -9501,7 +9902,7 @@ public final class Segment {
 						} else s.end.copy(end);														
 						s.type = tp;
 						s.radius = rr;						
-					} else {																		
+					} else if (prev.type*(end.x-start.x)>0){																		
 						if (s.start==null){
 							s.start = new Vector2D(start);
 						} else s.start.copy(start);											
@@ -9511,13 +9912,13 @@ public final class Segment {
 //						s.center = null;
 						s.type = 0;
 						s.radius = 0;						
-					}					
+					} else continue;					
 					s.num = 2;
 					s.startIndex = from+1;
 					s.endIndex = from+2;
 					s.unsafe = false;
 					reSynchronize(s, os, 0, otherTo, -which, tw);				
-					if ((os.type!=0 && (os.radius<=REJECT_VALUE || (os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y))) {								
+					if ((os.type!=0 && ((os.num>=2 && check(opoints, os.startIndex, os.endIndex+1, os.center, os.radius)<0))) || (op!=null && op.type!=Segment.UNKNOWN && (os.startIndex<=op.endIndex || os.start.y<=op.end.y))) {								
 						continue;
 					}
 					if (s.type==0){ 
@@ -9544,14 +9945,14 @@ public final class Segment {
 							reSynchronize(s, os, 0, otherTo, -which, tw);
 							return 1+indx;
 						} else if (next==null && isConnected(prev, s, tW, pt)){
-							connect(prev, s, pt, tW);
+							connect(prev, s, pt, tW,true);
 							if (s.type!=Segment.UNKNOWN && s.startIndex==prev.endIndex+1){
 								reSynchronize(s, os, 0, otherTo, -which, tw);
 								s.done = true;
 								return 1+indx;
 							}														
 						} else if (next!=null){							
-							connect(next, s, pt, tW);
+							connect(next, s, pt, tW,true);
 							if (s.type!=Segment.UNKNOWN && s.endIndex+1==next.startIndex ){
 								reSynchronize(s, os, 0, otherTo, -which, tw);
 								s.done = true;
@@ -10396,12 +10797,14 @@ public final class Segment {
 		for (int i = 0;i<sz;++i){
 			Segment s = ssArr[i];
 			int endIndx = s.endIndex;
-			if (s.type!=UNKNOWN)
+			if (s.type!=UNKNOWN && s.startIndex>=startIndex)
 				for (int j = s.startIndex;j<=endIndx;++j) {
 					int score = score(s,which,tW);
+					if (score<0) continue;
 //					if (j-startIndex<0 || score>MAX_RADIUS-1 || score<0)
 //						System.out.println();
-					mark[j-startIndex] = (s.map!=null) ? s.map[score] : 1;
+					if (j-startIndex<size)
+						mark[j-startIndex] = (s.map!=null) ? s.map[score] : 1;
 				}
 		}
 
@@ -10424,7 +10827,7 @@ public final class Segment {
 				Segment t = (jj==0) ? null : rs[jj-1];
 				while (l!=null && s!=null && l.start.y>s.end.y && (t==null || t.end.y<s.start.y)){
 					if (i==jj && rs==liArr){
-						if (lz-i>0) arraycopy(liArr, i, liArr, i+1, lz-i);
+						if (lz-i>0) System.arraycopy(liArr, i, liArr, i+1, lz-i);
 						++lz;
 						++i;								
 					} 
@@ -10434,7 +10837,7 @@ public final class Segment {
 				}
 
 				if (s==null && i<lz){
-					if (lz-i>0) arraycopy(liArr, i, rs, jj, lz-i);
+					if (lz-i>0) System.arraycopy(liArr, i, rs, jj, lz-i);
 					jj+=lz-i;
 					break;
 				}
@@ -10501,7 +10904,8 @@ public final class Segment {
 								s.radCount++;
 								s.opp.radCount++;
 							}
-							s.map[lr] += score;							
+							boolean ignore = (lr==sR && s.type==l.type && s.num==l.num && !s.done);
+							if (!ignore) s.map[lr] += score;							
 							if (s.map!=null){
 								if (changed) {
 									s.num = s.endIndex+1-s.startIndex;
@@ -10519,7 +10923,7 @@ public final class Segment {
 									if (!s.unsafe && (s.num>2 || s.map[lr]>3)) s.unsafe = true;
 									Segment.reSynchronize(s, s.opp, 0,indx+1, -which, tW*2);
 								} else if ((s.map[lr]<3 && s.upper==null && s.lower==null)&& s.num>l.num){
-									s.map[lr]++;																										
+									if (!ignore) s.map[lr]++;																										
 									s.copy(l);									
 									Segment os = s.opp;
 									Segment ol = l.opp;									
@@ -10575,7 +10979,7 @@ public final class Segment {
 						}
 						s.map[lr] += score;									
 					} else if (s.map[sr]>0) s.map[sr]--;					
-					if (s.type==0 && s.map!=null && s.map[sr]>1) s.map[sr]--;
+					if (s.map!=null && (s.type==0 || s.map[sr]<=3) && s.map[sr]>1) s.map[sr]--;
 					if (s.map!=null && s.map[sr]==0){
 						for (int ii = s.radCount-1;ii>=0;--ii){
 							int rads = s.appearedRads[ii];
@@ -10587,9 +10991,11 @@ public final class Segment {
 							}
 						}
 					}
-					if (s.map!=null && sr>0 && lr>0 && (score>=s.map[sr] || s.map[lr]>=s.map[sr]) ) {														
+					
+					boolean isGood = sr>0 && lr>0 && lr!=sr && s.map!=null && (l.num<=s.num && l.startIndex>=s.startIndex && l.endIndex<=s.endIndex && l.num>=3 && l.end.y-l.start.y<=3 || l.end.y-l.start.y<=1 || l.end.y-l.start.y<=2 && l.end.y-l.start.y<s.end.y-s.start.y);
+					if (s.map!=null && sr>0 && lr>0 && (score>=s.map[sr] || s.map[lr]>=s.map[sr]) && !isGood) {														
 						if (s.type!=UNKNOWN && s.map!=null)
-							for (int j = s.startIndex;j<=s.endIndex;++j) mark[j-startIndex] = 0;
+							for (int j = s.startIndex;j<=s.endIndex;++j) if (j-startIndex<mark.length) mark[j-startIndex] = 0;
 						
 						if (s.map[lr]==0) {
 							s.appearedRads[s.radCount++] = lr;
@@ -10700,7 +11106,7 @@ public final class Segment {
 					if (k>=sz) s = null;
 				}
 				if (k<sz-1){
-					arraycopy(ssArr, k, rs, jj, sz-k);
+					System.arraycopy(ssArr, k, rs, jj, sz-k);
 					jj += sz-k;
 				}
 				break;
@@ -10747,16 +11153,16 @@ public final class Segment {
 				double ddy = t.end.y - t.start.y;
 				if (Math.abs(Math.atan2(dy, dx)-Math.atan2(ddy, ddx))>0.5) return false;
 			}
-		} 
-		return true;
+		} 		
+		return s.type==0 || s.center.distance(t.center)<2.5;
 	}
 
-	private static boolean isConfirmed(Segment s,int which,double tW){
+	public static boolean isConfirmed(Segment s,int which,double tW){
 		if (s.type==0 && Math.abs(s.start.x-s.end.x)<TrackSegment.EPSILON) return true;
-		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null && s.center.y==0) return true;
-		int sR = (s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : double2int(s.radius+s.type*which*tW);
-		Vector2D center = s.center;
-		return ((s.map!=null && s.map[sR]>3) || (s.type!=0 && center!=null && center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
+		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null && s.center.y==0) return true;		
+		int sR = (s.type==0 || s.radius>=MAX_RADIUS-1) ? MAX_RADIUS-1 : (int)(Math.round(s.radius+s.type*which*tW));
+		if (sR<0) sR = 0;
+		return ((s.map!=null && sR>=0 && sR<s.map.length && s.map[sR]>3) || (s.type!=0 && s.center!=null && s.center.y==0) || ((s.num>=3 || (s.num>=2 && CircleDriver2.inTurn)) && s.lower!=null && s.upper!=null) || (s.num>4 && s.lower!=null || s.upper!=null) );
 	}
 
 	/*private static void removeFirstPoint(Segment s,Segment other){//remove the first point of s		
@@ -10937,7 +11343,7 @@ public final class Segment {
 
 
 	private static void removeFirstPoint(Segment s,Segment other,double pointy){//remove the first point of s
-		if (pointy<s.start.y-SMALL_MARGIN) return;		
+		if (pointy<s.start.y-SMALL_MARGIN && (s.num==0 || s.points[s.startIndex].y>pointy)) return;		
 		Vector2D[] vv = s.points;
 		int fst = (s.num==0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
 		if (s.num>0){
@@ -10946,6 +11352,8 @@ public final class Segment {
 			else fst++;
 			if (fst>=0 && fst<s.endIndex && vv[fst].y<=pointy+SMALL_MARGIN) fst++;
 		}
+		
+		if (fst<0) return;
 
 		s.startIndex = fst;			
 		s.updated = true;
@@ -10954,7 +11362,7 @@ public final class Segment {
 			s.num = 0;
 			s.endIndex = fst-1;
 		}
-		Vector2D v = (s.num>0) ? s.points[s.startIndex] : s.start;
+		Vector2D v = (s.num>0) ? s.points[fst] : s.start;
 		if (s.num>0 && v.y>s.end.y+SMALL_MARGIN){
 			s.type = Segment.UNKNOWN;
 			s.opp.type = Segment.UNKNOWN;
@@ -11312,9 +11720,9 @@ public final class Segment {
 
 
 	private static void removeLastPoint(Segment s,Segment other,double pointy){//remove the last point of s
-		if (s.type==Segment.UNKNOWN || pointy>s.end.y+SMALL_MARGIN) return;					
+		if (s.type==Segment.UNKNOWN || pointy>s.end.y+SMALL_MARGIN && (s.num==0 || pointy>s.points[s.endIndex].y)) return;					
 		Vector2D[] vv = s.points;
-		int j = (s.num==0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
+		int j = (s.num==0 || s.endIndex<=0) ? s.startIndex : binarySearchFromTo(vv, pointy, 0, s.endIndex);
 		j = (j<0) ? -j-1 : j;
 
 		//		if (j<=s.endIndex && vv[j].y<=point.y) j++;
@@ -11346,7 +11754,7 @@ public final class Segment {
 		boolean empty = true;
 		Vector2D start = (s.num>0) ? s.points[s.startIndex] : s.start;
 		int startIndx = other.startIndex;
-		if (s.type!=0 && s.type!=UNKNOWN){			
+		if (s.type!=0 && s.type!=UNKNOWN && s.radius>0){			
 			Vector2D center = s.center;
 			double cx = center.x;
 			double cy = center.y;								
@@ -11442,7 +11850,7 @@ public final class Segment {
 					s.type = UNKNOWN;					
 				}
 			}//end of if			
-		} else if (s.type==0){//s.type == 0		
+		} else if (s.type==0 || s.radius==0){//s.type == 0		
 			double vx = s.end.x - other.end.x;
 			double vy = s.end.y - other.end.y;			
 			double sy = v.y;
@@ -12517,7 +12925,7 @@ public final class Segment {
 
 
 	public static final void reSynchronize(Segment s,Segment o,int from,int to,int which,double tW){
-		if (s.type==Segment.UNKNOWN) {
+		if (s==null || s.type==Segment.UNKNOWN) {
 			if (o!=null) o.type=Segment.UNKNOWN;
 			return;
 		}
@@ -12906,11 +13314,13 @@ public final class Segment {
 		int sz = to-from;
 		int dSz = endIndx-startIndx;
 		int[] occupied = CircleDriver2.occupied;
+		if (size<0) return size;
 		if (sz==dSz){
 			if (endIndx>size) {
 				int j = 0;
 				for (int i = size;i<endIndx;++i){
-					while (occupied[j]!=0) j++;
+					while (j<occupied.length && occupied[j]!=0) j++;
+					if (j>=occupied.length) return size;
 					trIndx[i] = j;
 					occupied[j] = 1;
 //					Segment t = dest[j];
@@ -12949,32 +13359,33 @@ public final class Segment {
 					if (s.type==Segment.UNKNOWN) continue;
 					if (seg==null || (seg.type!=Segment.UNKNOWN &&  s.end.y<seg.start.y) ){						
 						if (seg==null || seg.type!=Segment.UNKNOWN){
-							while (occupied[j]!=0) j++;		
-							if (size-startIndx>0) System.arraycopy(trIndx, startIndx, trIndx, startIndx+1, size-startIndx);
+							while (j<occupied.length && occupied[j]!=0) j++;		
+							if (size-startIndx>0 && startIndx>=0) System.arraycopy(trIndx, startIndx, trIndx, startIndx+1, size-startIndx);
 							size++;
 						} else j = trIndx[ startIndx++ ];
-						occupied[j] = 1;
-						
-						t = 	dest[ j ];
-						seg = (which==-1) ? t.leftSeg : t.rightSeg;							
-						seg.opp.done = false;							
-						trIndx[ startIndx ] = j;
-						startIndx++;
+						if (j<occupied.length) {
+							occupied[j] = 1;													
+							t = 	dest[ j ];
+							seg = (which==-1) ? t.leftSeg : t.rightSeg;							
+							seg.opp.done = false;							
+							trIndx[ startIndx ] = j;
+							startIndx++;
+						}
 														
 					} else startIndx++;
-					if (seg!=s){
+					if (seg!=s && seg!=null){
 						if (s.map==null || seg.map!=s.map){
 							int[] map = seg.map;
 							int[] appearedRads = seg.appearedRads;								
 							for (int k = seg.radCount-1;k>=0;--k){
 								int rr = appearedRads[k];
-								map[rr] = 0;
+								if (rr>=0) map[rr] = 0;
 								appearedRads[k] = 0;
 							}
 							if (s.map!=null){
 								for (int k = s.radCount-1;k>=0;--k){
 									int rr = s.appearedRads[k];
-									map[rr] = s.map[rr];
+									if (rr>=0) map[rr] = s.map[rr];
 									appearedRads[k] = s.appearedRads[k];
 								}					
 							}
@@ -12992,7 +13403,7 @@ public final class Segment {
 						seg.opp.done = false;
 //						seg.opp.done = oldDone;
 					}					
-					t.radCount = seg.radCount;
+					if (seg!=null) t.radCount = seg.radCount;
 				} // end of for				
 			}		
 		}
@@ -13043,13 +13454,13 @@ public final class Segment {
 				int[] appearedRads = seg.appearedRads;								
 				for (int j = seg.radCount-1;j>=0;--j){
 					int rr = seg.appearedRads[j];
-					seg.map[rr] = 0;
+					if (rr>=0) seg.map[rr] = 0;
 					seg.appearedRads[j] = 0;
 				}
 				if (s.map!=null){
 					for (int j = s.radCount-1;j>=0;--j){
 						int rr = s.appearedRads[j];
-						map[rr] = s.map[rr];
+						if (rr>=0) map[rr] = s.map[rr];
 						appearedRads[j] = s.appearedRads[j];
 					}					
 				}
@@ -13078,36 +13489,40 @@ public final class Segment {
 		Segment os = s.opp;
 		s.type = Segment.UNKNOWN;							
 		if (os!=null) os.type = Segment.UNKNOWN;
-		if (!s.unsafe){
-			Segment next = null;
-			for (int i = currentIndx+1;i<trSz;++i){
+		occupied[ trIndx[currentIndx] ] = 0;
+		if (currentIndx==trSz-1) return trSz-1;
+//		if (!s.unsafe){
+//			Segment next = null;
+			int i = 0;
+			for (i = currentIndx+1;i<trSz;++i){
 				int j = trIndx[i]; 
 				Segment t = trArr[ j ];
-				if (t.unsafe || i==trSz-1) {
-					if (!t.unsafe) {
+				if (t.unsafe) {
+					/*if (!t.unsafe) {
 						t.leftSeg.type = Segment.UNKNOWN;
 						t.rightSeg.type = Segment.UNKNOWN;
 						t.type = Segment.UNKNOWN;
 						occupied[j] = 0;
 						i++;
+					}//*/
+					if (i-currentIndx>0) {
+						if (trSz-i>0) System.arraycopy(trIndx, i, trIndx, currentIndx, trSz-i);							
+						trSz-=i-currentIndx;
 					}
-					if (i-currentIndx-1>0) {
-						if (trSz-i>0) System.arraycopy(trIndx, i, trIndx, currentIndx+1, trSz-i);
-						trSz-=i-currentIndx-1;
-					}
-					if (trSz>currentIndx+1){
-						next = trArr[trIndx[currentIndx+1]];
+					/*if (trSz>currentIndx){
+						next = trArr[trIndx[currentIndx]];
 						next = (which==1) ? next.rightSeg : next.leftSeg;
-					} else next = null;
-					break;
+					} else next = null;//*/
+					return trSz;
 				}
 				t.leftSeg.type = Segment.UNKNOWN;
 				t.rightSeg.type = Segment.UNKNOWN;
 				t.type = Segment.UNKNOWN;
 				occupied[j] = 0;
 			}
-		}
-		return trSz;
+			if (i==trSz) return currentIndx;
+//		}
+		return trSz-1;
 	}
 	
 
@@ -13311,17 +13726,28 @@ public final class Segment {
 					else {
 						occupied[ trIndx[currentIndx+1] ] = 0; 
 						trSz = remove(next, which, currentIndx+1, trSz);
+						if (trSz>currentIndx+1){
+							next = trArr[trIndx[currentIndx+1]];
+							next = (which==1) ? next.rightSeg : next.leftSeg;
+						} else next = null;
+						on = (next==null) ? null : next.opp;
 					}
-					next.updated = true;
-					if (next.type!=Segment.UNKNOWN)
-						reSynchronize(next,on,0,otherTo,-which,tW*2);
-					else {
-						int idx = currentIndx+2;
-						occupied[ trIndx[currentIndx+1] ] = 0; 
-						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-						trSz+=currentIndx+1;
-						on.type = Segment.UNKNOWN;
-						if (currentIndx==trSz-1) next = null;
+					if (next!=null){
+						next.updated = true;
+						if (next.type!=Segment.UNKNOWN)
+							reSynchronize(next,on,0,otherTo,-which,tW*2);
+						else if (trSz>currentIndx+1){
+							int idx = currentIndx+2;
+							occupied[ trIndx[currentIndx+1] ] = 0; 
+							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+							trSz+=currentIndx+1;
+							on.type = Segment.UNKNOWN;
+							if (trSz>currentIndx+1){
+								next = trArr[trIndx[currentIndx+1]];
+								next = (which==1) ? next.rightSeg : next.leftSeg;
+							} else next = null;
+							on = (next==null) ? null : next.opp;
+						}
 					}
 					
 				} else if (s!=null && s.type!=Segment.UNKNOWN && next!=null && next.type!=Segment.UNKNOWN && next.end.y<=s.end.y+SMALL_MARGIN){
@@ -13343,19 +13769,27 @@ public final class Segment {
 						if (next.unsafe) 
 							removeFirstPoint(next, on, s.end.y+SMALL_MARGIN);
 						else {
-							occupied[ trIndx[currentIndx+1] ] = 0; 
-							trSz = remove(next, which, currentIndx+1, trSz);
+							occupied[ trIndx[idx] ] = 0; 
+							trSz = remove(next, which, idx, trSz);
+							next = (idx>=trSz) ? null : (which==1) ? trArr[ trIndx[idx] ].rightSeg : trArr[ trIndx[idx] ].leftSeg;
+							on = (next==null) ? null : next.opp;
 						}
-						next.updated = true;
-						if (next.type!=Segment.UNKNOWN)
-							reSynchronize(next,on,0,otherTo,-which,tW*2);
-						else {
-							idx = currentIndx+2;
-							occupied[ trIndx[currentIndx+1] ] = 0;
-							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-							trSz+=currentIndx+1;
-							on.type = Segment.UNKNOWN;	
-							if (currentIndx==trSz-1) next = null;
+						if (next!=null){
+							next.updated = true;
+							if (next.type!=Segment.UNKNOWN)
+								reSynchronize(next,on,0,otherTo,-which,tW*2);
+							else {
+								idx = currentIndx+2;
+								occupied[ trIndx[currentIndx+1] ] = 0;
+								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+								trSz+=currentIndx+1;
+								on.type = Segment.UNKNOWN;	
+								if (trSz>currentIndx+1){
+									next = trArr[trIndx[currentIndx+1]];
+									next = (which==1) ? next.rightSeg : next.leftSeg;
+								} else next = null;
+								on = (next==null) ? null : next.opp;
+							}
 						}
 					}
 				}
@@ -13366,19 +13800,29 @@ public final class Segment {
 					else {
 						occupied[ trIndx[currentIndx+1] ] = 0; 
 						trSz = remove(on, -which, currentIndx+1, trSz);
+						if (trSz>currentIndx+1){
+							next = trArr[trIndx[currentIndx+1]];
+							next = (which==1) ? next.rightSeg : next.leftSeg;
+						} else next = null;
+						on = (next==null) ? null : next.opp;
 					}
-					on.updated = true;
-					if (on.type!=Segment.UNKNOWN)
-						reSynchronize(on,next,0,to,which,tW*2);
-					else {
-						int idx = currentIndx+2;
-						occupied[ trIndx[currentIndx+1] ] = 0; 
-						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-						trSz+=currentIndx+1;
-						next.type = Segment.UNKNOWN;
-						if (currentIndx==trSz-1) next = null;
+					if (on!=null){
+						on.updated = true;
+						if (on.type!=Segment.UNKNOWN)
+							reSynchronize(on,next,0,to,which,tW*2);
+						else {
+							int idx = currentIndx+2;
+							occupied[ trIndx[currentIndx+1] ] = 0; 
+							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+							trSz+=currentIndx+1;
+							next.type = Segment.UNKNOWN;
+							if (trSz>currentIndx+1){
+								next = trArr[trIndx[currentIndx+1]];
+								next = (which==1) ? next.rightSeg : next.leftSeg;
+							} else next = null;
+							on = (next==null) ? null : next.opp;
+						}
 					}
-
 				} else if (os!=null && os.type!=Segment.UNKNOWN && on!=null && on.type!=Segment.UNKNOWN && on.end.y<=os.end.y+SMALL_MARGIN){
 					int idx = currentIndx+1;
 					while (on!=null && on.type!=Segment.UNKNOWN && on.end.y<=os.end.y+SMALL_MARGIN){														
@@ -13400,17 +13844,25 @@ public final class Segment {
 						else {
 							occupied[ trIndx[currentIndx+1] ] = 0; 
 							trSz = remove(on, -which, currentIndx+1, trSz);
+							next = (idx>=trSz) ? null : (which==1) ? trArr[ trIndx[idx] ].rightSeg : trArr[ trIndx[idx] ].leftSeg;
+							on = (next==null) ? null : next.opp;
 						}
-						on.updated = true;
-						if (on.type!=Segment.UNKNOWN)
-							reSynchronize(on,next,0,to,which,tW*2);
-						else {
-							idx = currentIndx+2;
-							occupied[ trIndx[currentIndx+1] ] = 0;
-							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-							trSz+=currentIndx+1;
-							next.type = Segment.UNKNOWN;
-							if (currentIndx==trSz-1) next = null;
+						if (on!=null){
+							on.updated = true;
+							if (on.type!=Segment.UNKNOWN)
+								reSynchronize(on,next,0,to,which,tW*2);
+							else {
+								idx = currentIndx+2;
+								occupied[ trIndx[currentIndx+1] ] = 0;
+								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+								trSz+=currentIndx+1;
+								next.type = Segment.UNKNOWN;
+								if (trSz>currentIndx+1){
+									next = trArr[trIndx[currentIndx+1]];
+									next = (which==1) ? next.rightSeg : next.leftSeg;
+								} else next = null;
+								on = (next==null) ? null : next.opp;
+							}
 						}
 					}
 				}
@@ -13443,22 +13895,42 @@ public final class Segment {
 		}
 		
 		if (prev!=null && s!=null && prev.type!=Segment.UNKNOWN){
-			if (prev.end.y>=s.start.y-SMALL_MARGIN){		
+			if (prev.end!=null && s.start!=null && prev.end.y>=s.start.y-SMALL_MARGIN){		
 				if (s.unsafe) {
 					Segment.removeFirstPoint(s, os, prev.end.y+SMALL_MARGIN);
 					s.updated = true;
 				} else {
 //					occupied[ trIndx[currentIndx] ] = 0; 
 					trSz = remove(s, which, currentIndx, trSz);
+					if (trSz>currentIndx+1){
+						next = trArr[trIndx[currentIndx+1]];
+						next = (which==1) ? next.rightSeg : next.leftSeg;
+					} else next = null;
+					on = (next==null) ? null : next.opp;
+					if (trSz>currentIndx){
+						s = trArr[trIndx[currentIndx]];
+						s = (which==1) ? s.rightSeg : s.leftSeg;
+					} else s = null;
+					os = (s==null) ? null : s.opp;
 				}
 				reSynchronize(s,os,0,otherTo,-which,tW*2);
-			} else if (op!=null && op.end.y>=os.start.y-SMALL_MARGIN){
+			} else if (op!=null && op.end!=null && os!=null && os.start!=null && op.end.y>=os.start.y-SMALL_MARGIN){
 				if (os.unsafe) {
 					Segment.removeFirstPoint(os, s,op.end.y+SMALL_MARGIN);
 					s.updated = true;
 				} else {
 //					occupied[ trIndx[currentIndx] ] = 0; 
 					trSz = remove(os, -which, currentIndx, trSz);
+					if (trSz>currentIndx+1){
+						next = trArr[trIndx[currentIndx+1]];
+						next = (which==1) ? next.rightSeg : next.leftSeg;
+					} else next = null;
+					on = (next==null) ? null : next.opp;
+					if (trSz>currentIndx){
+						s = trArr[trIndx[currentIndx]];
+						s = (which==1) ? s.rightSeg : s.leftSeg;
+					} else s = null;
+					os = (s==null) ? null : s.opp;
 				}
 				reSynchronize(os,s,0,to,which,tW*2);
 			}
@@ -13505,18 +13977,29 @@ public final class Segment {
 						else {
 							occupied[ trIndx[currentIndx+1] ] = 0; 
 							trSz = remove(next, which, currentIndx+1, trSz);
+							if (trSz>currentIndx+1){
+								next = trArr[trIndx[currentIndx+1]];
+								next = (which==1) ? next.rightSeg : next.leftSeg;
+							} else next = null;
+							on = (next==null) ? null : next.opp;
 						}
-						next.updated = true;
-						if (next.type!=Segment.UNKNOWN)
-							reSynchronize(next,on,0,otherTo,-which,tW*2);
-						else {
-							int idx = currentIndx+2;
-							occupied[ trIndx[currentIndx+1] ] = 0; 
-							if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-							trSz+=currentIndx+1;
-							on.type = Segment.UNKNOWN;
-							if (currentIndx==trSz-1) next = null;
-						}						
+						if (next!=null){
+							next.updated = true;
+							if (next.type!=Segment.UNKNOWN)
+								reSynchronize(next,on,0,otherTo,-which,tW*2);
+							else {
+								int idx = currentIndx+2;
+								occupied[ trIndx[currentIndx+1] ] = 0; 
+								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+								trSz+=currentIndx+1;
+								on.type = Segment.UNKNOWN;
+								if (trSz>currentIndx+1){
+									next = trArr[trIndx[currentIndx+1]];
+									next = (which==1) ? next.rightSeg : next.leftSeg;
+								} else next = null;
+								on = (next==null) ? null : next.opp;
+							}
+						}
 					} else if (next!=null && next.type!=Segment.UNKNOWN && (next.endIndex<s.startIndex || next.end.y<=s.end.y+SMALL_MARGIN)){
 						int idx = currentIndx+1;
 						while (next!=null && next.type!=Segment.UNKNOWN && next.end.y<=s.end.y+SMALL_MARGIN){														
@@ -13538,17 +14021,28 @@ public final class Segment {
 							else {
 								occupied[ trIndx[currentIndx+1] ] = 0; 
 								trSz = remove(next, which, currentIndx+1, trSz);
+								if (trSz>currentIndx+1){
+									next = trArr[trIndx[currentIndx+1]];
+									next = (which==1) ? next.rightSeg : next.leftSeg;
+								} else next = null;
+								on = (next==null) ? null : next.opp;
 							}
-							next.updated = true;
-							if (next.type!=Segment.UNKNOWN)
-								reSynchronize(next,on,0,otherTo,-which,tW*2);
-							else {
-								idx = currentIndx+2;
-								occupied[ trIndx[currentIndx+1] ] = 0;
-								if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
-								trSz+=currentIndx+1;
-								on.type = Segment.UNKNOWN;		
-								if (currentIndx==trSz-1) next = null;
+							if (next!=null){
+								next.updated = true;
+								if (next.type!=Segment.UNKNOWN)
+									reSynchronize(next,on,0,otherTo,-which,tW*2);
+								else {
+									idx = currentIndx+2;
+									occupied[ trIndx[currentIndx+1] ] = 0;
+									if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, currentIndx+1, trSz);
+									trSz+=currentIndx+1;
+									on.type = Segment.UNKNOWN;		
+									if (trSz>currentIndx+1){
+										next = trArr[trIndx[currentIndx+1]];
+										next = (which==1) ? next.rightSeg : next.leftSeg;
+									} else next = null;
+									on = (next==null) ? null : next.opp;
+								}
 							}
 						}
 					}
@@ -13711,14 +14205,14 @@ public final class Segment {
 			if (sR>=MAX_RADIUS) sR = MAX_RADIUS-1;
 			if (s.type!=0 && s.type!=Segment.UNKNOWN){
 				boolean ok = !s.updated;			
-				if (s.updated){					
+				if (s.updated && s.center!=null){					
 					double d = check(v, firstIndex,lastIndex, s.center, s.radius);
 					ok = (d>=0);
 					if (s.num>2){
 						if (!ok && fst!=null && lst!=fst){
-							Vector2D center = tmpCenter;
-							circle(fst, lst, center.x,center.y, s.radius,center);
-//							Vector2D center = circle(fst, lst, s.center, s.radius);
+//							Vector2D center = tmpCenter; 
+//							circle(fst, lst, s.center.x,s.center.y, s.radius,center);
+							Vector2D center = circle(fst,lst, s.center, s.radius);
 							double d1 = check(v, firstIndex,lastIndex, center, s.radius);
 							ok = (d1>=0);
 							if (ok) {
@@ -13741,9 +14235,19 @@ public final class Segment {
 					}
 
 					if (!ok){
-						if (currentMap[sR]>1) currentMap[sR]--;
-						if (!isConfirmed(s, which, tW) && currentMap[sR]<1){							
+						if (sR>=0 && currentMap[sR]>1) currentMap[sR]--;
+						if (!isConfirmed(s, which, tW) && sR>=0 && currentMap[sR]<1){							
 							trSz = remove(s, which, currentIndx, trSz);
+							if (trSz>currentIndx+1){
+								next = trArr[trIndx[currentIndx+1]];
+								next = (which==1) ? next.rightSeg : next.leftSeg;
+							} else next = null;
+							on = (next==null) ? null : next.opp;
+							if (trSz>currentIndx){
+								s = trArr[trIndx[currentIndx]];
+								s = (which==1) ? s.rightSeg : s.leftSeg;
+							} else s = null;
+							os = (s==null) ? null : s.opp;
 						} 													
 					} 
 //					else bkupS.copy(s);
@@ -14061,7 +14565,7 @@ public final class Segment {
 		////////////////////////////////FILL GAP FROM HERE //////////////////////////////////
 		int prevIndx = currentIndx-1;
 		while (prev!=null && prev.type==Segment.UNKNOWN){
-			prev = (prevIndx==0) ? null : (which==1) ? trArr[ trIndx[--prevIndx] ].rightSeg : trArr[ trIndx[--prevIndx] ].leftSeg; 
+			prev = (prevIndx<=0) ? null : (which==1) ? trArr[ trIndx[--prevIndx] ].rightSeg : trArr[ trIndx[--prevIndx] ].leftSeg; 
 		}
 		op = (prev==null) ? null : prev.opp;
 		int nextIndx = currentIndx+1;
@@ -14097,7 +14601,7 @@ public final class Segment {
 						}
 					}
 					if (psz>0){																	
-						arraycopy(oalArr, 0, tmp, 0, psz);
+						System.arraycopy(oalArr, 0, tmp, 0, psz);
 						sz+=psz;
 					} 					
 				}
@@ -14120,7 +14624,7 @@ public final class Segment {
 				if (ok){													
 					nsz = bestGuess(v, s.endIndex+1, endIndx, -which*tW, s, next, oalArr,sz);					
 					if (nsz>sz){												
-						arraycopy(oalArr, sz, tmp, sz, nsz-sz);
+						System.arraycopy(oalArr, sz, tmp, sz, nsz-sz);
 						sz = nsz;												
 					} 					
 				}
@@ -14149,7 +14653,25 @@ public final class Segment {
 				return;
 			} else if (s.lower!=null || s.upper!=null){
 				firstIndex = s.startIndex;
-				lastIndex = s.endIndex;				
+				if (s.lower!=null && firstIndex>0){
+					if (s.points!=null){
+						while (firstIndex>0 && s.points[firstIndex-1].y>=s.lower.y)  firstIndex--;
+					}
+				} else if (firstIndex>0){
+					if (prev!=null) 
+						firstIndex = prev.endIndex+1;
+					else firstIndex = 0;
+				}
+				lastIndex = s.endIndex;
+				if (s.upper!=null && lastIndex<to-1){
+					if (s.points!=null){
+						while (lastIndex<to-1 && s.points[lastIndex+1].y<=s.upper.y) lastIndex++;
+					}
+				} else if (lastIndex<to-1){
+					if (next!=null){
+						lastIndex = next.startIndex-1;
+					} else lastIndex = to-1;
+				}
 			}
 
 		}
@@ -14243,9 +14765,9 @@ public final class Segment {
 		if (liSz>0){ 
 			if (salSz>0) 				
 				liSz = mix(salArr,salSz, oalArr,liSz, which, tW,tmpStore);
-			else arraycopy(oalArr, 0, tmpStore, 0, liSz);										
+			else System.arraycopy(oalArr, 0, tmpStore, 0, liSz);										
 			if (liSz>1) liSz = adjust(tmpStore,liSz);	
-			trSz = replaceSideElems(tmpStore, 0, liSz, trArr, trIndx, prevIndx+1, nextIndx, trSz, which,tW);
+			if (trSz>=0) trSz = replaceSideElems(tmpStore, 0, liSz, trArr, trIndx, prevIndx+1, nextIndx, trSz, which,tW);
 			for (int ii = oldSz-1;ii>=0;--ii){
 				Segment ss = oalArr[ii];
 				ss.map = null;
@@ -14259,7 +14781,7 @@ public final class Segment {
 	}
 	
 	private static final void reExpand(Segment prev,Segment s,Segment next,int which, double tW){
-		long ti = System.nanoTime();
+		long ti = (CircleDriver2.debug) ? System.nanoTime() : 0;
 		int n = 0;
 		if (CircleDriver2.debug) System.out.println("Start reExpand : "+(System.nanoTime()-ti)/1000000);		
 		int from = (prev==null) ? 0 : prev.endIndex+1;
@@ -14299,7 +14821,7 @@ public final class Segment {
 				if (d<=EPS && Segment.check(v, prev.startIndex, s.endIndex+1, s.center, s.radius)>=0){
 					tmpSeg.type = Segment.UNKNOWN;
 					boolean good = false;
-					if ((good = isBelong(s, v, prev.startIndex, s.endIndex+1, tmpSeg, which, tw)) || tmpSeg.type!=Segment.UNKNOWN){
+					if ((good = isBelong(s, v, prev.startIndex, s.endIndex+1, tmpSeg, which, tW)) || tmpSeg.type!=Segment.UNKNOWN){
 						if (good || (tmpSeg.type==prev.type && tmpSeg.type!=0 && tmpSeg.radius==prev.radius && Math.abs(tmpSeg.center.y-prev.center.y)<1)){
 							Segment.apply(s, applyTW, tmpSeg.type, tmpSeg.start, tmpSeg.end, tmpSeg.center, tmpSeg.radius);
 							if (s.radius==tmpSeg.radius){
@@ -14327,7 +14849,7 @@ public final class Segment {
 				if (d<=EPS && Segment.check(v, s.startIndex, next.endIndex+1, s.center, s.radius)>=0){
 					tmpSeg.type = Segment.UNKNOWN;
 					boolean good = false;
-					if ((good = isBelong(s, v, s.startIndex, next.endIndex+1, tmpSeg, which, tw)) || tmpSeg.type!=Segment.UNKNOWN){
+					if ((good = isBelong(s, v, s.startIndex, next.endIndex+1, tmpSeg, which, tW)) || tmpSeg.type!=Segment.UNKNOWN){
 						if (good || (tmpSeg.type==next.type && tmpSeg.type!=0 && tmpSeg.radius==next.radius && Math.abs(tmpSeg.center.y-next.center.y)<1)){
 							Segment.apply(s, applyTW, tmpSeg.type, tmpSeg.start, tmpSeg.end, tmpSeg.center, tmpSeg.radius);
 							if (s.radius==tmpSeg.radius){
@@ -14365,8 +14887,9 @@ public final class Segment {
 //			Vector2D pt = new Vector2D();
 			Segment rs = new Segment();
 			int endIndex = s.endIndex;
-			if (endIndex<=s.startIndex) endIndex = s.startIndex;
-			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tw);
+//			if (endIndex<=s.startIndex) endIndex = s.startIndex;
+			boolean isConfirm = s.type!=0 && isConfirmed(s, which, tW);
+			boolean isPrevConfirm = prev!=null && isConfirmed(prev, which, tW);
 			bkupS.copy(s);
 			int SIZE_N = storage.SIZE_N;
 			int[] totalRad_N = storage.totalRad_N;
@@ -14376,17 +14899,49 @@ public final class Segment {
 				Vector2D first = v[i];
 				double startX = first.x;
 				double startY = first.y;
-				if (prev!=null && startY-prev.end.y<=SMALL_MARGIN) continue;
+				if (prev!=null && startY-prev.end.y<=SMALL_MARGIN) continue;				
+				boolean isPrevFTCn = false;
+//				boolean isPrevSGood = false;
+				boolean ok = true;
 				if (isConfirm){
 					double dx = s.center.x - first.x;
 					double dy = s.center.y - first.y;
 					double d = Math.sqrt(dx*dx+dy*dy);
 					d-=s.radius;
-					if (d<0) d=-d;
-					if (d>EPS || (s.center.y==0 && d>E) ) continue;
+					if (d<0) d=-d;					
+					if (prev!=null && (isPrevConfirm || prev.upper!=null)){
+						tmpSeg1.type = Segment.UNKNOWN;
+						if (endIndex>=0){
+							radiusFrom2Points(prev, first, v[endIndex], applyTW, tmpSeg);						
+							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+								ok = false;		
+//								isPrevSGood = true;
+//								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);
+//								if (endIndex==to-1) isPrevFTCn = true;
+								tmpSeg.type = Segment.UNKNOWN;
+							}
+						}
+						if (to>0 && to-1>endIndex && ok){
+							radiusFrom2Points(prev, first, v[to-1], applyTW, tmpSeg1);
+							if (tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==s.radius)){
+								ok = false;
+								Segment.apply(s, applyTW, s.type, first, v[to-1], tmpSeg1.center, tmpSeg1.radius);
+								isPrevFTCn = true;								
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius)){
+								Segment.apply(s, applyTW, s.type, first, v[to-1], tmpSeg1.center, tmpSeg1.radius);
+								if (s.radius==tmpSeg.radius){
+									ok = false;
+									isPrevFTCn = true;
+								}
+							}							
+						}
+						tmpSeg.type = Segment.UNKNOWN;
+					}					
+					if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 				}
 				int r_index = i<<SIZE_N;
 				for (int j = to;j>endIndex;--j){
+					if (j<=0) break;
 					Vector2D last = v[j-1];
 					double endX = last.x;
 					double endY = last.y;
@@ -14396,7 +14951,24 @@ public final class Segment {
 						double d = Math.sqrt(dx*dx+dy*dy);
 						d-=s.radius;
 						if (d<0) d=-d;
-						if (d>EPS || (s.center.y==0 && d>E) ) continue;
+						if (!ok && !isPrevFTCn){
+							radiusFrom2Points(prev, first, last, applyTW, tmpSeg);
+							if (tmpSeg.type==s.type && (tmpSeg.type==0 || tmpSeg.radius==s.radius)){
+								ok = false;								
+//								Segment.apply(s, applyTW, s.type, s.start, s.end, tmpSeg.center, tmpSeg.radius);								
+								tmpSeg.type = Segment.UNKNOWN;
+//								if (j==to-1) isPrevFTCn = true;
+//								isPrevSGood = true;
+							} else if (tmpSeg1.type==tmpSeg.type && tmpSeg1.type==s.type && (tmpSeg1.type==0 || tmpSeg1.radius==tmpSeg.radius)){
+								Segment.apply(s, applyTW, s.type, first, tmpSeg1.end, tmpSeg1.center, tmpSeg1.radius);
+								if (s.radius==tmpSeg.radius){
+									ok = false;
+//									isPrevSGood = true;
+									isPrevFTCn = true;
+								}
+							} else ok = true;
+						}						
+						if (ok && (d>EPS || (s.center.y==0 && d>E)) ) continue;
 					}
 					
 					int m_indx = r_index + j-1;
@@ -14407,11 +14979,12 @@ public final class Segment {
 					
 					n++;
 					int num = j-i;
+					
 					if (i==s.startIndex && j==s.endIndex+1) break;
 					rs.type = Segment.UNKNOWN;
 					rs.startIndex = i;
 					rs.endIndex = j-1;
-					rs.num = num;
+					rs.num = num;					
 					if (donePrev && map!=null){
 						int er = (s.type==0) ? 0 : (int)Math.round(s.radius+which*s.type*tW);
 						if (er>=Segment.MAX_RADIUS-1) {
@@ -14432,6 +15005,26 @@ public final class Segment {
 							}
 						}
 					}
+					
+					if (!CircleDriver2.inTurn && isPrevFTCn){
+//						Segment.circle(first, v[to-1], s.center.x,s.center.y, s.radius,s.center);
+//						Segment.apply(s, applyTW, s.type, first, v[to-1], s.center, s.radius);
+						s.startIndex = i;
+						s.endIndex = to-1;
+						s.num = to-i;
+						return;
+					} 
+					/*else if (!CircleDriver2.inTurn && isPrevSGood){
+						Segment.circle(first, last, s.center.x,s.center.y, s.radius,s.center);
+						Segment.apply(s, applyTW, s.type, first, last, s.center, s.radius);						
+//						Segment.apply(s, applyTW, s.type, first, last, s.center, s.radius);
+						s.startIndex = i;
+						s.endIndex = j;
+						s.num = num;
+						return;
+					}//*/
+					
+					
 					found =  !found && !donePrev && num>2 && isBelong(s,v, i, j, rs, which, tW) || rs.type!=Segment.UNKNOWN;
 					tmpSeg.type = Segment.UNKNOWN;
 					tmpSeg1.type = Segment.UNKNOWN;
@@ -14594,16 +15187,17 @@ public final class Segment {
 												
 						if (prev!=null && isPossiblePrevConnected && isConnected(prev, s, applyTW, pt) && pt.y>prev.start.y && pt.y<s.end.y) {																														
 							if ((prev.type!=s.type || prev.radius!=s.radius))				
-								connect(prev, s, pt, applyTW);
+								connect(prev, s, pt, applyTW,true);													
+							
 						}
 
 						if (next!=null && isPossibleNextConnected && s.type!=Segment.UNKNOWN && next.type!=Segment.UNKNOWN && isConnected(s, next, applyTW, pt) && pt.y>s.start.y && pt.y<next.end.y) {																														
 							if ((next.type!=s.type || next.radius!=s.radius))				
-								connect(s, next, pt, applyTW);
+								connect(s, next, pt, applyTW,true);
 						}
 						
 						if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-							if (isConfirmed(prev, which, tw)){								
+							if (isConfirmed(prev, which, tW)){								
 								Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -14632,7 +15226,7 @@ public final class Segment {
 						}
 						
 						if (on!=null && s.type!=Segment.UNKNOWN && on.type!=Segment.UNKNOWN && (os.endIndex>on.startIndex || os.end.y>=on.start.y-SMALL_MARGIN)){
-							if (isConfirmed(next, which, tw)){
+							if (isConfirmed(next, which, tW)){
 								Segment.removeLastPoint(os, s,on.start.y-SMALL_MARGIN);
 								if (os.type!=Segment.UNKNOWN) 
 									reSynchronize(os, s, 0, maxTo, which, tw);
@@ -14652,13 +15246,13 @@ public final class Segment {
 		}
 		int sr = (s.type==0 || s.radius>=MAX_RADIUS) ? MAX_RADIUS-1 : (int)Math.round(s.radius+s.type*tW*which);
 		if (sr>=MAX_RADIUS) sr = MAX_RADIUS-1;
-		if (s.map!=null && s.map[sr]==0){
+		if (s.map!=null && sr>=0 && s.map[sr]==0){
 			s.appearedRads[s.radCount++] = sr;
 			s.opp.radCount++;
 			s.map[sr]++;
 		}
-		long endTime = (System.nanoTime()-ti)/1000000;
-		if (CircleDriver2.debug || endTime>=1) System.out.println("End reExpand : "+endTime+"   at "+CircleDriver2.time+" s.    "+n);
+		long endTime = (CircleDriver2.debug) ? (System.nanoTime()-ti)/1000000 : 0;
+		if (CircleDriver2.debug && endTime>=1) System.out.println("End reExpand : "+endTime+"   at "+CircleDriver2.time+" s.    "+n);
 	}
 
 	/*private static final void reExpand(Segment prev,Segment t,Segment next,double tW){
@@ -14730,7 +15324,7 @@ public final class Segment {
 		int otherTo = (which==1) ? edge.lSize : edge.rSize;
 		
 		if (prev!=null && prev.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){				
+			if (isConfirmed(prev, which, tw*0.5)){				
 				if (s.unsafe) 
 					Segment.removeFirstPoint(s, os, prev.end.y+SMALL_MARGIN);
 				else {
@@ -14738,7 +15332,8 @@ public final class Segment {
 					os.type = Segment.UNKNOWN;
 				}
 				if (s.type!=Segment.UNKNOWN) 
-					reSynchronize(s, os, 0, otherTo, -which, tw);				
+					reSynchronize(s, os, 0, otherTo, -which, tw);
+				else os.type = Segment.UNKNOWN;
 			} else {
 				int oldTp = prev.type;
 				if (prev.unsafe){
@@ -14759,7 +15354,7 @@ public final class Segment {
 		}
 		
 		if (op!=null && op.type!=Segment.UNKNOWN && s.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){
-			if (isConfirmed(prev, which, tw)){
+			if (isConfirmed(prev, which, tw*0.5)){
 				if (os.unsafe)
 					Segment.removeFirstPoint(os, s, op.end.y+SMALL_MARGIN);
 				else {
@@ -14767,7 +15362,8 @@ public final class Segment {
 					os.type = Segment.UNKNOWN;
 				}
 				if (os.type!=Segment.UNKNOWN) 
-					reSynchronize(os, s, 0, maxTo, which, tw);				
+					reSynchronize(os, s, 0, maxTo, which, tw);
+				else s.type = Segment.UNKNOWN;
 			} else {
 				int oldTp = prev.type;
 				if (op.unsafe){
@@ -14788,10 +15384,262 @@ public final class Segment {
 		}
 	}
 	
+	private static void joinSegment(Segment prev,Segment s,double tW){
+		Segment pl = prev.leftSeg;
+		Segment pr = prev.rightSeg;
+		Segment l = s.leftSeg;
+		Segment r = s.rightSeg;
+		Vector2D[] lV = l.points;
+		Vector2D[] rV = r.points;
+		pl.end.copy(l.end);
+		pl.endIndex = l.endIndex;
+		pr.end.copy(r.end);
+		pr.endIndex = r.endIndex;
+		pl.num = pl.endIndex+1-pl.startIndex;
+		pr.num = pr.endIndex+1-pr.startIndex;
+		pl.upper = l.upper;
+		pr.upper = r.upper;
+		if (pl.center!=null && pl.center.y!=0){
+			if (pl.num>2){
+				circle(lV[pl.startIndex], lV[pl.endIndex], pl.center.x,pl.center.y, pl.radius,pl.center);
+			} else circle(pl.start,pl.end, pl.center.x,pl.center.y, pl.radius,pl.center);
+
+			if (pr.num>2){
+				circle(rV[pr.startIndex], rV[pr.endIndex], pr.center.x,pr.center.y, pr.radius,pr.center);
+			} else circle(pr.start,pr.end, pr.center.x,pr.center.y, pr.radius,pr.center);
+		}
+		l.type = Segment.UNKNOWN;
+		r.type = Segment.UNKNOWN;		
+		s.radCount = l.radCount;								
+		toMiddleSegment(pl,prev, -1, tW);
+		int prvRad = (prev.type==0) ? MAX_RADIUS-1 : (int)Math.round(prev.radius); 
+		if (prvRad>=0) prev.map[prvRad] += s.map[prvRad];
+		pl.done = true;
+		pr.done = true;
+		pl.updated = true;
+		pr.updated = true;
+		prev.updated = true;
+		prev.radCount = pl.radCount;
+
+	}
+	
 	public static final int reUpdate(Segment[] trArr,int sz,double tW){
 		return reUpdate(trArr, sz, tW,0);
 	}
+	
+	private static boolean reject3(Segment pr,Segment r,Segment nr,Segment pl,Segment l,Segment nl,int edge,double tW){		
+		if (CircleDriver2.inTurn && r!=null && pr!=null && r.type!=0 &&  !isConfirmed(r, edge, tW) && r.num<=2 && l.num<=2 
+				 && pr.type!=r.type && (r.startIndex>pr.endIndex+1 || l.startIndex>pl.endIndex+1)){
+			Vector2D v = (l.points==null) ? null : r.startIndex>pr.endIndex+1 ? r.points[r.startIndex-1] : l.points[l.startIndex-1];
+//			Vector2D pv = (v==null) ? null : r.startIndex>pr.endIndex+1 ? pr.end : pl.end;
+			
+			if (v!=null){
+				if (true){
+//					Vector2D point = new Vector2D();
+					Vector2D[] vs = null,others = null;
+					int num = 0;
+					int otherNum = 0;
+					Segment s = null;
+					Segment prev = null;
+					boolean ok = false;
+					if (isConnected(pr, r, tW, pt)){
+						ok = true;
+						mapPoint(pt, r, -1, tW, tmpPoint);
+						num = CircleDriver2.edgeDetector.rSize;
+						otherNum = CircleDriver2.edgeDetector.lSize;
+						vs = r.points;
+						others = l.points;
+						s = r;
+						prev = pr;
+					} else if (isConnected(pl, l, tW, pt)){
+						ok  =true;
+						mapPoint(pt, l, 1, tW, tmpPoint);
+						num = CircleDriver2.edgeDetector.lSize;
+						otherNum = CircleDriver2.edgeDetector.rSize;
+						vs = l.points;
+						others = r.points;
+						s = l;
+						prev = pl;
+					}
+					if (ok){
+						int i = 0;
+						if (num>0){
+							i = binarySearchFromTo(vs, pt.y, 0, num-1);
+							if (i<0) 
+								i = -i-1;
+							else if (pt.y>vs[i].y) i++;
+							if (s.startIndex>i){
+								v = vs[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = vs[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+						
+						if (otherNum>0){
+							i = binarySearchFromTo(others, tmpPoint.y, 0, otherNum-1);
+							if (i<0) 
+								i = -i-1;
+							else if (tmpPoint.y>others[i].y) i++;
+							s = s.opp;
+							prev = prev.opp;					
+							if (s.startIndex>i){
+								v = others[i];
+								if ((s.start.x-v.x)*s.type<0) 
+									return true;
+							} 
+//							else if (i-1>prev.endIndex){
+//								v = others[i-1];
+//								if ((v.x-prev.end.x)*prev.type<0) 
+//									return true;
+//							}
+						}
+					}
+				}
+//				return (v.x-pv.x)*l.type<0;
+			}
+		}
+		return false;	
+			
+	}
+	
+	private static boolean reject2(Segment pr,Segment r,Segment nr,int edge,int rN,Vector2D[] rV,double tW){		
+		if (r.type==0){
+			if (pr!=null && pr.type==0 || nr!=null && nr.type==0) return false;
+		} else if (pr!=null && pr.type==r.type && Math.abs(pr.radius-r.radius)<5) 
+			return false;
+		else if (nr!=null && nr.type==r.type && Math.abs(nr.radius-r.radius)<5)
+			return false;
+		
+		boolean notIsconfirmed = !isConfirmed(r, edge, tW);
+				
+		if (r.type!=0 && r.map!=null && r.num>1 && (r.num<=2 || r.lower==null && r.upper==null) && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (r.startIndex==0 || r.start.y - rV[r.startIndex-1].y<=2) && (notIsconfirmed || r.end.y-r.start.y<=3 || r.num>=3 && r.end.y-r.start.y<5) && (pr==null || nr==null || pr.endIndex<r.startIndex-1 || nr.startIndex-1>r.endIndex)){
+			if (pr!=null && isConnected(pr, r, tW, tmpPoint))
+				return false;
+			return true;
+		}
+		
+		
+		if (r.type!=0 && r.map!=null && r.num>1 && r.num<=2 && notIsconfirmed && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && nr!=null && isConfirmed(nr, edge, tW) && pr!=null && nr!=null && isConfirmed(pr, edge, tW)){		
+			return true;
+		}
+		
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && r.endIndex<rN-1 && rV[r.endIndex+1].y-r.end.y<=2 && (pr==null || r.start.y-pr.end.y<=3)) return true;		
+		if (r.num>=3 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=5 && (pr==null || r.start.y-pr.end.y<=2)){
+//			Vector2D point = new Vector2D();
+			if (pr!=null && isConnected(pr, r, tW, tmpPoint))
+				return false;
+			return true;
+		}
+		
+		if (r.num>=2 && notIsconfirmed && r.lower==null && r.upper==null && r.end.y-r.start.y<=1) return true;
+		return false;
+	}
+	
+	public static final void removePointFromEdge(int i,Segment[] trArr,int trSz,int[] trIndx,int[] occupied,int which){		
+		for (int j = trSz-1;j>=0;--j){			
+			Segment t = (which==-1) ? trArr[ trIndx[j] ].leftSeg : trArr[ trIndx[j] ].rightSeg;
+			if (t.startIndex>=i || t.endIndex>=i){
+				if (t.startIndex>i) {
+					t.startIndex--;
+					t.endIndex--;
+				} else if (t.endIndex>=t.startIndex) t.endIndex--;
+				
+				t.num = t.endIndex - t.startIndex+1;				
+			} else break;
+		}				
+		
 
+	}
+	
+	public static final int removeRedundant(Segment pl,Segment l,Segment nl,Vector2D[] lV,Segment[] trArr,int trSz,int[] trIndx,int[] occupied,int which,int lN){
+		if (l.num>0){
+			if (l.startIndex>0){
+				Vector2D ls = lV[l.startIndex];
+				if (ls.certain && (pl==null || pl.endIndex<l.startIndex-1) ){
+					while (true){
+						Vector2D pt = lV[l.startIndex-1];
+						if (!pt.certain && pt.distance(ls)<1){
+							if (lN>l.startIndex) {
+								for (int ii = 0,nn = lN-l.startIndex;ii<nn;++ii)
+									lV[l.startIndex-1+ii].copy(lV[l.startIndex+ii]);																														
+							}
+							removePointFromEdge(l.startIndex-1, trArr, trSz, trIndx, occupied, which);
+							lN--;
+							if (l.startIndex>0 && l.num>0 && (pl==null || pl.endIndex<l.startIndex-1)) {
+								ls = lV[l.startIndex];
+								continue;
+							}
+						}
+						break;
+					} //end of while					
+				} else if (!ls.certain && (pl==null || pl.endIndex<l.startIndex-1)){
+					while (true){
+						Vector2D pt = lV[l.startIndex-1];
+						if (pt.certain && pt.distance(ls)<1){
+							if (lN>l.startIndex+1) {
+								for (int ii = 0,nn = lN-l.startIndex-1;ii<nn;++ii)
+									lV[l.startIndex+ii].copy(lV[l.startIndex+ii+1]);																														
+							}
+							removePointFromEdge(l.startIndex, trArr, trSz, trIndx, occupied, which);
+							lN--;	
+							if (l.num>0 && l.startIndex>0 && (pl==null || pl.endIndex<l.startIndex-1)){
+								ls = lV[l.startIndex];
+								if (!ls.certain) continue;
+							}
+						}
+						break;
+					} //end of while										
+				}
+			}
+			
+			if (l.num>0 && l.endIndex<lN-1){
+				Vector2D ls = lV[l.endIndex];
+				if (ls.certain && (nl==null || l.endIndex<nl.startIndex-1) ){
+					while (true){
+						Vector2D pt = lV[l.endIndex+1];
+						if (!pt.certain && pt.distance(ls)<1){
+							if (lN>l.endIndex+2) {
+								for (int ii = 0,nn = lN-l.endIndex-2;ii<nn;++ii)
+									lV[l.endIndex+1+ii].copy(lV[l.endIndex+2+ii]);																														
+							}
+							removePointFromEdge(l.endIndex+1, trArr, trSz, trIndx, occupied, which);
+							lN--;
+							if (l.endIndex<lN-1 && l.num>0 && (nl==null || l.endIndex<nl.startIndex-1)) {
+								ls = lV[l.endIndex];
+								continue;
+							}
+						}
+						break;
+					} //end of while					
+				} else if (!ls.certain && (nl==null || l.endIndex<nl.startIndex-1)){
+					while (true){
+						Vector2D pt = lV[l.endIndex+1];
+						if (pt.certain && pt.distance(ls)<1){
+							if (lN>l.endIndex+1) {
+								for (int ii = 0,nn = lN-l.endIndex-1;ii<nn;++ii)
+									lV[l.endIndex+ii].copy(lV[l.endIndex+ii+1]);																														
+							}
+							removePointFromEdge(l.endIndex, trArr, trSz, trIndx, occupied, which);
+							lN--;	
+							if (l.num>0 && l.endIndex<lN-1 && (nl==null || l.endIndex<nl.startIndex-1)){
+								ls = lV[l.endIndex];
+								if (!ls.certain) continue;
+							}
+						}
+						break;
+					} //end of while										
+				}
+			}
+								
+		}
+		return lN;
+	}
+		
 	public static final int reUpdate(Segment[] trArr,int sz,double tW,int fromSeg){
 		if (CircleDriver2.debug) System.out.println("Start reUpdate : "+(System.nanoTime()-CircleDriver2.ti)/1000000);
 		int[] trIndx = CircleDriver2.trIndx;
@@ -14811,8 +15659,19 @@ public final class Segment {
 		int count = 0;		
 		int prevLStartIndx = 0;
 		int prevRStartIndx = 0;
+		boolean isLastRejected = false;
 //		int nextLEndIndx = 0;
 //		int nextREndIndx = 0;
+		if (edge!=null && edge.highestPoint!=null){
+			Vector2D h = edge.highestPoint;
+			double hl = h.length();
+			double rl = (rN<1) ? 0 : rV[rN-1].length();
+			double ll = (lN<1) ? 0 : lV[lN-1].length();
+//			|| edge.currentPointAhead!=null && edge.currentPointAhead.y<55
+			careful =  CircleDriver2.speedX>=200 && h.y<60 || h.y<30 || CircleDriver2.turn==1 &&  rN>0 && hl-rl>0 && hl-rl<30 || CircleDriver2.turn==-1 && lN>0 &&  hl-ll>0 && hl-ll<30;
+//			if (trSz>0 && trArr[trIndx[trSz-1]].type!=0 && trArr[trIndx[trSz-1]].radius<80 &&  (CircleDriver2.turn==-1 && lN>0 && hl-ll>tW*2 && hl-ll<50 || CircleDriver2.turn==1 && rN>0 && hl-rl>tW*2 && hl-rl<50) )
+//				System.out.println();
+		}
 		double tw = tW+tW;
 		for (int i = fromSeg;i<trSz;++i){			
 			if (i<0) continue;
@@ -14833,6 +15692,7 @@ public final class Segment {
 				oldTrSz = trSz;
 				if (oldIndx<i) oldIndx = i;				
 			}			
+			oldTrSz = trSz;
 			next = (i<trSz-1) ? trArr[ trIndx[i+1] ] : null;
 			Segment l = t.leftSeg;
 			Segment r = t.rightSeg;
@@ -14852,7 +15712,7 @@ public final class Segment {
 			pr = (prev==null) ? null : prev.rightSeg;			
 //			if (pl!=null) pl.updated = false;
 //			if (pr!=null) pr.updated = false;
-			if (i>1 && prev.type!=UNKNOWN){
+			if (i>1 && prev!=null && prev.type!=UNKNOWN){
 				prevLStartIndx = pl.startIndex;
 				prevRStartIndx = pr.startIndex;
 			}
@@ -14861,8 +15721,13 @@ public final class Segment {
 //				nextREndIndx = nr.endIndex;
 //			}
 
-			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center.y==0)));
-			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){				
+			boolean isFirstL = (l!=null && l.type!=Segment.UNKNOWN && ((l.type==0 && Math.abs(l.start.x-l.end.x)<E) || (l.type!=0 && l.center!=null && l.center.y==0)));
+			if (l!=null && l.type!=Segment.UNKNOWN && ((l.end.y<0 && r.end.y<0)|| Double.isNaN(l.start.y) || Double.isNaN(l.end.y) || (!isFirstL && l.end.y-l.start.y<=1) || (!CircleDriver2.inTurn && l.num<2 && r.num<2))){								
+				if (!CircleDriver2.inTurn) {
+					edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+					edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+				}
+				
 				occupied[ trIndx[i] ] = 0;
 				if ((trSz-=i+1)>0) System.arraycopy(trIndx, i+1, trIndx, i, trSz);									
 				trSz+=i--;				
@@ -14880,12 +15745,26 @@ public final class Segment {
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					oldTrSz = trSz;
+					if (l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
 					while (pl!=null && pl.type==UNKNOWN){
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;					
-						prev.radCount = pl.radCount;
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;					
+							prev.radCount = pl.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;					
@@ -14899,12 +15778,27 @@ public final class Segment {
 					l = t.leftSeg;
 					r = t.rightSeg;			
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;				
-					while (pr!=null && pr.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;
-						prev.radCount = pr.radCount;
+					nr = (next==null) ? null : next.rightSeg;
+					if (l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
+					while (pr!=null && pr.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;
+							prev.radCount = pr.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;					
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;
@@ -14922,15 +15816,29 @@ public final class Segment {
 					t = trArr[ trIndx[i] ];			
 					next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
 					l = t.leftSeg;
-					r = t.rightSeg;	
+					r = t.rightSeg;						
 					nl = (next==null) ? null : next.leftSeg;
 					nr = (next==null) ? null : next.rightSeg;
-					oldTrSz = trSz;
-					while (pr!=null && pr.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;					
-						prev.radCount = pr.radCount;
+					if (l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
+					while (pr!=null && pr.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;					
+							prev.radCount = pr.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;		
@@ -14945,16 +15853,31 @@ public final class Segment {
 				if (!l.done){
 					if (lN>0 && l.type!=UNKNOWN) reCheckSegment(pl, l, nl, -1, tW,trArr,i);				
 					t = trArr[ trIndx[i] ];
-					next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
+					next = (i<trSz-1 && i<trIndx.length-1) ? trArr[  trIndx[i+1] ] : null;
 					l = t.leftSeg;
-					r = t.rightSeg;
+					r = t.rightSeg;					
 					nl = (next==null) ? null : next.leftSeg;
-					nr = (next==null) ? null : next.rightSeg;				
-					while (pl!=null && pl.type==UNKNOWN){					
-						occupied[ trIndx[i-1] ] = 0;					
-						if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
-						trSz+=--i;
-						prev.radCount = pl.radCount;
+					nr = (next==null) ? null : next.rightSeg;
+					if (l.type!=Segment.UNKNOWN){
+						if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+							pl.upper = new Vector2D(l.lower);
+							if (r.lower==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							pr.upper = new Vector2D(r.lower);																
+						} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+							nl.lower = new Vector2D(l.upper);
+							if (r.upper==null)
+								reSynchronize(l, r, 0, rN, 1, tw);
+							nr.lower = new Vector2D(r.upper);
+						}
+					}
+					while (pl!=null && pl.type==UNKNOWN){
+						if (i>0){
+							occupied[ trIndx[i-1] ] = 0;					
+							if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, i-1, trSz);
+							trSz+=--i;
+							prev.radCount = pl.radCount;
+						}
 						prev = (i>0) ? trArr[ trIndx[i-1] ] : null;
 						pl = (prev==null) ? null : prev.leftSeg;
 						pr = (prev==null) ? null : prev.rightSeg;			
@@ -14968,7 +15891,7 @@ public final class Segment {
 				}
 			}
 			
-			if (i>0 && pl.type!=UNKNOWN){
+			if (i>0 && pl!=null && pl.type!=UNKNOWN){
 				if (i>1 && (pl.startIndex<prevLStartIndx || pr.startIndex<prevRStartIndx)){
 					Segment prPrevL = trArr[ trIndx[i-2] ].leftSeg;
 					Segment prPrevR = prPrevL.opp;
@@ -15007,80 +15930,28 @@ public final class Segment {
 //				nextREndIndx = nr.endIndex;
 //			}
 
-			if (i>0 && pl!=null && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && Math.abs(pl.center.y-l.center.y)<1)){
-				pl.end.copy(l.end);
-				pl.endIndex = l.endIndex;
-				pr.end.copy(r.end);
-				pr.endIndex = r.endIndex;
-				pl.num = pl.endIndex+1-pl.startIndex;
-				pr.num = pr.endIndex+1-pr.startIndex;
-				pl.upper = l.upper;
-				pr.upper = r.upper;
-				if (pl.center.y!=0){
-					if (pl.num>2){
-						circle(lV[pl.startIndex], lV[pl.endIndex], pl.center.x,pl.center.y, pl.radius,pl.center);
-					} else circle(pl.start,pl.end, pl.center.x,pl.center.y, pl.radius,pl.center);
-
-					if (pr.num>2){
-						circle(rV[pr.startIndex], rV[pr.endIndex], pr.center.x,pr.center.y, pr.radius,pr.center);
-					} else circle(pr.start,pr.end, pr.center.x,pr.center.y, pr.radius,pr.center);
-				}
-				l.type = Segment.UNKNOWN;
-				r.type = Segment.UNKNOWN;		
-				t.radCount = l.radCount;
+			if (i>0 && pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || pl.center.distance(l.center)<2.5) )){
+				joinSegment(prev, t, tW);
 				int idx = i+1;
 				occupied [ trIndx[i] ] = 0;
 				if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
-				trSz+=i--;				
-				toMiddleSegment(pl,prev, -1, tW);
-				int prvRad = (prev.type==0) ? MAX_RADIUS-1 : (int)Math.round(prev.radius); 
-				prev.map[prvRad] += t.map[prvRad];
-				pl.done = true;
-				pr.done = true;
-				pl.updated = true;
-				pr.updated = true;
-				prev.updated = true;
-				prev.radCount = pl.radCount;
+				trSz+=i--;												
 				continue;
-			} else if (i>0 && pl!=null && nl!=null && pl.type==nl.type && pl.type!=0 && pl.radius==nl.radius && Math.abs(pl.center.y-nl.center.y)<1 ){
-				pl.end.copy(nl.end);
-				pl.endIndex = nl.endIndex;
-				pr.end.copy(nr.end);
-				pr.endIndex = nr.endIndex;
-				pl.num = pl.endIndex+1-pl.startIndex;
-				pr.num = pr.endIndex+1-pr.startIndex;
-				pl.upper = nl.upper;
-				pr.upper = nr.upper;
-				if (pl.center.y!=0){
-					if (pl.num>2){
-						circle(lV[pl.startIndex], lV[pl.endIndex], pl.center.x,pl.center.y, pl.radius,pl.center);
-					} else circle(pl.start,pl.end, pl.center.x,pl.center.y, pl.radius,pl.center);
-
-					if (pr.num>2){
-						circle(rV[pr.startIndex], rV[pr.endIndex], pr.center.x,pr.center.y, pr.radius,pr.center);
-					} else circle(pr.start,pr.end, pr.center.x,pr.center.y, pr.radius,pr.center);
-				}
-				l.type = Segment.UNKNOWN;
-				r.type = Segment.UNKNOWN;
-				t.radCount = l.radCount;
-				nl.type = Segment.UNKNOWN;
-				nr.type = Segment.UNKNOWN;
-				next.type = Segment.UNKNOWN;
-				next.radCount = nl.radCount;
+			} else if (i>0 && pl!=null && nl!=null && nl.type!=Segment.UNKNOWN && pl.type==nl.type && pl.type!=0 && pl.radius==nl.radius && pl.center.distance(nl.center)<2.5 ){
+				joinSegment(prev, next, tW);
 				int idx = i+2;
 				occupied[ trIndx[i+1] ] = 0;
 				occupied[ trIndx[i] ] = 0;
 				if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
-				trSz+=i--;				
-				toMiddleSegment(pl,prev, -1, tW);
-				int prvRad = (prev.type==0) ? MAX_RADIUS-1 : (int)Math.round(prev.radius); 
-				prev.map[prvRad] += next.map[prvRad];
-				pl.done = true;
-				pr.done = true;
-				pl.updated = true;
-				pr.updated = true;
-				prev.updated = true;
-				prev.radCount = pl.radCount;
+				trSz+=i--;								
+				continue;
+			} 
+			if (i>0 && l!=null && nl!=null && l.type!=Segment.UNKNOWN && l.type==nl.type && l.type!=0 && isSameSegment(l, nl)){
+				joinSegment(t, next, tW);
+				occupied[ trIndx[i+1] ] = 0;
+				if (trSz>i+2) System.arraycopy(trIndx, i+2, trIndx, i+1, trSz-i-2);
+				trSz--;	
+				prev = t;
 				continue;
 			}
 
@@ -15093,12 +15964,44 @@ public final class Segment {
 				} else prev.type = UNKNOWN;
 			}
 			if (prev!=null && pl!=null) prev.radCount = pl.radCount;
+			if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && (trSz>2 || trSz>1 && pl!=null && pl.type!=0) && i>0 && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+					|| reject2(pr, r, nr, 1,rN, rV, tW))){
+				l.type = Segment.UNKNOWN;
+				r.type = Segment.UNKNOWN;
+				if (i==trSz-1) isLastRejected = true;
+			}
 						
 			if (l!=null && lN>0){
 				if (l.type!=UNKNOWN) {
 					toMiddleSegment(l,t, -1, tW);
-					t.radCount = l.radCount;					
-				} else {													
+					t.radCount = l.radCount;
+					if (l.type==Segment.UNKNOWN){
+						if (pl!=null) pl.upper = null;
+						if (nl!=null) nl.lower = null;
+						if (pr!=null) pr.upper = null;
+						if (nr!=null) nr.lower = null;
+						if (prev!=null) prev.upper = null;
+						if (next!=null) next.lower = null;
+						if (t.rightSeg!=null) {
+							t.rightSeg.type = Segment.UNKNOWN;
+							t.rightSeg.radius = 0;
+						}				
+						t.radCount = l.radCount;
+						occupied[ trIndx[i] ] = 0;
+						int idx = i+1;					
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
+						trSz+=i;					
+						if (oldTrSz==trSz){
+							i--;	//*/
+							continue;
+						} else i -= oldTrSz-trSz;
+						t = prev;
+					}
+				} else {		
+					if (!CircleDriver2.inTurn) {
+						edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+						edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+					}
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15114,19 +16017,43 @@ public final class Segment {
 					occupied[ trIndx[i] ] = 0;
 					int idx = i+1;					
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
-					trSz+=i;
-					i--;					
-					continue;
-				}
+					trSz+=i;					
+					if (oldTrSz==trSz){
+						i--;	//*/
+						continue;
+					} else i -= oldTrSz-trSz;
+					t = prev;
+				} 
 			} else if (r!=null && rN>0){
 				if (r.type!=UNKNOWN) {
 					toMiddleSegment(r,t, 1, tW);
-					t.radCount = r.radCount;					
+					t.radCount = r.radCount;		
+					if (r.type==Segment.UNKNOWN){
+						if (pl!=null) pl.upper = null;
+						if (nl!=null) nl.lower = null;
+						if (pr!=null) pr.upper = null;
+						if (nr!=null) nr.lower = null;
+						if (prev!=null) prev.upper = null;
+						if (next!=null) next.lower = null;
+						if (t.rightSeg!=null) {
+							t.rightSeg.type = Segment.UNKNOWN;
+							t.rightSeg.radius = 0;
+						}				
+						t.radCount = l.radCount;
+						occupied[ trIndx[i] ] = 0;
+						int idx = i+1;					
+						if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
+						trSz+=i;					
+						if (oldTrSz==trSz){
+							i--;	//*/
+							continue;
+						} else i -= oldTrSz-trSz;
+						t = prev;
+					}
 					//					r.updated = false;
 					//					if (l!=null) l.updated = false;
 					//					t.updated = false;
-				} else {
-					int idx = i+1;										
+				} else {																			
 					t.type = UNKNOWN;
 					if (pl!=null) pl.upper = null;
 					if (nl!=null) nl.lower = null;
@@ -15140,15 +16067,18 @@ public final class Segment {
 					}
 					t.radCount = r.radCount;
 					occupied[ trIndx[i] ] = 0;
+					int idx = i+1;						
 					if ((trSz-=idx)>0) System.arraycopy(trIndx, idx, trIndx, i, trSz);
 					trSz+=i;
-					i--;					
-					continue; 
-				}
+					if (oldTrSz==trSz){
+						i--;	//*/
+						continue;
+					} else i -= oldTrSz-trSz;
+				} 
 			}			
 
-			Segment firstSeg = trArr[ trIndx[0] ];
-			if (prev!=null && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius))){
+			Segment firstSeg = (trSz<=0) ? null : trArr[ trIndx[0] ];
+			if (firstSeg!=null && t!= null && t.type!=Segment.UNKNOWN && (prev!=null && (t.type==0 && Math.abs(t.end.x-t.start.x)<=E && t.end.y-t.start.y>3 && firstSeg.type!=0) || (t.type!=0 && t.center!=null && t.center.y==0  && firstSeg.end.y<1 && (firstSeg.type==0 || firstSeg.radius!=t.radius)))){
 				boolean good = true;
 				if (t.type!=0){
 					for (int j = 0;j<l.startIndex;++j){
@@ -15170,7 +16100,11 @@ public final class Segment {
 							}
 						}
 					}
-				}
+				} 
+				else if (i>0 && t.type==0 && Math.abs(t.end.x-t.start.x)<=E && prev!=null && firstSeg.type!=0 && firstSeg.end.y>1 && t.start.y>0 && !CircleDriver2.inTurn){ 
+					good = false;
+//					CircleDriver2.debug = true;
+				}//*/
 				if (good){
 					for (int j = 0;j<i;++j)	occupied[ trIndx[j] ] = 0;
 					if ((trSz-=i)>0) System.arraycopy(trIndx, i, trIndx, 0, trSz);
@@ -15185,52 +16119,118 @@ public final class Segment {
 		if (trSz>0 && fromSeg<trSz) 
 			prev = trArr[ trIndx[ trSz-1] ];						
 		
-		pl = (prev==null) ? null : prev.leftSeg;
-		pr = (prev==null) ? null : prev.rightSeg;
-		int numL = (pl==null) ? lN : lN - pl.endIndex-1;
-		int numR = (pr==null) ? rN : rN - pr.endIndex-1;
 		
-		if (trSz==0 || fromSeg==trSz || numL>=2 || numR>=2 ){			
-			int currentIndx = (trSz==0) ? 0 : trSz;			
-			if (numL>=numR)
-				reCheckSegment(pl, null, null, -1, tW,trArr,currentIndx);
-			else reCheckSegment(pr, null, null, 1, tW,trArr,currentIndx);
-			Segment t = null;
-			Segment l = null;
-			Segment r = null;
-			Segment nl = null;
-			Segment nr = null; 
-			if (currentIndx<trSz){
-				t = trArr[ trIndx[currentIndx] ];
-				next = (currentIndx<trSz-1) ? trArr[  trIndx[currentIndx+1] ] : null;
-				l = t.leftSeg;
-				r = t.rightSeg;
-				nl = (next==null) ? null : next.leftSeg;
-				nr = (next==null) ? null : next.rightSeg;
-			}
-			if (numL>=numR) 
-				reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
-			else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
-			
-			if (trSz>0){
-				int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
-				for (int i = trSz-1;i>=minSeg;--i){
-					t = trArr[ trIndx[i] ];	
-					Segment s = t.leftSeg;					
-					toMiddleSegment(s,t, -1, tW);
-					prev = (i>0) ? trArr[ trIndx[i-1] ].leftSeg : null;
-					
-					if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
-						reCalibrate(prev, s, -1, tw);							
-					}
-					Segment op = (prev==null) ? null : prev.opp;
-					Segment os = (s==null) ? null : s.opp;
-					if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
-						reCalibrate(prev, s, 1, tw);							
-					}
-					t.radCount = s.radCount;
+		
+		while (!isLastRejected){
+			pl = (prev==null) ? null : prev.leftSeg;
+			pr = (prev==null) ? null : prev.rightSeg;
+			int numL = (pl==null) ? lN : lN - pl.endIndex-1;
+			int numR = (pr==null) ? rN : rN - pr.endIndex-1;
+			int lastTrsz = trSz; 
+			if (trSz==0 || fromSeg==trSz || numL>=2 || numR>=2 ){			
+				int currentIndx = (trSz==0) ? 0 : trSz;			
+				if (numL>=numR)
+					reCheckSegment(pl, null, null, -1, tW,trArr,currentIndx);
+				else reCheckSegment(pr, null, null, 1, tW,trArr,currentIndx);
+				Segment t = null;
+				Segment l = null;
+				Segment r = null;
+				Segment nl = null;
+				Segment nr = null; 
+				if (currentIndx<trSz){
+					t = trArr[ trIndx[currentIndx] ];
+					next = (currentIndx<trSz-1) ? trArr[  trIndx[currentIndx+1] ] : null;
+					l = t.leftSeg;
+					r = t.rightSeg;
+					nl = (next==null) ? null : next.leftSeg;
+					nr = (next==null) ? null : next.rightSeg;				
 				}
-			}
+				if (numL>=numR) 
+					reCheckSegment(pr, r, nr, 1, tW,trArr,currentIndx);
+				else reCheckSegment(pl, l, nl, -1, tW,trArr,currentIndx);
+				
+				if (l!=null && l.type!=Segment.UNKNOWN){
+					if (l.lower!=null && pl!=null && (pl.upper==null || pr.upper==null)) {
+						pl.upper = new Vector2D(l.lower);
+						if (r.lower==null)
+							reSynchronize(l, r, 0, rN, 1, tw);
+						pr.upper = new Vector2D(r.lower);																
+					} else if (nl!=null && l.upper!=null && (nl.lower==null || nr.lower==null)){
+						nl.lower = new Vector2D(l.upper);
+						if (r.upper==null)
+							reSynchronize(l, r, 0, rN, 1, tw);
+						nr.lower = new Vector2D(r.upper);
+					}
+				}
+				
+				if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+						|| reject2(pr, r, nr, 1,rN, rV, tW))){
+					l.type = Segment.UNKNOWN;
+					r.type = Segment.UNKNOWN;
+				}
+				
+				if (pl!=null && l!=null && l.type!=Segment.UNKNOWN && pl.type==l.type && l.type!=0 && (pl.radius==l.radius && (pl.center==null || l.center==null || Math.abs(pl.center.y-l.center.y)<1) )){
+					joinSegment(prev, t, tW);		
+					occupied [ trIndx[trSz-1] ] = 0;
+	//				if (trSz>0) System.arraycopy(trIndx, trSz-1, trIndx, trSz-2, 1);
+					trSz--;								
+				}
+				
+				if (trSz>0){
+					
+					if (lastTrsz<trSz-1){
+						for (int i = lastTrsz+1;i<trSz;++i){							
+							t = trArr[ trIndx[i] ];
+							next = (i<trSz-1) ? trArr[  trIndx[i+1] ] : null;
+							prev = trArr[ trIndx[i-1]];
+							l = t.leftSeg;
+							r = t.rightSeg;
+							nl = (next==null) ? null : next.leftSeg;
+							nr = (next==null) ? null : next.rightSeg;
+							pl = prev.leftSeg;
+							pr = prev.rightSeg;
+							if (CircleDriver2.inTurn && pl!=null && reject3(pr, r, nr, pl, l, nl, 1,tW) || !CircleDriver2.inTurn && l!=null && r!=null && l.type!=Segment.UNKNOWN && r.type!=Segment.UNKNOWN && (reject2(pl, l, nl,-1, lN, lV, tW)
+									|| reject2(pr, r, nr, 1,rN, rV, tW))){
+								l.type = Segment.UNKNOWN;
+								r.type = Segment.UNKNOWN;
+								if (!CircleDriver2.inTurn) {
+									edge.lSize = lN = removeRedundant(pl, l, nl, lV, trArr, trSz, trIndx, occupied, -1, lN);
+									edge.rSize = rN = removeRedundant(pr, r, nr, rV, trArr, trSz, trIndx, occupied, 1, rN);
+								}
+							}
+						}
+					}//*/
+					int minSeg = (fromSeg>0) ? fromSeg-1 : 0;
+					for (int i = trSz-1;i>=minSeg;--i){					
+						t = trArr[ trIndx[i] ];	
+						Segment s = t.leftSeg;
+						if (s.type==Segment.UNKNOWN){							
+							occupied[ trIndx[i] ] = 0;
+							if (trSz>i+1) System.arraycopy(trIndx, i+1, trIndx, i, trSz-i-1);
+							trSz--;
+							continue;
+						}
+						toMiddleSegment(s,t, -1, tW);
+						prev = (i>0) ? trArr[ trIndx[i-1] ].leftSeg : null;
+						
+						if (prev!=null && prev.type!=Segment.UNKNOWN && (prev.endIndex>s.startIndex || prev.end.y>=s.start.y-SMALL_MARGIN)){																
+							reCalibrate(prev, s, -1, tw);							
+						}
+						Segment op = (prev==null) ? null : prev.opp;
+						Segment os = (s==null) ? null : s.opp;
+						if (op!=null && op.type!=Segment.UNKNOWN && (op.endIndex>os.startIndex || op.end.y>=os.start.y-SMALL_MARGIN)){								
+							reCalibrate(prev, s, 1, tw);							
+						}
+						t.radCount = s.radCount;
+						
+					}
+					if (lastTrsz<trSz) {						
+						prev = trArr[ trIndx[trSz-1] ];
+						continue;
+					}
+				}				
+			};
+			break;
 		}		
 		
 		if (CircleDriver2.debug) System.out.println("End reUpdate : "+(System.nanoTime()-CircleDriver2.ti)/1000000);
@@ -16225,9 +17225,35 @@ public final class Segment {
 		len+=lngth.length;
 		len = double2string(this.length,buf,len);
 
-		System.arraycopy(dista, 0, buf, len, dista.length);
-		len+=dista.length;		
-		len = double2string(this.dist,buf,len);
+		System.arraycopy(lwer, 0, buf, len, lwer.length);
+		len+=lwer.length;
+		if (lower!=null){
+			buf[len++]='(';
+			len = double2string(this.lower.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.lower.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
+		
+		System.arraycopy(uper, 0, buf, len, uper.length);
+		len+=uper.length;
+		if (upper!=null){
+			buf[len++]='(';
+			len = double2string(this.upper.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.upper.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
 
 		System.arraycopy(fin, 0, buf, len, fin.length);
 		len+=fin.length;				
@@ -16295,9 +17321,35 @@ public final class Segment {
 		len+=lngth.length;
 		len = double2string(this.length,buf,len);
 
-		System.arraycopy(dista, 0, buf, len, dista.length);
-		len+=dista.length;		
-		len = double2string(this.dist,buf,len);
+		System.arraycopy(lwer, 0, buf, len, lwer.length);
+		len+=lwer.length;
+		if (lower!=null){
+			buf[len++]='(';
+			len = double2string(this.lower.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.lower.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
+		
+		System.arraycopy(uper, 0, buf, len, uper.length);
+		len+=uper.length;
+		if (upper!=null){
+			buf[len++]='(';
+			len = double2string(this.upper.x,buf,len);
+			buf[len++]=',';
+			len = double2string(this.upper.y,buf,len);
+			buf[len++]=')';
+		} else {
+			buf[len++] = 'n';
+			buf[len++] = 'u';
+			buf[len++] = 'l';
+			buf[len++] = 'l';
+		}
 
 		System.arraycopy(fin, 0, buf, len, fin.length);
 		len+=fin.length;				
@@ -16358,13 +17410,13 @@ public final class Segment {
 				rt = digitno;
 				rt++;
 				int c =ivalue%10;       								
-				while ( c == 0 ){
+				while ( c == 0 && digitno>=0){
 					digitno--;
 					rt--;
 					ivalue /= 10;
 					c = ivalue%10;
 				}
-				while ( ivalue != 0){
+				while ( ivalue != 0 && digitno>=0){
 					s[digitno--] = (char)(c+'0');              
 					ivalue /= 10;
 					c = ivalue%10;
