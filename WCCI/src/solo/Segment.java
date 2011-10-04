@@ -11383,7 +11383,7 @@ public final class Segment {
 		Vector2D end = (s.num>0) ? s.points[s.endIndex] : s.end;
 		int endIndx = other.endIndex;
 		boolean empty = true;
-		if (s.type!=0 && s.type!=UNKNOWN){
+		if (s.type!=0 && s.type!=UNKNOWN && s.center!=null){
 			Vector2D center = s.center;
 			double cx = center.x;
 			double cy = center.y;

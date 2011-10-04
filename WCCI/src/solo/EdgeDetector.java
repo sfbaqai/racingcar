@@ -1395,10 +1395,10 @@ public final class EdgeDetector {
 				prev.num--;
 				elems[prev.endIndex].copy(v);
 				prev.endIndex--;				
-			} else if (v.certain && next!=null && next.num>2 && !elems[next.startIndex].certain && elems[next.startIndex].y<v.y+1){
-				next.num--;
-				elems[next.startIndex].copy(v);
-				next.startIndex++;				
+//			} else if (v.certain && next!=null && next.num>2 && !elems[next.startIndex].certain && elems[next.startIndex].y<v.y+1){
+//				next.num--;
+//				elems[next.startIndex].copy(v);
+//				next.startIndex++;				
 			} 
 			else {				
 				if ((sz-indx)>0) {
