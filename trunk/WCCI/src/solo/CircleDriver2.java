@@ -34,8 +34,8 @@ public final class CircleDriver2{
 	/**
 	 * 
 	 */
-	public static final double BREAK_TIME = 6000.78;
 	public static boolean debug = false;
+	public static final double BREAK_TIME = 91.77;//123.93;
 	//		661.28;
 
 	//	private static final double ABS_SLIP = 2.0f;	+				-	// [m/s] range [0..10]
@@ -4458,7 +4458,7 @@ public final class CircleDriver2{
 				else if (!isSafeToAccel && m<20 && relativePosMovement>-0.001 && (edgeDetector.highestPoint==null || edgeDetector.highestPoint.length()-m<50) && 
 						(speedX>highestSpeed+Math.max(FAST_MARGIN,m) || speedX>highestSpeed+Math.min(FAST_MARGIN,m*2) && (distToEstCircle<-GAP || distToEstCircle<0 && distToEstCircle<lastDistToEstCircle || distToEstCircle<GAP*0.5 && relativeAngleMovement<-0.01)) 
 						&& (distToEstCircle<-GAP || distToEstCircle<0 && (absSpeedY>=MODERATE_SPEEDY ||  distToEstCircle<lastDistToEstCircle) || distToEstCircle<GAP*0.5 && relativeAngleMovement<-0.01))
-					acc = 0;
+					acc = (speed<sp && distToEstCircle>-W && relativePosMovement>0.01 && relativeAngleMovement>-0.01) ? acc : 0;
 				else if (!isSafeToAccel && m<20 && distToEstCircle<-GAP && (edgeDetector.highestPoint==null || edgeDetector.highestPoint.length()-m<50) && (relativeAngleMovement<-0.001 && distToEstCircle<-W || relativeAngleMovement<-0.01) && relativePosMovement<0.001 && speedX>highestSpeed+m)
 					acc = 0;
 				else if (trSz==1 && steer*turn<0 && speedX>lowestSpeed+tW && relativeAngleMovement<-0.01 && relativeAngleMovement<lastRelativeAngleMovement && relativePosMovement<-0.001)
@@ -5367,8 +5367,10 @@ public final class CircleDriver2{
 				if (a>0 && b>0){					
 					if (brake>0 && absSpeedY<HIGH_SPEEDY && (inTurn || seenNewSeg)) {
 						brake = (distToEstCircle<-GAP && relativeAngleMovement<-0.001 || distToEstCircle<-W || distToEstCircle<0 && relativeAngleMovement<-0.01) 
-								? speed>sp ? Math.min(brake,(speed*speed-sp*sp)*0.5/(speed*speed))*0.5 : brake*0.5 
-								: (speed>sp && (relativeAngleMovement<0.001)) ? Math.min(brake, (speed*speed-sp*sp)*0.5/(speed*speed)) : 0;
+								? speed>sp ? Math.min(brake,(speed*speed-sp*sp)*0.5/(speed*speed))*0.5 : (relativePosMovement>0.01) ? 0 : brake*0.5 
+								: (speed>sp && (relativeAngleMovement<0.001)) 
+									? Math.min(brake, (speed*speed-sp*sp)*0.5/(speed*speed)) 
+									: 0;
 					}
 					if (relativePosMovement>-0.001 && absSpeedY<HIGH_SPEEDY && relativeAngleMovement>-0.001 && distToEstCircle>0 && speed<lastSpeed+dl){
 						acc = 1;
@@ -5376,9 +5378,11 @@ public final class CircleDriver2{
 					} 
 					else if (inTurn && relativePosMovement<0.001 && steer*turn<=0 && absSpeedY<MODERATE_SPEEDY && (relativeAngleMovement>-0.01 && distToEstCircle>-W || distToEstCircle>-GAP) && al>=60){
 						acc = (relativeAngleMovement>-0.001 || distToEstCircle>0) ? 1 : acc;
-						brake = 0;
 						
-					}
+						brake = 0;
+					}/* else if (brake==0 && relativePosMovement>-0.001 && speed<sp-10 && relativeAngleMovement>-0.01){
+						acc = 1;						
+					}//*/
 //					else if (b>0) 
 //						brake = (speed>sp) ? Math.min(brake, (speed*speed-sp*sp)/(speed*speed)) : 0;
 				} 
@@ -5392,7 +5396,7 @@ public final class CircleDriver2{
 				}//*/
 			}
 						
-			if (!inTurn && acc>CONSTANT_SPEED_ACC && (relativePosMovement<-0.03 && absSpeedY>HIGH_SPEEDY || relativePosMovement<-0.01 && relativeAngleMovement<-0.02))
+			if (!inTurn && acc>CONSTANT_SPEED_ACC && (relativePosMovement<-0.03 && (absSpeedY>HIGH_SPEEDY || relativeAngle<-0.2 || relativeAngleMovement<-0.01 && relativeAngle<0) || relativePosMovement<-0.01 && relativeAngleMovement<-0.02))
 				acc = CONSTANT_SPEED_ACC*0.25;
 			
 //			if (acc>CONSTANT_SPEED_ACC && a>0 && speed>highestSpeed && steer*turn<=0 && relativePosMovement>-0.001 && absSpeedY>MODERATE_SPEEDY && (relativeAngleMovement<-0.001 && lastRelativeAngleMovement>relativeAngleMovement || relativeAngleMovement<-0.01) && distToEstCircle<-GAP && distToEstCircle<lastDistToEstCircle)
@@ -9717,7 +9721,7 @@ public final class CircleDriver2{
 			NumberFormat nf = NumberFormat.getInstance();
 			nf.setMinimumFractionDigits(2);
 			nf.setMaximumFractionDigits(2);
-			drawEstimate("E "+nf.format(time)+" b");
+//			drawEstimate("E "+nf.format(time)+" b");
 		}
 		if (debug) System.out.println(cs.radiusl+"    r    "+cs.radiusr+"    r     "+cs.radius);
 		if (debug) System.out.println("Must pass point  "+mustPassPoint+"     Optimal point  "+optimalPoint);		
